@@ -1,0 +1,36 @@
+---
+Default:
+  workload_home_dir: "/home/intel/gramine/examples/openvino"
+  original_manifest_file: "benchmark_app.manifest.template"
+  timeout: 3000
+  metrics: ["throughput", "latency"]
+  fp: ["FP16", "FP32"]
+  workload_name: "OpenVino"
+  throughput_manifest_file: "src/config_files/openvino_throughput.manifest.template"
+  latency_manifest_file: "src/config_files/openvino_latency.manifest.template"
+
+test_ov_perf_bert_large:
+  model: "bert-large-uncased-whole-word-masking-squad-0001"
+  model_dir: "/home/intel/gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
+
+test_ov_perf_bert_large_int8:
+  model: "bert-large-uncased-whole-word-masking-squad-int8-0001"
+  model_dir: "/home/intel/gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-int8-0001"
+  fp: ["FP16-INT8"]
+
+test_ov_perf_brain_tumor_seg_0001:
+  model: "brain-tumor-segmentation-0001"
+  model_dir: "/home/intel/gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
+
+test_ov_perf_brain_tumor_seg_0002:
+  model: "brain-tumor-segmentation-0002"
+  model_dir: "/home/intel/gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
+
+test_ov_perf_resnet:
+  model: "resnet-50-tf"
+  model_dir: "/home/intel/gramine/examples/openvino/model/public/resnet-50-tf"
+  
+test_ov_perf_ssd_mobilenet:
+  model: "ssd_mobilenet_v1_coco"
+  model_dir: "/home/intel/gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
+  

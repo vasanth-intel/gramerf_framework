@@ -1,0 +1,12 @@
+---
+# Need to enclose few of the below dependencies within quotes as the cmd string
+# will be formed with spaces and pip install will fail without the quotes.
+Default:
+ asv
+ "meson >=0.55, <0.56" 
+
+"18.04":
+ recommonmark
+ "Sphinx == 1.8"
+ sphinx_rtd_theme
+ "toml >= 0.10"

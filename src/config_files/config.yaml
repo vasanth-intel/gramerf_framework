@@ -3,5 +3,8 @@ iterations: 2
 exec_mode: ["linux", "gdirect", "gsgx"]
 http_proxy: "http://proxy-dmz.intel.com:911/"
 https_proxy: "http://proxy-dmz.intel.com:912/"
+build_gramine: False
+build_type: "release"
+build_prefix: "/home/intel/test/gramine_install/usr"
 
   

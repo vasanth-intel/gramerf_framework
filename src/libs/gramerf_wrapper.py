@@ -4,21 +4,9 @@
 import json
 import yaml
 import inspect
-import conftest
+from src.libs.Workload import Workload
 
-class test_config:
-    # constructor
-    def __init__(self, dict_obj):
-        self.__dict__.update(dict_obj)
-
-   
-def dict2obj(dict_instance):
-    # using json.loads method and passing json.dumps
-    # method and custom object hook as arguments
-    return json.loads(json.dumps(dict_instance), object_hook=test_config)
-
-
-def read_config(tests_yaml_path):
+def read_config(tests_yaml_path, test_config_dict):
     # Reading test specific configurations
     test_name = inspect.stack()[1].function
 
@@ -28,31 +16,24 @@ def read_config(tests_yaml_path):
         except yaml.YAMLError as exc:
             print(exc)
 
-    print(conftest.test_config_dict)
-    
-    conftest.test_config_dict.update(yaml_test_config['Default'])
+    test_config_dict.update(yaml_test_config['Default'])
 
     if yaml_test_config.get(test_name):
-        conftest.test_config_dict.update(yaml_test_config[test_name])
-        conftest.test_config_dict['test_name'] = test_name
-        print ("\n\n Test Name = ", conftest.test_config_dict['test_name'])
+        test_config_dict.update(yaml_test_config[test_name])
+        test_config_dict['test_name'] = test_name
+    
+    print("\n-- Updated Test Configuration Data : \n", test_config_dict)
 
 
-def run_test(test_obj):
+def run_test(test_config_dict):
+
+    test_obj = Workload(test_config_dict)
+    
     #Update final test config from command line arguments
-    test_obj.update_test_config_from_cmd_line()
+    test_obj.update_test_config_from_cmd_line(test_config_dict)
+    
+    test_obj.pre_actions(test_config_dict)
 
-    test_config_obj = dict2obj(conftest.test_config_dict)
-    #tco = test_config_obj
-    #print ("\n ########## Local ###########", tco.iterations)
-
-    test_obj.pre_actions(test_config_obj)
-
-    #print("\n\n", test_config_obj.iterations)
-    #print("\n\n", test_config_obj.metrics[0])
-    #print("\n\n", test_config_obj.model_dir)
-    #print("\n\n", test_config_dict['model_dir'])
-    #print("\n\n", test_config_dict)
 
 
 

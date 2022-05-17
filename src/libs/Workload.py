@@ -3,8 +3,6 @@
 #
 import sys
 import os
-import time
-import psutil
 from src.config_files import constants
 
 
@@ -14,32 +12,23 @@ class Workload(object):
     #   command          Command to execute including the executable name and arguments (required)
     #   exe_name         Executable name, e.g. diskspd.exe or pcmark.exe (required)
     #                      used to kill the process
-    #   working_dir      Directory to set as the working directory before running the command
-    #                      default: C:/VALIDATION/workloads/<name>
-    #   log_dir          Root directory for logging
-    #                      default: <JK_LOCAL_VAL_REPO>/tests/logs/results/<name>
-    #   baseline_subdir  Logging subdirectory for baseline results
-    #                      default: baseline
-    #                      Note: variable baseline_dir is set to <log_dir>/<baseline_dir>
-    #   testapp_subdir   Logging subdirectory for testapp results
-    #                      default: testapp
-    #                      Note: variable testapp_dir is set to <log_dir>/<testapp_dir>
     def __init__(self,
-                 name,
-                 command,
-                 exe_name,
-                 working_dir = None,
-                 log_dir = None,
-                 baseline_subdir ='baseline',
-                 testapp_subdir = 'testapp'):
-        self.name = name
-        self.command = command
-        self.exe_name = exe_name
+                 test_config_dict):
+        self.name = test_config_dict['workload_name']
+        self.command = None
         self.degradation = None
+        
+        workload_script = test_config_dict['workload_name'] + "_Workload"
+        sys.path.append(os.path.join(constants.FRAMEWORK_HOME_DIR, "src", "workloads"))
+        self.workload_obj = getattr(__import__(workload_script), 'WORKLOAD')
+        print(dir(self.workload_obj))
+
 
     # pre_actions - implement in a subclass if needed
-    def pre_actions(self, TEST_CONFIG, resultsdir = None):
-        pass
+    def pre_actions(self, test_config_dict):
+        self.workload_obj.pre_actions(test_config_dict)
+        self.workload_obj.build_workload(test_config_dict)
+        
 
     # post_actions - implement in a subclass if needed
     def post_actions(self, TEST_CONFIG):
@@ -50,8 +39,8 @@ class Workload(object):
         return True
 
     # update_test_config_from_cmd_line - implement in a subclass if needed
-    def update_test_config_from_cmd_line(self):
-        pass
+    def update_test_config_from_cmd_line(self, test_config_dict):
+        self.workload_obj.update_test_config_from_cmd_line(test_config_dict)
 
     def kill(self):
         pass

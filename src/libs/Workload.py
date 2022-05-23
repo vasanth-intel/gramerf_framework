@@ -27,8 +27,11 @@ class Workload(object):
     # pre_actions - implement in a subclass if needed
     def pre_actions(self, test_config_dict):
         self.workload_obj.pre_actions(test_config_dict)
-        self.workload_obj.build_workload(test_config_dict)
+        return self.workload_obj.build_workload(test_config_dict)
         
+
+    def construct_workload_exec_cmd(self):
+        pass
 
     # post_actions - implement in a subclass if needed
     def post_actions(self, TEST_CONFIG):
@@ -37,10 +40,6 @@ class Workload(object):
     # parse_performance - implement in a subclass if needed
     def parse_performance(self, TEST_CONFIG):
         return True
-
-    # update_test_config_from_cmd_line - implement in a subclass if needed
-    def update_test_config_from_cmd_line(self, test_config_dict):
-        self.workload_obj.update_test_config_from_cmd_line(test_config_dict)
 
     def kill(self):
         pass

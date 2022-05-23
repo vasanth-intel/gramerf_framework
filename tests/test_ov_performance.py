@@ -4,29 +4,36 @@
 import os
 import pytest
 import src.libs.gramerf_wrapper
-from setup import read_global_config
+from setup import read_perf_suite_config
 
 @pytest.fixture(scope="class")
 def tests_setup_fixture():
     print ("\n##### In tests_setup_fixture #####\n")
     yaml_file_name = "ov_performance_tests.yaml"
     tests_yaml_path = os.path.join(os.getcwd(), 'data', yaml_file_name)
-    test_config_dict = read_global_config()
-    return tests_yaml_path, test_config_dict
+    return tests_yaml_path
 
 
 @pytest.mark.usefixtures("tests_setup_fixture")
 @pytest.mark.usefixtures("gramerf_setup")
 class TestClass:
+    # In order to use command line values within pytest, using 'pytest.config' global
+    # is deprecated from pytest version 4.0 onwards. Instead, we need to pass the config 
+    # instance via an autouse fixture in order to access it.
+    @pytest.fixture(autouse=True)
+    def inject_config(self, request):
+        print ("\n##### In inject_config #####\n")
+        self._config = request.config
 
     @pytest.mark.ov_perf
     @pytest.mark.ov_perf_bert_large
     def test_ov_perf_bert_large(self, tests_setup_fixture):
         print("\n##### In test_ov_perf_bert_large #####\n")
 
-        tests_yaml_path, test_config_dict = tests_setup_fixture
-        src.libs.gramerf_wrapper.read_config(tests_yaml_path, test_config_dict)
-        src.libs.gramerf_wrapper.run_test(test_config_dict)
+        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
+        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        
+        assert test_result
 
 
     @pytest.mark.ov_perf
@@ -34,9 +41,10 @@ class TestClass:
     def test_ov_perf_brain_tumor_seg_0001(self, tests_setup_fixture):
         print ("\n##### In test_ov_perf_brain_tumor_seg_0001 #####\n")
 
-        tests_yaml_path, test_config_dict = tests_setup_fixture
-        src.libs.gramerf_wrapper.read_config(tests_yaml_path, test_config_dict)
-        src.libs.gramerf_wrapper.run_test(test_config_dict)
+        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
+        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        
+        assert test_result
 
 
     @pytest.mark.ov_perf
@@ -44,9 +52,10 @@ class TestClass:
     def test_ov_perf_brain_tumor_seg_0002(self, tests_setup_fixture):
         print ("\n##### In test_ov_perf_brain_tumor_seg_0002 #####\n")
 
-        tests_yaml_path, test_config_dict = tests_setup_fixture
-        src.libs.gramerf_wrapper.read_config(tests_yaml_path, test_config_dict)
-        src.libs.gramerf_wrapper.run_test(test_config_dict)
+        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
+        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        
+        assert test_result
 
 
     @pytest.mark.ov_perf
@@ -54,10 +63,10 @@ class TestClass:
     def test_ov_perf_resnet(self, tests_setup_fixture):
         print ("\n##### In test_ov_perf_resnet #####\n")
 
-        tests_yaml_path, test_config_dict = tests_setup_fixture
-        src.libs.gramerf_wrapper.read_config(tests_yaml_path, test_config_dict)
-        src.libs.gramerf_wrapper.run_test(test_config_dict)
-
+        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
+        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        
+        assert test_result
 
 
     @pytest.mark.ov_perf
@@ -65,7 +74,8 @@ class TestClass:
     def test_ov_perf_ssd_mobilenet(self, tests_setup_fixture):
         print ("\n##### In test_ov_perf_ssd_mobilenet #####\n")
 
-        tests_yaml_path, test_config_dict = tests_setup_fixture
-        src.libs.gramerf_wrapper.read_config(tests_yaml_path, test_config_dict)
-        src.libs.gramerf_wrapper.run_test(test_config_dict)
+        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
+        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        
+        assert test_result
 

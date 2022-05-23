@@ -69,11 +69,45 @@ def update_env_variables(build_prefix):
      print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
 
 
-def set_http_proxies(test_config_dict):
-    os.environ['http_proxy'] = test_config_dict['http_proxy']
-    os.environ['HTTP_PROXY'] = test_config_dict['http_proxy']
-    os.environ['https_proxy'] = test_config_dict['https_proxy']
-    os.environ['HTTPS_PROXY'] = test_config_dict['https_proxy']
+'''
+Function to set environment http and https proxies.
+'''
+def set_http_proxies():
+    os.environ['http_proxy'] = constants.HTTP_PROXY
+    os.environ['HTTP_PROXY'] = constants.HTTP_PROXY
+    os.environ['https_proxy'] = constants.HTTPS_PROXY
+    os.environ['HTTPS_PROXY'] = constants.HTTPS_PROXY
     print("\n-- Setting http_proxy : \n", os.environ['http_proxy'])
     print("\n-- Setting https_proxy : \n", os.environ['https_proxy'])
 
+
+'''
+Function to set the CPU frequency scaling governor to 'performance' mode.
+'''
+def set_cpu_freq_scaling_governor():
+     print ("\n-- Setting CPU frequency scaling governor to 'performance' mode..")
+     cpu_freq_file = os.path.join(constants.FRAMEWORK_HOME_DIR, 'src/config_files', 'set_cpu_freq_scaling_governor.sh')
+     
+     chmod_cmd = 'chmod +x ' + cpu_freq_file
+     set_cpu_freq_cmd = 'sudo ' + cpu_freq_file
+     
+     subprocess.run(chmod_cmd, shell=True, check=True)
+     subprocess.run(set_cpu_freq_cmd, shell=True, check=True)
+
+'''
+Function to determine and set 'THREADS_CNT' env var.
+'''
+def set_threads_cnt_env_var():
+     lscpu_output = subprocess.getoutput('lscpu')
+     lines = lscpu_output.splitlines()
+     core_per_socket, threads_per_core = 0, 0
+     for line in lines:
+          if ('Core(s) per socket:' in line):
+               core_per_socket = int(line.split(':')[-1].strip())
+          if ('Thread(s) per core:' in line):
+               threads_per_core =  int(line.split(':')[-1].strip())
+          if (core_per_socket and threads_per_core):
+               break
+     os.environ['THREADS_CNT'] = str(core_per_socket * threads_per_core)
+     
+     print("\n-- Setting the THREADS_CNT env variable to ", os.environ['THREADS_CNT'])

@@ -111,7 +111,7 @@ def install_gramine_dependencies():
     os.chdir(cwd)
     
 
-def build_and_install_gramine(test_config_dict):
+def build_and_install_gramine():
     print("\n###### In build_and_install_gramine #####\n")
     
     cwd = os.getcwd()
@@ -123,8 +123,8 @@ def build_and_install_gramine(test_config_dict):
     # start building the same.
     os.chdir(constants.GRAMINE_HOME_DIR)
 
-    build_type = test_config_dict['build_type']
-    build_prefix = test_config_dict['build_prefix']
+    build_type = constants.BUILD_TYPE
+    build_prefix = constants.BUILD_PREFIX
 
     # Cleanup existing gramine binaries (if any) before starting a fresh build.
     # Passing prefix path as argument, so that user installed (if any) gramine
@@ -167,13 +167,13 @@ def build_and_install_gramine(test_config_dict):
  
     os.chdir(cwd)
 
-def setup_gramine_environment(test_config_dict):
+def setup_gramine_environment():
     # Update the following environment variables as the gramine binaries can be
     # installed at some other place other than '/usr/local'
     # PATH, PYTHONPATH and PKG_CONFIG_PATH
     # Need to update these variables only after building gramine as there would be some
     # dereferences of few path values which are created only after successful build.
-    utils.update_env_variables(test_config_dict['build_prefix'])
+    utils.update_env_variables(constants.BUILD_PREFIX)
 
     gramine_sgx_gen_private_key_cmd = "gramine-sgx-gen-private-key -f"
 
@@ -182,7 +182,7 @@ def setup_gramine_environment(test_config_dict):
     time.sleep(constants.SUBPROCESS_SLEEP_TIME)
 
 
-def build_gramine_binaries(test_config_dict):
+def build_gramine_binaries():
 
     print("\n###### In build_gramine #####\n")
 
@@ -190,8 +190,8 @@ def build_gramine_binaries(test_config_dict):
     install_gramine_dependencies()
 
     # Build and Install Gramine
-    build_and_install_gramine(test_config_dict)
+    build_and_install_gramine()
 
     # Setup gramine env variables and generate sgx private key
-    setup_gramine_environment(test_config_dict)
+    setup_gramine_environment()
     

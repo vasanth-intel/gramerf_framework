@@ -17,6 +17,7 @@ def tests_setup_fixture():
 @pytest.mark.usefixtures("tests_setup_fixture")
 @pytest.mark.usefixtures("gramerf_setup")
 class TestClass:
+
     # In order to use command line values within pytest, using 'pytest.config' global
     # is deprecated from pytest version 4.0 onwards. Instead, we need to pass the config 
     # instance via an autouse fixture in order to access it.
@@ -25,57 +26,256 @@ class TestClass:
         print ("\n##### In inject_config #####\n")
         self._config = request.config
 
-    @pytest.mark.ov_perf
-    @pytest.mark.ov_perf_bert_large
-    def test_ov_perf_bert_large(self, tests_setup_fixture):
-        print("\n##### In test_ov_perf_bert_large #####\n")
+#######################################################################################
 
-        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
-        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_bert_large_throughput
+    @pytest.mark.ov_perf_bert_large_fp16_throughput
+    def test_ov_perf_bert_large_fp16_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_bert_large_fp16_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
         
         assert test_result
 
-
     @pytest.mark.ov_perf
-    @pytest.mark.ov_perf_brain_tumor_seg_0001
-    def test_ov_perf_brain_tumor_seg_0001(self, tests_setup_fixture):
-        print ("\n##### In test_ov_perf_brain_tumor_seg_0001 #####\n")
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_bert_large_throughput
+    @pytest.mark.ov_perf_bert_large_fp32_throughput
+    def test_ov_perf_bert_large_fp32_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_bert_large_fp32_throughput #####\n")
 
-        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
-        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
         
         assert test_result
 
-
     @pytest.mark.ov_perf
-    @pytest.mark.ov_perf_brain_tumor_seg_0002
-    def test_ov_perf_brain_tumor_seg_0002(self, tests_setup_fixture):
-        print ("\n##### In test_ov_perf_brain_tumor_seg_0002 #####\n")
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_bert_large_latency
+    @pytest.mark.ov_perf_bert_large_fp16_latency
+    def test_ov_perf_bert_large_fp16_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_bert_large_fp16_latency #####\n")
 
-        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
-        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
         
         assert test_result
 
-
     @pytest.mark.ov_perf
-    @pytest.mark.ov_perf_resnet
-    def test_ov_perf_resnet(self, tests_setup_fixture):
-        print ("\n##### In test_ov_perf_resnet #####\n")
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_bert_large_latency
+    @pytest.mark.ov_perf_bert_large_fp32_latency
+    def test_ov_perf_bert_large_fp32_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_bert_large_fp32_latency #####\n")
 
-        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
-        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
         
         assert test_result
 
+#######################################################################################
 
     @pytest.mark.ov_perf
-    @pytest.mark.ov_perf_ssd_mobilenet
-    def test_ov_perf_ssd_mobilenet(self, tests_setup_fixture):
-        print ("\n##### In test_ov_perf_ssd_mobilenet #####\n")
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_bert_large_int8_throughput
+    def test_ov_perf_bert_large_int8_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_bert_large_int8_throughput #####\n")
 
-        test_config_dict = read_perf_suite_config(self, tests_setup_fixture)
-        test_result = src.libs.gramerf_wrapper.run_test(test_config_dict)
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
         
         assert test_result
 
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_bert_large_int8_latency
+    def test_ov_perf_bert_large_int8_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_bert_large_int8_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+#######################################################################################
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_fp16_throughput
+    def test_ov_perf_brain_tumor_seg_0001_fp16_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_brain_tumor_seg_0001_fp16_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_fp32_throughput
+    def test_ov_perf_brain_tumor_seg_0001_fp32_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_brain_tumor_seg_0001_fp32_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_fp16_latency
+    def test_ov_perf_brain_tumor_seg_0001_fp16_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_brain_tumor_seg_0001_fp16_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_fp32_latency
+    def test_ov_perf_brain_tumor_seg_0001_fp32_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_brain_tumor_seg_0001_fp32_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+#######################################################################################
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_fp16_throughput
+    def test_ov_perf_brain_tumor_seg_0002_fp16_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_brain_tumor_seg_0002_fp16_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_fp32_throughput
+    def test_ov_perf_brain_tumor_seg_0002_fp32_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_brain_tumor_seg_0002_fp32_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_fp16_latency
+    def test_ov_perf_brain_tumor_seg_0002_fp16_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_brain_tumor_seg_0002_fp16_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_fp32_latency
+    def test_ov_perf_brain_tumor_seg_0002_fp32_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_brain_tumor_seg_0002_fp32_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+#######################################################################################
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_resnet_throughput
+    @pytest.mark.ov_perf_resnet_fp16_throughput
+    def test_ov_perf_resnet_fp16_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_resnet_fp16_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_resnet_throughput
+    @pytest.mark.ov_perf_resnet_fp32_throughput
+    def test_ov_perf_resnet_fp32_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_resnet_fp32_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_resnet_latency
+    @pytest.mark.ov_perf_resnet_fp16_latency
+    def test_ov_perf_resnet_fp16_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_resnet_fp16_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_resnet_latency
+    @pytest.mark.ov_perf_resnet_fp32_latency
+    def test_ov_perf_resnet_fp32_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_resnet_fp32_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+#######################################################################################
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_ssd_mobilenet_throughput
+    @pytest.mark.ov_perf_ssd_mobilenet_fp16_throughput
+    def test_ov_perf_ssd_mobilenet_fp16_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_ssd_mobilenet_fp16_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_ssd_mobilenet_throughput
+    @pytest.mark.ov_perf_ssd_mobilenet_fp32_throughput
+    def test_ov_perf_ssd_mobilenet_fp32_throughput(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_ssd_mobilenet_fp32_throughput #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_ssd_mobilenet_latency
+    @pytest.mark.ov_perf_ssd_mobilenet_fp16_latency
+    def test_ov_perf_ssd_mobilenet_fp16_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_ssd_mobilenet_fp16_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_ssd_mobilenet_latency
+    @pytest.mark.ov_perf_ssd_mobilenet_fp32_latency
+    def test_ov_perf_ssd_mobilenet_fp32_latency(self, tests_setup_fixture):
+        print ("\n##### In test_ov_perf_ssd_mobilenet_fp32_latency #####\n")
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_setup_fixture)
+        
+        assert test_result
+
+#######################################################################################

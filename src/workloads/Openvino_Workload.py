@@ -1,9 +1,6 @@
 #
 # Imports
 #
-from genericpath import exists
-import pytest
-import collections
 import os
 import subprocess
 import time
@@ -19,6 +16,17 @@ def is_true(env):
     return value == 'true'
 
 class OpenvinoWorkload(Workload):
+    def __init__(self):
+        # result is the overall score for all benchmarks
+        # it is a list containing [baseline_score, testapp_score, percent_degradaton]
+        self.result = []
+        self.build_exec_params_dict = dict()
+        # self.records are the individual benchmark results
+        # {benchmark, [baseline_score, testapp_score, percent_degradaton]}
+        # self.records = collections.OrderedDict()
+        # time.sleep(1)
+
+        
     def install_workload(self, test_config_dict):
         # Installing Openvino within "/home/intel/test/gramine/examples/openvino/openvino_2021"
         install_dir = os.path.join(test_config_dict['workload_home_dir'], 'openvino_2021')
@@ -72,7 +80,7 @@ class OpenvinoWorkload(Workload):
     the manifest (latency/throughput) that needs to be overridden into the workload home dir
     and renames the copied manifest to the expected name by the workload.
     '''
-    def replace_manifest_file(self, test_config_dict, buildForThroughput = None):
+    def replace_manifest_file(self, test_config_dict):
         original_manifest_file = os.path.join(test_config_dict['workload_home_dir'], test_config_dict['original_manifest_file'])
         
         # Check if the original manifest file exists.
@@ -83,32 +91,22 @@ class OpenvinoWorkload(Workload):
         # Renaming the original manifest to manifest.ori
         os.rename(original_manifest_file, original_manifest_file+'.ori')
 
-        if buildForThroughput == True:
-            override_manifest_file = os.path.join(constants.FRAMEWORK_HOME_DIR, test_config_dict['throughput_manifest_file'])
-        elif buildForThroughput == False:
-            override_manifest_file = os.path.join(constants.FRAMEWORK_HOME_DIR, test_config_dict['latency_manifest_file'])
+        override_manifest_file = os.path.join(constants.FRAMEWORK_HOME_DIR, test_config_dict['manifest_file'])
         
         # Copy the workload specific manifest to workload dir and 
         # rename the same as per the expected original name
         shutil.copy2(override_manifest_file, test_config_dict['workload_home_dir'])
-        if buildForThroughput == True:
-            tmp_original_file = os.path.join(test_config_dict['workload_home_dir'], os.path.basename(test_config_dict['throughput_manifest_file']))
-        elif buildForThroughput == False:
-            tmp_original_file = os.path.join(test_config_dict['workload_home_dir'], os.path.basename(test_config_dict['latency_manifest_file']))
+        tmp_original_file = os.path.join(test_config_dict['workload_home_dir'], os.path.basename(test_config_dict['manifest_file']))
+        
         os.rename(tmp_original_file, original_manifest_file)
 
         return True
 
 
-    def build_workload(self, test_config_dict, buildForThroughput = True):
-        if buildForThroughput:
-            if not self.replace_manifest_file(test_config_dict, True):
-                print("\n-- Failure: Workload build failure. Returning without building the workload.")
-                return False
-        else:
-            if not self.replace_manifest_file(test_config_dict, False):
-                print("\n-- Failure: Workload build failure. Returning without building the workload.")
-                return False
+    def build_workload(self, test_config_dict):
+        if not self.replace_manifest_file(test_config_dict):
+            print("\n-- Failure: Workload build failure. Returning without building the workload.")
+            return False
         
         cwd = os.getcwd()
 
@@ -139,12 +137,12 @@ class OpenvinoWorkload(Workload):
         os.chdir(cwd)
 
         # Check for build status by verifying the existence of model.xml file and return accordingly.
-        model_file_path = os.path.join(test_config_dict['model_dir'],test_config_dict['fp'][0],test_config_dict['model_name']+'.xml')
+        model_file_path = os.path.join(test_config_dict['model_dir'],test_config_dict['fp'],test_config_dict['model_name']+'.xml')
         if os.path.exists(model_file_path):
             print("\n-- Model is built. Can proceed further to execute the workload..")
             return True
         else:
-            print("\n-- Failure: Model not found/built. Returning without building the model.")
+            print(f"\n-- Failure: Model {model_file_path} not found/built. Returning without building the model.")
             return False
 
 
@@ -153,18 +151,44 @@ class OpenvinoWorkload(Workload):
         self.install_workload(test_config_dict)
         
 
+    def construct_workload_exec_cmd(self, test_config_dict, exec_mode = 'native', iteration=1):
+        ov_exec_cmd = None
+        if exec_mode == 'native':
+            exec_mode_str = './benchmark_app'
+        else:
+            exec_mode_str = exec_mode + ' benchmark_app'
+
+        model_str = ' -m ' + os.path.join(test_config_dict['model_dir'],test_config_dict['fp'],test_config_dict['model_name']+'.xml')
+
+        output_file_name = constants.LOGS_DIR + "/" + test_config_dict['test_name'] + '_' + exec_mode + '_' + str(iteration) + '.txt'
+
+        print("\nOutput file name = ", output_file_name)
+        if test_config_dict['metric'] == 'throughput':
+            
+            ov_exec_cmd = "KMP_AFFINITY=granularity=fine,noverbose,compact,1,0 " + \
+                            exec_mode_str + model_str + \
+                            " -d CPU -b 1 -t 20" + \
+                            " -nstreams " + os.environ['THREADS_CNT'] + " -nthreads " + os.environ['THREADS_CNT'] + \
+                            " -nireq " + os.environ['THREADS_CNT'] + " | tee " + output_file_name
+
+        elif test_config_dict['metric'] == 'latency':
+            ov_exec_cmd = "KMP_AFFINITY=granularity=fine,noverbose,compact,1,0 " + \
+                            exec_mode_str + model_str + \
+                            " -d CPU -b 1 -t 20" + \
+                            " -api sync | tee " + output_file_name
+
+        else:
+            print("\n-- Failure: Internal error! Execution metric no set..")
+            return ov_exec_cmd
+
+        print("\nCommand name = ", ov_exec_cmd)
+        return ov_exec_cmd                           
+
+
     def execute_workload(self, test_config_dict, execForThroughput = True):
         pass
 
-    def __init__(self, test_config_dict):
-        # result is the overall score for all benchmarks
-        # it is a list containing [baseline_score, testapp_score, percent_degradaton]
-        self.result = []
-        # self.records are the individual benchmark results
-        # {benchmark, [baseline_score, testapp_score, percent_degradaton]}
-        self.records = collections.OrderedDict()
-        time.sleep(1)
-        
+       
     def post_actions(self, TEST_CONFIG):
         pass
 
@@ -180,6 +204,6 @@ class OpenvinoWorkload(Workload):
         pass
     
 
-WORKLOAD = OpenvinoWorkload(test_config_dict = None)
+WORKLOAD = OpenvinoWorkload()
 
 #eof

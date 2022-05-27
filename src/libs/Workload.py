@@ -1,8 +1,10 @@
 #
 # Imports
 #
+import subprocess
 import sys
 import os
+import time
 from src.config_files import constants
 
 
@@ -17,7 +19,7 @@ class Workload(object):
         self.name = test_config_dict['workload_name']
         self.command = None
         self.degradation = None
-        
+                        
         workload_script = test_config_dict['workload_name'] + "_Workload"
         sys.path.append(os.path.join(constants.FRAMEWORK_HOME_DIR, "src", "workloads"))
         self.workload_obj = getattr(__import__(workload_script), 'WORKLOAD')
@@ -29,9 +31,26 @@ class Workload(object):
         self.workload_obj.pre_actions(test_config_dict)
         return self.workload_obj.build_workload(test_config_dict)
         
+    # Build the workload execution command based on execution params and execute it.
+    def execute_workload(self, test_config_dict):
+        # Need to add more logic to this method. This is just plain invocation.
+        # Add logic to set exec_mode, iteration etc..
+        self.command = self.workload_obj.construct_workload_exec_cmd(test_config_dict)
 
-    def construct_workload_exec_cmd(self):
-        pass
+        if self.command == None:
+            return False
+
+        cwd = os.getcwd()
+
+        os.chdir(test_config_dict['workload_home_dir'])
+
+        subprocess.run(self.command, shell=True, check=True)
+        time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+
+        os.chdir(cwd)
+        
+        return True
+        
 
     # post_actions - implement in a subclass if needed
     def post_actions(self, TEST_CONFIG):

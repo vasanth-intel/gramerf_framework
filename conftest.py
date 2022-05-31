@@ -1,7 +1,6 @@
 #
 # Imports
 #
-from tkinter.filedialog import test
 import pytest
 import os
 from src.config_files import constants
@@ -23,7 +22,7 @@ def gramerf_setup():
     utils.set_http_proxies()
 
     # Checkout gramine source and build the same.
-    build_gramine.build_gramine_binaries(test_config_dict)
+    build_gramine.build_gramine_binaries()
 
     # Setting 'THREADS_CNT' env variable
     utils.set_threads_cnt_env_var()

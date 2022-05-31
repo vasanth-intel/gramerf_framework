@@ -5,6 +5,10 @@ import subprocess
 import lsb_release
 from src.config_files import constants
 
+def exec_shell_cmd(cmd):
+     cmd_stdout = subprocess.run([cmd], shell=True, stdout=subprocess.PIPE, check=True, text=True)
+     return cmd_stdout
+     
 def str_to_bool(s):
     if s == 'True':
          return True
@@ -55,11 +59,6 @@ def update_env_variables(build_prefix):
      os.environ["PATH"] = build_prefix + "/bin" + os.pathsep + os.environ["PATH"]
      print(f"\n-- Updated environment PATH variable to the following..\n", os.environ["PATH"])
 
-     # Update environment 'PYTHONPATH' variable to <prefix>/lib/python<version>/site-packages.
-     python_version_str = "python" + str(sys.version_info.major) + "." + str(sys.version_info.minor)
-     os.environ["PYTHONPATH"] = build_prefix + "/lib/" + python_version_str + "/site-packages" + os.pathsep + os.environ.get('PYTHONPATH', '')
-     print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
-
      # Update environment 'PKG_CONFIG_PATH' variable to <prefix>/<libdir>/pkgconfig.
      libdir_path_cmd = "meson introspect " + constants.GRAMINE_HOME_DIR + \
                     "/build/ --buildoptions | jq -r '(map(select(.name == \"libdir\"))) | map(.value) | join(\"/\")'"
@@ -67,6 +66,20 @@ def update_env_variables(build_prefix):
 
      os.environ["PKG_CONFIG_PATH"] = build_prefix + "/" + libdir_path + "/pkgconfig" + os.pathsep + os.environ.get('PKG_CONFIG_PATH', '')
      print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
+
+     # Update environment 'PYTHONPATH' variable to <prefix>/lib/python<version>/site-packages.
+     if not os.path.exists("gramine/Scripts/get-python-platlib.py"):
+          print(f"\n-- Failure to update 'PYTHONPATH' env variable. get-python-platlib.py does not exist..\n")
+          return
+
+     print(f"\n-- PYTHONPATH command\n", constants.PYTHONPATH_CMD)
+     pythonpath_cmd_output =  exec_shell_cmd(constants.PYTHONPATH_CMD)
+     if pythonpath_cmd_output.returncode != 0:
+          print(f"\n-- Failure: Setting 'PYTHONPATH' env variable command returned non-zero error code..\n")
+          return
+
+     os.environ["PYTHONPATH"] = pythonpath_cmd_output.stdout
+     print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
 
 
 '''

@@ -23,7 +23,6 @@ class Workload(object):
         workload_script = test_config_dict['workload_name'] + "_Workload"
         sys.path.append(os.path.join(constants.FRAMEWORK_HOME_DIR, "src", "workloads"))
         self.workload_obj = getattr(__import__(workload_script), 'WORKLOAD')
-        print(dir(self.workload_obj))
 
 
     # pre_actions - implement in a subclass if needed
@@ -33,22 +32,27 @@ class Workload(object):
         
     # Build the workload execution command based on execution params and execute it.
     def execute_workload(self, test_config_dict):
-        # Need to add more logic to this method. This is just plain invocation.
-        # Add logic to set exec_mode, iteration etc..
-        self.command = self.workload_obj.construct_workload_exec_cmd(test_config_dict)
-
-        if self.command == None:
-            return False
-
+        print("\n##### In execute_workload #####\n")
         cwd = os.getcwd()
 
-        os.chdir(test_config_dict['workload_home_dir'])
+        workload_home_dir = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
+        os.chdir(workload_home_dir)
 
-        subprocess.run(self.command, shell=True, check=True)
-        time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+        for i in range(len(test_config_dict['exec_mode'])):
+            print(f"\n-- Executing {test_config_dict['test_name']} in {test_config_dict['exec_mode'][i]} mode")
+            for j in range(test_config_dict['iterations']):
+                self.command = self.workload_obj.construct_workload_exec_cmd(test_config_dict, test_config_dict['exec_mode'][i], j+1)
+
+                if self.command == None:
+                    print(f"\n-- Failure: Unable to construct command for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
+                    os.chdir(cwd)
+                    return False
+
+                subprocess.run(self.command, shell=True, check=True)
+                time.sleep(constants.SUBPROCESS_SLEEP_TIME)
 
         os.chdir(cwd)
-        
+
         return True
         
 

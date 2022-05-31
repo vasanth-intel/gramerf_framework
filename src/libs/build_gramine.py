@@ -24,24 +24,23 @@ def fresh_gramine_checkout():
     if os.path.exists(constants.GRAMINE_HOME_DIR):
         shutil.rmtree(constants.GRAMINE_HOME_DIR)
     
-    os.chdir(constants.HOME_DIR)
-    git_clone_cmd = 'git clone ' + constants.GRAMINE_CLONE_URL
-    print("\n-- Gramine git clone command..\n", git_clone_cmd)
-    os.system(git_clone_cmd)
-
+    print("\n-- Cloning Gramine git repo..\n", constants.GRAMINE_CLONE_CMD)
+    if utils.exec_shell_cmd(constants.GRAMINE_CLONE_CMD).returncode != 0:
+        print("\n-- Failure: Gramine git clone command returned non-zero error code..\n")
+    
     # Git clone the examples repo too for workloads download.
     os.chdir(constants.GRAMINE_HOME_DIR)
-    git_clone_cmd = 'git clone ' + constants.GRAMINE_EXAMPLES_CLONE_URL
-    print("\n-- Gramine examples git clone command..\n", git_clone_cmd)
-    os.system(git_clone_cmd)
+
+    print("\n-- Cloning Gramine examples git repo..\n", constants.EXAMPLES_REPO_CLONE_CMD)
+    if utils.exec_shell_cmd(constants.EXAMPLES_REPO_CLONE_CMD).returncode != 0:
+        print("\n-- Failure: Gramine examples git clone command returned non-zero error code..\n")
+
+    os.chdir(constants.FRAMEWORK_HOME_DIR)
+
 
 
 def install_gramine_dependencies():
     print("\n###### In install_gramine_dependencies #####\n")
-
-    cwd = os.getcwd()
-    # Installing dependencies from User's home directory
-    os.chdir(constants.HOME_DIR)
 
     # Determine the distro and the corresponding version.
     # Choose the respective packages.txt based on the distro version.
@@ -85,10 +84,8 @@ def install_gramine_dependencies():
             # We need not update the python packages string here as we do not have any 21.04/21.10 distro
             # specific package dependencies. Refer python_packages.yaml file for more clarity.
         else:
-            os.chdir(cwd)
             pytest.exit("\n***** Unknown / Unsupported Distro version.. Exiting test session. *****")
     else:
-        os.chdir(cwd)
         pytest.exit("\n***** Unknown / Unsupported Distro.. Exiting test session. *****")
 
     #system_packages_cmd = 'xargs sudo -H apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y <' + system_packages_file
@@ -107,65 +104,46 @@ def install_gramine_dependencies():
     print("\n-- Executing below mentioned Python packages installation cmd..\n", python_packages_cmd)
     subprocess.run(python_packages_cmd, shell=True, check=True)
     time.sleep(constants.SUBPROCESS_SLEEP_TIME)
-
-    os.chdir(cwd)
     
 
 def build_and_install_gramine():
     print("\n###### In build_and_install_gramine #####\n")
     
-    cwd = os.getcwd()
-
     # Checkout fresh gramine source
     fresh_gramine_checkout()
-
+    
     # Change dir to above checked out gramine folder and
     # start building the same.
     os.chdir(constants.GRAMINE_HOME_DIR)
 
-    build_type = constants.BUILD_TYPE
-    build_prefix = constants.BUILD_PREFIX
-
     # Cleanup existing gramine binaries (if any) before starting a fresh build.
     # Passing prefix path as argument, so that user installed (if any) gramine
     # binaries are also removed.
-    utils.cleaup_gramine_binaries(build_prefix)
+    utils.cleaup_gramine_binaries(constants.BUILD_PREFIX)
 
     # Create prefix dir
-    print(f"\n-- Creating build prefix directory '{build_prefix}'..\n")
+    print(f"\n-- Creating build prefix directory '{constants.BUILD_PREFIX}'..\n")
     # In the below makedirs call, if the target directory already exists an OSError is raised
     # if 'exist_ok' value is False. Otherwise, True value leaves the directory unaltered. 
-    os.makedirs(build_prefix, exist_ok=True)
+    os.makedirs(constants.BUILD_PREFIX, exist_ok=True)
 
-    build_type_prefix_str = "--prefix=" + build_prefix + " --buildtype=" + build_type
-
-    gramine_sgx_sed_cmd = "sed -i \"/uname/ a '/usr/src/linux-headers-@0@/arch/x86/include/uapi'.format(run_command('uname', '-r').stdout().split('-generic')[0].strip()),\" meson.build"
-
-    gramine_build_meson_cmd = "meson setup build/ --werror " + \
-                            build_type_prefix_str + \
-                            " -Ddirect=enabled -Dsgx=enabled -Dtests=enabled > " + \
-                            constants.LOGS_DIR + "/gramine_build_meson_cmd_output.txt"
-
-    gramine_ninja_build_cmd = "ninja -vC build > " + constants.LOGS_DIR + "/gramine_ninja_build_cmd_output.txt"
-
-    gramine_ninja_install_cmd = "ninja -vC build install > " + constants.LOGS_DIR + "/gramine_ninja_install_cmd_output.txt"
-
-    print("\n-- Executing below mentioned gramine-sgx sed cmd..\n", gramine_sgx_sed_cmd)
-    subprocess.run(gramine_sgx_sed_cmd, shell=True, check=True)
+    print("\n-- Executing below mentioned gramine-sgx sed cmd..\n", constants.GRAMINE_SGX_SED_CMD)
+    if utils.exec_shell_cmd(constants.GRAMINE_SGX_SED_CMD).returncode != 0:
+        pytest.exit("\n-- Failure: SED command returned non-zero error code..\n")
+        
+    print("\n-- Executing below mentioned gramine build meson build cmd..\n", constants.GRAMINE_BUILD_MESON_CMD)
+    if utils.exec_shell_cmd(constants.GRAMINE_BUILD_MESON_CMD).returncode != 0:
+        pytest.exit("\n-- Failure: Gramine build meson command returned non-zero error code..\n")
     
-    print("\n-- Executing below mentioned gramine build meson build cmd..\n", gramine_build_meson_cmd)
-    subprocess.run(gramine_build_meson_cmd, shell=True, check=True)
-    time.sleep(constants.SUBPROCESS_SLEEP_TIME)
-    
-    print("\n-- Executing below mentioned gramine ninja build cmd..\n", gramine_ninja_build_cmd)
-    subprocess.run(gramine_ninja_build_cmd, shell=True, check=True)
-    time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+    print("\n-- Executing below mentioned gramine ninja build cmd..\n", constants.GRAMINE_NINJA_BUILD_CMD)
+    if utils.exec_shell_cmd(constants.GRAMINE_NINJA_BUILD_CMD).returncode != 0:
+        pytest.exit("\n-- Failure: Gramine ninja build command returned non-zero error code..\n")
 
-    print("\n-- Executing below mentioned gramine ninja build install cmd..\n", gramine_ninja_install_cmd)
-    subprocess.run(gramine_ninja_install_cmd, shell=True, check=True)
-    time.sleep(constants.SUBPROCESS_SLEEP_TIME)
- 
-    os.chdir(cwd)
+    print("\n-- Executing below mentioned gramine ninja build install cmd..\n", constants.GRAMINE_NINJA_INSTALL_CMD)
+    if utils.exec_shell_cmd(constants.GRAMINE_NINJA_INSTALL_CMD).returncode != 0:
+        pytest.exit("\n-- Failure: Gramine ninja install command returned non-zero error code..\n")
+     
+    os.chdir(constants.FRAMEWORK_HOME_DIR)
 
 def setup_gramine_environment():
     # Update the following environment variables as the gramine binaries can be
@@ -175,11 +153,9 @@ def setup_gramine_environment():
     # dereferences of few path values which are created only after successful build.
     utils.update_env_variables(constants.BUILD_PREFIX)
 
-    gramine_sgx_gen_private_key_cmd = "gramine-sgx-gen-private-key -f"
-
-    print("\n-- Generating gramine-sgx private key..\n", gramine_sgx_gen_private_key_cmd)
-    subprocess.run(gramine_sgx_gen_private_key_cmd, shell=True, check=True)
-    time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+    print("\n-- Generating gramine-sgx private key..\n", constants.GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
+    if utils.exec_shell_cmd(constants.GRAMINE_SGX_GEN_PRIVATE_KEY_CMD).returncode != 0:
+        pytest.exit("\n-- Failure: Gramine sgx generate private key command returned non-zero error code..\n")
 
 
 def build_gramine_binaries():

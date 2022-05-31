@@ -1,6 +1,6 @@
 ---
 Default:
-  workload_home_dir: "/home/intel/test/gramine/examples/openvino"
+  workload_home_dir: "gramine/examples/openvino"
   original_manifest_file: "benchmark_app.manifest.template"
   timeout: 3000
   metric: "throughput"
@@ -10,122 +10,122 @@ Default:
   
 test_ov_perf_bert_large_fp16_throughput:
   model_name: "bert-large-uncased-whole-word-masking-squad-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
+  model_dir: "gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
 
 test_ov_perf_bert_large_fp32_throughput:
   model_name: "bert-large-uncased-whole-word-masking-squad-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
+  model_dir: "gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
   fp: "FP32"
 
 test_ov_perf_bert_large_fp16_latency:
   model_name: "bert-large-uncased-whole-word-masking-squad-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
+  model_dir: "gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_bert_large_fp32_latency:
   model_name: "bert-large-uncased-whole-word-masking-squad-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
+  model_dir: "gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-0001"
   fp: "FP32"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_bert_large_int8_throughput:
   model_name: "bert-large-uncased-whole-word-masking-squad-int8-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-int8-0001"
+  model_dir: "gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-int8-0001"
   fp: ["FP16-INT8"]
 
 test_ov_perf_bert_large_int8_latency:
   model_name: "bert-large-uncased-whole-word-masking-squad-int8-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-int8-0001"
+  model_dir: "gramine/examples/openvino/model/intel/bert-large-uncased-whole-word-masking-squad-int8-0001"
   fp: ["FP16-INT8"]
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_brain_tumor_seg_0001_fp16_throughput:
   model_name: "brain-tumor-segmentation-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
+  model_dir: "gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
 
 test_ov_perf_brain_tumor_seg_0001_fp32_throughput:
   model_name: "brain-tumor-segmentation-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
+  model_dir: "gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
   fp: "FP32"
 
 test_ov_perf_brain_tumor_seg_0001_fp16_latency:
   model_name: "brain-tumor-segmentation-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
+  model_dir: "gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_brain_tumor_seg_0001_fp32_latency:
   model_name: "brain-tumor-segmentation-0001"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
+  model_dir: "gramine/examples/openvino/model/public/brain-tumor-segmentation-0001"
   fp: "FP32"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_brain_tumor_seg_0002_fp16_throughput:
   model_name: "brain-tumor-segmentation-0002"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
+  model_dir: "gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
 
 test_ov_perf_brain_tumor_seg_0002_fp32_throughput:
   model_name: "brain-tumor-segmentation-0002"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
+  model_dir: "gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
   fp: "FP32"
 
 test_ov_perf_brain_tumor_seg_0002_fp16_latency:
   model_name: "brain-tumor-segmentation-0002"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
+  model_dir: "gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_brain_tumor_seg_0002_fp32_latency:
   model_name: "brain-tumor-segmentation-0002"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
+  model_dir: "gramine/examples/openvino/model/public/brain-tumor-segmentation-0002"
   fp: "FP32"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_resnet_fp16_throughput:
   model_name: "resnet-50-tf"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/resnet-50-tf"
+  model_dir: "gramine/examples/openvino/model/public/resnet-50-tf"
 
 test_ov_perf_resnet_fp32_throughput:
   model_name: "resnet-50-tf"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/resnet-50-tf"
+  model_dir: "gramine/examples/openvino/model/public/resnet-50-tf"
   fp: "FP32"
 
 test_ov_perf_resnet_fp16_latency:
   model_name: "resnet-50-tf"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/resnet-50-tf"
+  model_dir: "gramine/examples/openvino/model/public/resnet-50-tf"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_resnet_fp32_latency:
   model_name: "resnet-50-tf"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/resnet-50-tf"
+  model_dir: "gramine/examples/openvino/model/public/resnet-50-tf"
   fp: "FP32"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_ssd_mobilenet_fp16_throughput:
   model_name: "ssd_mobilenet_v1_coco"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
+  model_dir: "gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
 
 test_ov_perf_ssd_mobilenet_fp32_throughput:
   model_name: "ssd_mobilenet_v1_coco"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
+  model_dir: "gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
   fp: "FP32"
 
 test_ov_perf_ssd_mobilenet_fp16_latency:
   model_name: "ssd_mobilenet_v1_coco"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
+  model_dir: "gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"
 
 test_ov_perf_ssd_mobilenet_fp32_latency:
   model_name: "ssd_mobilenet_v1_coco"
-  model_dir: "/home/intel/test/gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
+  model_dir: "gramine/examples/openvino/model/public/ssd_mobilenet_v1_coco"
   fp: "FP32"
   metric: "latency"
   manifest_file: "src/config_files/openvino_latency.manifest.template"

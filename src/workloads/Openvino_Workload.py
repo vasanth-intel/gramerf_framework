@@ -20,7 +20,6 @@ class OpenvinoWorkload(Workload):
         # result is the overall score for all benchmarks
         # it is a list containing [baseline_score, testapp_score, percent_degradaton]
         self.result = []
-        self.build_exec_params_dict = dict()
         # self.records are the individual benchmark results
         # {benchmark, [baseline_score, testapp_score, percent_degradaton]}
         # self.records = collections.OrderedDict()
@@ -29,7 +28,7 @@ class OpenvinoWorkload(Workload):
         
     def install_workload(self, test_config_dict):
         # Installing Openvino within "/home/intel/test/gramine/examples/openvino/openvino_2021"
-        install_dir = os.path.join(test_config_dict['workload_home_dir'], 'openvino_2021')
+        install_dir = os.path.join(constants.FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'], 'openvino_2021')
         
         # We would not install if the installation dir already exists.
         if os.path.exists(install_dir):
@@ -37,7 +36,8 @@ class OpenvinoWorkload(Workload):
             return
         os.makedirs(install_dir, exist_ok=True)
         cwd = os.getcwd()
-        os.chdir(test_config_dict['workload_home_dir'])
+        workload_home_dir = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
+        os.chdir(workload_home_dir)
 
         distro, distro_version = utils.get_distro_and_version()
         if distro == 'ubuntu':
@@ -81,7 +81,8 @@ class OpenvinoWorkload(Workload):
     and renames the copied manifest to the expected name by the workload.
     '''
     def replace_manifest_file(self, test_config_dict):
-        original_manifest_file = os.path.join(test_config_dict['workload_home_dir'], test_config_dict['original_manifest_file'])
+        workload_home_dir = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
+        original_manifest_file = os.path.join(workload_home_dir, test_config_dict['original_manifest_file'])
         
         # Check if the original manifest file exists.
         if not os.path.exists(original_manifest_file):
@@ -95,8 +96,8 @@ class OpenvinoWorkload(Workload):
         
         # Copy the workload specific manifest to workload dir and 
         # rename the same as per the expected original name
-        shutil.copy2(override_manifest_file, test_config_dict['workload_home_dir'])
-        tmp_original_file = os.path.join(test_config_dict['workload_home_dir'], os.path.basename(test_config_dict['manifest_file']))
+        shutil.copy2(override_manifest_file, workload_home_dir)
+        tmp_original_file = os.path.join(workload_home_dir, os.path.basename(test_config_dict['manifest_file']))
         
         os.rename(tmp_original_file, original_manifest_file)
 
@@ -113,10 +114,10 @@ class OpenvinoWorkload(Workload):
         # Not checking for existence of model, as we may be building it for either throughput or latency.
         # So, this method can be invoked from the caller based on whether we are building the
         # workload for throughput or latency.
+        workload_home_dir = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
+        os.chdir(workload_home_dir)
 
-        os.chdir(test_config_dict['workload_home_dir'])
-
-        setupvars_path = os.path.join(test_config_dict['workload_home_dir'], 'openvino_2021/bin', 'setupvars.sh')
+        setupvars_path = os.path.join(workload_home_dir, 'openvino_2021/bin', 'setupvars.sh')
         
         if os.path.exists(setupvars_path):
             print(f"\n-- Building workload model '{test_config_dict['model_name']}'..\n")
@@ -130,14 +131,14 @@ class OpenvinoWorkload(Workload):
 
         # After the build is complete we need to del the existing overridden manifest and rename
         # manifest.ori to the expected original name by the workload.
-        original_manifest_file = os.path.join(test_config_dict['workload_home_dir'], test_config_dict['original_manifest_file'])
+        original_manifest_file = os.path.join(workload_home_dir, test_config_dict['original_manifest_file'])
         os.remove(original_manifest_file)
         os.rename(original_manifest_file+'.ori', original_manifest_file)
 
         os.chdir(cwd)
 
         # Check for build status by verifying the existence of model.xml file and return accordingly.
-        model_file_path = os.path.join(test_config_dict['model_dir'],test_config_dict['fp'],test_config_dict['model_name']+'.xml')
+        model_file_path = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['model_dir'],test_config_dict['fp'],test_config_dict['model_name']+'.xml')
         if os.path.exists(model_file_path):
             print("\n-- Model is built. Can proceed further to execute the workload..")
             return True
@@ -158,7 +159,7 @@ class OpenvinoWorkload(Workload):
         else:
             exec_mode_str = exec_mode + ' benchmark_app'
 
-        model_str = ' -m ' + os.path.join(test_config_dict['model_dir'],test_config_dict['fp'],test_config_dict['model_name']+'.xml')
+        model_str = ' -m ' + os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['model_dir'],test_config_dict['fp'],test_config_dict['model_name']+'.xml')
 
         output_file_name = constants.LOGS_DIR + "/" + test_config_dict['test_name'] + '_' + exec_mode + '_' + str(iteration) + '.txt'
 
@@ -201,6 +202,11 @@ class OpenvinoWorkload(Workload):
         return '{:0.3f}'.format(100 * (float(baseline) - float(testapp)) / float(baseline))
 
     def parse_performance(self, TEST_CONFIG):
+        '''
+        Read logs and capture the metrics values ina  dictionary.
+        '''
+        # result = []
+        # return result
         pass
     
 

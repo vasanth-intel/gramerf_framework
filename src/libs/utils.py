@@ -104,8 +104,15 @@ def set_cpu_freq_scaling_governor():
      chmod_cmd = 'chmod +x ' + cpu_freq_file
      set_cpu_freq_cmd = 'sudo ' + cpu_freq_file
      
-     subprocess.run(chmod_cmd, shell=True, check=True)
-     subprocess.run(set_cpu_freq_cmd, shell=True, check=True)
+     if exec_shell_cmd(chmod_cmd).returncode != 0:
+          print ("\n-- Failure: Changing permissions of scaling governor script failed..")
+          return False
+     
+     if exec_shell_cmd(set_cpu_freq_cmd).returncode != 0:
+          print ("\n-- Failure: Setting CPU frequency scaling governor to 'performance' mode failed..")
+          return False
+     
+     return True
 
 '''
 Function to determine and set 'THREADS_CNT' env var.

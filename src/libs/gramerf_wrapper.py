@@ -51,11 +51,15 @@ def run_test(test_instance, test_yaml_file):
     
     test_obj = Workload(test_config_dict)
     
-    # Install and build workload.
+    # Workload pre-actions if any.
     if not test_obj.pre_actions(test_config_dict):
         return False
 
-    if test_obj.execute_workload(test_config_dict) == None:
+    # Download, build and install workload.
+    if not test_obj.setup_workload(test_config_dict):
+        return False
+
+    if not test_obj.execute_workload(test_config_dict):
         return False
 
     return True

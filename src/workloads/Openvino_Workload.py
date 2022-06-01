@@ -26,16 +26,16 @@ class OpenvinoWorkload(Workload):
         # time.sleep(1)
 
         
-    def install_workload(self, test_config_dict):
+    def download_workload(self, test_config_dict):
         # Installing Openvino within "/home/intel/test/gramine/examples/openvino/openvino_2021"
         install_dir = os.path.join(constants.FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'], 'openvino_2021')
         
         # We would not install if the installation dir already exists.
         if os.path.exists(install_dir):
             print("\n-- Openvino already installed. Not fetching from source..")
-            return
+            return True
         os.makedirs(install_dir, exist_ok=True)
-        cwd = os.getcwd()
+        
         workload_home_dir = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
         os.chdir(workload_home_dir)
 
@@ -51,28 +51,34 @@ class OpenvinoWorkload(Workload):
                 ren_dir = "l_openvino_toolkit_dev_ubuntu20_p_2021.4.752"
             else:
                 print("\n-- Failure: Unsupported distro version for Openvino installation. Proceeding without installation..")
-                os.chdir(cwd)
-                return
+                os.chdir(constants.FRAMEWORK_HOME_DIR)
+                return False
         elif distro == 'rhel':
             wget_cmd = "wget https://storage.openvinotoolkit.org/repositories/openvino/packages/2021.4.2/l_openvino_toolkit_dev_rhel8_p_2021.4.752.tgz"
             untar_cmd = "tar xzf l_openvino_toolkit_dev_rhel8_p_2021.4.752.tgz"
             ren_dir = "l_openvino_toolkit_dev_rhel8_p_2021.4.752"
         else:
             print("\n-- Failure: Unsupported distro for Openvino installation. Proceeding without installation..")
-            os.chdir(cwd)
-            return
+            os.chdir(constants.FRAMEWORK_HOME_DIR)
+            return False
 
         print("\n-- Fetching Openvino workload from source..")
-        subprocess.run(wget_cmd, shell=True, check=True)
-        time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+        if utils.exec_shell_cmd(wget_cmd).returncode != 0:
+            print("\n-- Failure: Openvino workload download failed..")
+            os.chdir(constants.FRAMEWORK_HOME_DIR)
+            return False
 
         print("\n-- Extracting Openvino workload..")
-        subprocess.run(untar_cmd, shell=True, check=True)
-        time.sleep(constants.SUBPROCESS_SLEEP_TIME)
-        
+        if utils.exec_shell_cmd(untar_cmd).returncode != 0:
+            print("\n-- Failure: Openvino workload extraction failed..")
+            os.chdir(constants.FRAMEWORK_HOME_DIR)
+            return False
+
         os.rename(ren_dir, 'openvino_2021')
 
-        os.chdir(cwd)
+        os.chdir(constants.FRAMEWORK_HOME_DIR)
+
+        return True
         
 
     '''
@@ -81,6 +87,7 @@ class OpenvinoWorkload(Workload):
     and renames the copied manifest to the expected name by the workload.
     '''
     def replace_manifest_file(self, test_config_dict):
+        print(f"\n-- Replacing original manifest with {test_config_dict['manifest_file']}.")
         workload_home_dir = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
         original_manifest_file = os.path.join(workload_home_dir, test_config_dict['original_manifest_file'])
         
@@ -104,13 +111,22 @@ class OpenvinoWorkload(Workload):
         return True
 
 
-    def build_workload(self, test_config_dict):
+    def revert_original_manifest_file(self, test_config_dict):
+        # After the build is complete we need to del the existing overridden manifest and rename
+        # manifest.ori to the expected original name by the workload.
+        print(f"\n-- Reverting to original manifest: {test_config_dict['original_manifest_file']}.")
+        original_manifest_file = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'],test_config_dict['original_manifest_file'])
+        os.remove(original_manifest_file)
+        os.rename(original_manifest_file+'.ori', original_manifest_file)
+
+
+    def build_and_install_workload(self, test_config_dict):
+        print("\n###### In build_and_install_workload #####\n")
+
         if not self.replace_manifest_file(test_config_dict):
             print("\n-- Failure: Workload build failure. Returning without building the workload.")
             return False
         
-        cwd = os.getcwd()
-
         # Not checking for existence of model, as we may be building it for either throughput or latency.
         # So, this method can be invoked from the caller based on whether we are building the
         # workload for throughput or latency.
@@ -123,19 +139,21 @@ class OpenvinoWorkload(Workload):
             print(f"\n-- Building workload model '{test_config_dict['model_name']}'..\n")
             ov_env_var_bld_cmd = f"bash -c 'source {setupvars_path} && make SGX=1'"
             print("\n-- Setting up OpenVINO environment variables and building Openvino..\n", ov_env_var_bld_cmd)
-            subprocess.run(ov_env_var_bld_cmd, shell=True, check=True)
+            
+            if utils.exec_shell_cmd(ov_env_var_bld_cmd).returncode != 0:
+                self.revert_original_manifest_file(test_config_dict)
+                os.chdir(constants.FRAMEWORK_HOME_DIR)
+                print("\n-- Failure: Openvino workload build failed..")
+                return False
         else:
-            os.chdir(cwd)
+            self.revert_original_manifest_file(test_config_dict)
+            os.chdir(constants.FRAMEWORK_HOME_DIR)
             print(f"\n-- Failure: OpenVino not installed in {setupvars_path}. Returning without building the workload.\n")
             return False
 
-        # After the build is complete we need to del the existing overridden manifest and rename
-        # manifest.ori to the expected original name by the workload.
-        original_manifest_file = os.path.join(workload_home_dir, test_config_dict['original_manifest_file'])
-        os.remove(original_manifest_file)
-        os.rename(original_manifest_file+'.ori', original_manifest_file)
+        self.revert_original_manifest_file(test_config_dict)
 
-        os.chdir(cwd)
+        os.chdir(constants.FRAMEWORK_HOME_DIR)
 
         # Check for build status by verifying the existence of model.xml file and return accordingly.
         model_file_path = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['model_dir'],test_config_dict['fp'],test_config_dict['model_name']+'.xml')
@@ -148,9 +166,15 @@ class OpenvinoWorkload(Workload):
 
 
     def pre_actions(self, test_config_dict):
-        utils.set_cpu_freq_scaling_governor()        
-        self.install_workload(test_config_dict)
+        return utils.set_cpu_freq_scaling_governor()
         
+
+    def setup_workload(self, test_config_dict):
+        if not self.download_workload(test_config_dict):
+            return False
+
+        return self.build_and_install_workload(test_config_dict)
+
 
     def construct_workload_exec_cmd(self, test_config_dict, exec_mode = 'native', iteration=1):
         ov_exec_cmd = None

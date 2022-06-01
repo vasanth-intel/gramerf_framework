@@ -27,14 +27,18 @@ class Workload(object):
 
     # pre_actions - implement in a subclass if needed
     def pre_actions(self, test_config_dict):
-        self.workload_obj.pre_actions(test_config_dict)
-        return self.workload_obj.build_workload(test_config_dict)
+        return self.workload_obj.pre_actions(test_config_dict)
         
+
+    # setup_workload - implement in a subclass if needed
+    def setup_workload(self, test_config_dict):
+        return self.workload_obj.setup_workload(test_config_dict)
+        
+
     # Build the workload execution command based on execution params and execute it.
     def execute_workload(self, test_config_dict):
         print("\n##### In execute_workload #####\n")
-        cwd = os.getcwd()
-
+        
         workload_home_dir = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
         os.chdir(workload_home_dir)
 
@@ -45,13 +49,13 @@ class Workload(object):
 
                 if self.command == None:
                     print(f"\n-- Failure: Unable to construct command for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
-                    os.chdir(cwd)
+                    os.chdir(constants.FRAMEWORK_HOME_DIR)
                     return False
 
                 subprocess.run(self.command, shell=True, check=True)
                 time.sleep(constants.SUBPROCESS_SLEEP_TIME)
 
-        os.chdir(cwd)
+        os.chdir(constants.FRAMEWORK_HOME_DIR)
 
         return True
         

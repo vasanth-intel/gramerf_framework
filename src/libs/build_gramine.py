@@ -38,7 +38,6 @@ def fresh_gramine_checkout():
     os.chdir(constants.FRAMEWORK_HOME_DIR)
 
 
-
 def install_gramine_dependencies():
     print("\n###### In install_gramine_dependencies #####\n")
 
@@ -68,42 +67,27 @@ def install_gramine_dependencies():
             #python_packages_dict.update(yaml_python_packages['Default'])
             python_packages_str = yaml_python_packages['Default']
 
-        if distro_version == '18.04':
-            if yaml_system_packages.get(distro_version):
-                system_packages_str = system_packages_str + ' ' + yaml_system_packages[distro_version]
-            if yaml_python_packages.get(distro_version):
-                python_packages_str = python_packages_str + ' ' + yaml_python_packages[distro_version]
-        elif distro_version == '20.04':
-            if yaml_system_packages.get(distro_version):
-                system_packages_str = system_packages_str + ' ' + yaml_system_packages[distro_version]
-            # We need not update the python packages string here as we do not have any 20.04 distro
-            # specific package dependencies. Refer python_packages.yaml file for more clarity.
-        elif distro_version == '21.04' or distro_version == '21.10':
-            if yaml_system_packages.get(distro_version):
-                system_packages_str = system_packages_str + ' ' + yaml_system_packages[distro_version]
-            # We need not update the python packages string here as we do not have any 21.04/21.10 distro
-            # specific package dependencies. Refer python_packages.yaml file for more clarity.
-        else:
-            pytest.exit("\n***** Unknown / Unsupported Distro version.. Exiting test session. *****")
+        if yaml_system_packages.get(distro_version) != None:
+            system_packages_str = system_packages_str + ' ' + yaml_system_packages[distro_version]
+        if yaml_python_packages.get(distro_version) != None:
+            python_packages_str = python_packages_str + ' ' + yaml_python_packages[distro_version]
+
     else:
         pytest.exit("\n***** Unknown / Unsupported Distro.. Exiting test session. *****")
 
-    #system_packages_cmd = 'xargs sudo -H apt-get update && env DEBIAN_FRONTEND=noninteractive apt-get install -y <' + system_packages_file
-    # Have separated 'apt-get update' from the below main command to suppress the lock error.
-    subprocess.run('sudo apt-get update', shell=True, check=True)
-    time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+    print("\n-- Executing below mentioned system update cmd..\n", constants.APT_UPDATE_CMD)
+    if utils.exec_shell_cmd(constants.APT_UPDATE_CMD).returncode != 0:
+        print("\n-- Failure: apt-get update command returned non-zero error code..\n")
     
-    system_packages_cmd = 'sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y ' + system_packages_str
+    system_packages_cmd = constants.SYS_PACKAGES_CMD + system_packages_str
     print("\n-- Executing below mentioned system packages installation cmd..\n", system_packages_cmd)
-    subprocess.run(system_packages_cmd, shell=True, check=True)
-    time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+    if utils.exec_shell_cmd(system_packages_cmd).returncode != 0:
+        print("\n-- Failure: Cannot update system packages..\n")
 
-    # Providing -H option to sudo to suppress the pip home directory warning.
-    # -U option is to install the latest package (if upgrade is available).
-    python_packages_cmd = 'sudo -H python3 -m pip install -U ' + python_packages_str
+    python_packages_cmd = constants.PYTHON_PACKAGES_CMD + python_packages_str
     print("\n-- Executing below mentioned Python packages installation cmd..\n", python_packages_cmd)
-    subprocess.run(python_packages_cmd, shell=True, check=True)
-    time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+    if utils.exec_shell_cmd(python_packages_cmd).returncode != 0:
+        print("\n-- Failure: Cannot update python packages..\n")
     
 
 def build_and_install_gramine():

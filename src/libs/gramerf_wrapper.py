@@ -4,13 +4,15 @@
 import os
 import yaml
 import inspect
+import shutil
 from src.libs.Workload import Workload
-from src.config_files import constants
+from src.config_files.constants import *
+from src.libs import utils
 
 def read_perf_suite_config(test_instance, test_yaml_file, test_name):
     # Reading global config data.
     config_file_name = "config.yaml"
-    config_file_path = os.path.join(constants.FRAMEWORK_HOME_DIR, 'src/config_files', config_file_name)
+    config_file_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', config_file_name)
     with open(config_file_path, "r") as config_fd:
         try:
             test_config_dict = yaml.safe_load(config_fd)
@@ -42,6 +44,21 @@ def read_perf_suite_config(test_instance, test_yaml_file, test_name):
 
     return test_config_dict
 
+def update_manifest_file(test_config_dict):
+    src_file = os.path.join(FRAMEWORK_HOME_DIR, "src/config_files" , test_config_dict['manifest_file'])
+    dest_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , test_config_dict['manifest_name']) + ".manifest.template"
+
+    shutil.copy2(src_file, dest_file)
+
+def generate_sgx_token_and_sig(test_config_dict):
+    if 'gramine-sgx' in test_config_dict['exec_mode']:
+        sign_cmd = "gramine-sgx-sign --manifest {0}.manifest --output {0}.manifest.sgx".format(test_config_dict['manifest_name'])
+        token_cmd = "gramine-sgx-get-token --output {0}.token --sig {0}.sig".format(test_config_dict['manifest_name'])
+        
+        if utils.exec_shell_cmd(sign_cmd).returncode != 0: 
+            raise Exception("Failed in SGX signing")
+        if utils.exec_shell_cmd(token_cmd).returncode != 0: 
+            raise Exception("Failed to generate sgx token")
 
 def run_test(test_instance, test_yaml_file):
 
@@ -50,29 +67,23 @@ def run_test(test_instance, test_yaml_file):
     test_config_dict = read_perf_suite_config(test_instance, test_yaml_file, test_name)
     
     test_obj = Workload(test_config_dict)
-    
+    workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
+    os.chdir(workload_home_dir)
+
     # Workload pre-actions if any.
     if not test_obj.pre_actions(test_config_dict):
         return False
-
+    
+    update_manifest_file(test_config_dict)
     # Download, build and install workload.
-    if not test_obj.setup_workload(test_config_dict):
-        return False
+    test_obj.setup_workload(test_config_dict)
+    generate_sgx_token_and_sig(test_config_dict)
+    test_obj.execute_workload(test_config_dict)
+    os.chdir(FRAMEWORK_HOME_DIR)
+    
+    test_obj.parse_performance(test_config_dict)
+        
 
-    if not test_obj.execute_workload(test_config_dict):
-        return False
+    test_obj.calculate_degradation(test_config_dict)
 
     return True
-
-    #return test_obj
-
-
-# def calculate_perf_degradation(test_obj):
-
-#     result = test_obj.parse_performance()
-
-#     gramine_direct_degradation = result['native']/result['gramine-direct']
-
-#     gramine_sgx_degradation = result['native']/result['gramine-sgx']
-
-#     return 0

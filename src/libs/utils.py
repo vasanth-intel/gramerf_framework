@@ -3,7 +3,7 @@ import os
 import shutil
 import subprocess
 import lsb_release
-from src.config_files import constants
+from src.config_files.constants import *
 
 def exec_shell_cmd(cmd):
      cmd_stdout = subprocess.run([cmd], shell=True, stdout=subprocess.PIPE, check=True, text=True)
@@ -17,8 +17,8 @@ def str_to_bool(s):
 
 
 def get_distro_and_version():
-     distro = lsb_release.get_lsb_information().get('ID').lower()
-     distro_version = lsb_release.get_lsb_information().get('RELEASE')
+     distro = lsb_release.get_distro_information().get('ID').lower()
+     distro_version = lsb_release.get_distro_information().get('RELEASE')
      return distro, distro_version
 
 
@@ -60,7 +60,7 @@ def update_env_variables(build_prefix):
      print(f"\n-- Updated environment PATH variable to the following..\n", os.environ["PATH"])
 
      # Update environment 'PKG_CONFIG_PATH' variable to <prefix>/<libdir>/pkgconfig.
-     libdir_path_cmd = "meson introspect " + constants.GRAMINE_HOME_DIR + \
+     libdir_path_cmd = "meson introspect " + GRAMINE_HOME_DIR + \
                     "/build/ --buildoptions | jq -r '(map(select(.name == \"libdir\"))) | map(.value) | join(\"/\")'"
      libdir_path = subprocess.getoutput(libdir_path_cmd)
 
@@ -72,8 +72,8 @@ def update_env_variables(build_prefix):
           print(f"\n-- Failure to update 'PYTHONPATH' env variable. get-python-platlib.py does not exist..\n")
           return
 
-     print(f"\n-- PYTHONPATH command\n", constants.PYTHONPATH_CMD)
-     pythonpath_cmd_output =  exec_shell_cmd(constants.PYTHONPATH_CMD)
+     print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
+     pythonpath_cmd_output =  exec_shell_cmd(PYTHONPATH_CMD)
      if pythonpath_cmd_output.returncode != 0:
           print(f"\n-- Failure: Setting 'PYTHONPATH' env variable command returned non-zero error code..\n")
           return
@@ -86,10 +86,10 @@ def update_env_variables(build_prefix):
 Function to set environment http and https proxies.
 '''
 def set_http_proxies():
-    os.environ['http_proxy'] = constants.HTTP_PROXY
-    os.environ['HTTP_PROXY'] = constants.HTTP_PROXY
-    os.environ['https_proxy'] = constants.HTTPS_PROXY
-    os.environ['HTTPS_PROXY'] = constants.HTTPS_PROXY
+    os.environ['http_proxy'] = HTTP_PROXY
+    os.environ['HTTP_PROXY'] = HTTP_PROXY
+    os.environ['https_proxy'] = HTTPS_PROXY
+    os.environ['HTTPS_PROXY'] = HTTPS_PROXY
     print("\n-- Setting http_proxy : \n", os.environ['http_proxy'])
     print("\n-- Setting https_proxy : \n", os.environ['https_proxy'])
 
@@ -99,7 +99,7 @@ Function to set the CPU frequency scaling governor to 'performance' mode.
 '''
 def set_cpu_freq_scaling_governor():
      print ("\n-- Setting CPU frequency scaling governor to 'performance' mode..")
-     cpu_freq_file = os.path.join(constants.FRAMEWORK_HOME_DIR, 'src/config_files', 'set_cpu_freq_scaling_governor.sh')
+     cpu_freq_file = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', 'set_cpu_freq_scaling_governor.sh')
      
      chmod_cmd = 'chmod +x ' + cpu_freq_file
      set_cpu_freq_cmd = 'sudo ' + cpu_freq_file

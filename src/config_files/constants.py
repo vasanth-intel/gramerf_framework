@@ -40,3 +40,5 @@ SYS_PACKAGES_CMD = "sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "
 # Providing -H option to sudo to suppress the pip home directory warning.
 # -U option is to install the latest package (if upgrade is available).
 PYTHON_PACKAGES_CMD = "sudo -H python3 -m pip install -U "
+
+LOG_LEVEL = "error"

@@ -22,6 +22,7 @@ Default:
  libmemcached-tools
  libnss-mdns
  libnuma1
+ libomp5
  libomp-dev
  libpcre2-dev
  libpcre3-dev
@@ -38,6 +39,7 @@ Default:
  libipsec-mb-dev
  musl
  musl-tools
+ nasm
  net-tools
  netcat-openbsd
  ninja-build

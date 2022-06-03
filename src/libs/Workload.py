@@ -5,7 +5,8 @@ import subprocess
 import sys
 import os
 import time
-from src.config_files import constants
+from src.config_files.constants import *
+from src.libs import utils
 
 
 class Workload(object):
@@ -19,17 +20,18 @@ class Workload(object):
         self.name = test_config_dict['workload_name']
         self.command = None
         self.degradation = None
+        # result is the overall results for the workload
+        # it is a dict containing { test, {native, direct, sgx, direct_degradation, sgx_degradation} }
+        self.result = dict()
                         
         workload_script = test_config_dict['workload_name'] + "_Workload"
-        sys.path.append(os.path.join(constants.FRAMEWORK_HOME_DIR, "src", "workloads"))
+        sys.path.append(os.path.join(FRAMEWORK_HOME_DIR, "src", "workloads"))
         self.workload_obj = getattr(__import__(workload_script), 'WORKLOAD')
-
 
     # pre_actions - implement in a subclass if needed
     def pre_actions(self, test_config_dict):
         return self.workload_obj.pre_actions(test_config_dict)
         
-
     # setup_workload - implement in a subclass if needed
     def setup_workload(self, test_config_dict):
         return self.workload_obj.setup_workload(test_config_dict)
@@ -38,9 +40,6 @@ class Workload(object):
     # Build the workload execution command based on execution params and execute it.
     def execute_workload(self, test_config_dict):
         print("\n##### In execute_workload #####\n")
-        
-        workload_home_dir = os.path.join(constants.FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
-        os.chdir(workload_home_dir)
 
         for i in range(len(test_config_dict['exec_mode'])):
             print(f"\n-- Executing {test_config_dict['test_name']} in {test_config_dict['exec_mode'][i]} mode")
@@ -48,54 +47,62 @@ class Workload(object):
                 self.command = self.workload_obj.construct_workload_exec_cmd(test_config_dict, test_config_dict['exec_mode'][i], j+1)
 
                 if self.command == None:
-                    print(f"\n-- Failure: Unable to construct command for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
-                    os.chdir(constants.FRAMEWORK_HOME_DIR)
-                    return False
+                    raise Exception(f"\n-- Failure: Unable to construct command for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
 
                 subprocess.run(self.command, shell=True, check=True)
-                time.sleep(constants.SUBPROCESS_SLEEP_TIME)
+                time.sleep(SUBPROCESS_SLEEP_TIME)
 
-        os.chdir(constants.FRAMEWORK_HOME_DIR)
+    # calculate the percent degradation
+    @staticmethod
+    def percent_degradation(baseline, testapp):
+        return '{:0.3f}'.format(100 * (float(baseline) - float(testapp)) / float(baseline))
 
-        return True
-        
+
+    def get_test_average(self, test_config_dict, exec_mode):
+        metric_sum = 0
+        for j in range(1, test_config_dict['iterations']+1):
+            test_file_name = test_config_dict['test_name'] + '_' + exec_mode + '_' + str(j) + '.txt'
+            if not os.path.exists(test_file_name):
+                raise Exception(f"\nFailure: File {test_file_name} does not exist for parsing performance..")
+
+            metric_sum += float(self.workload_obj.get_metric_value(test_config_dict, test_file_name))
+
+        return float(metric_sum / test_config_dict['iterations'])
+
+
+    '''
+    Read logs and capture the metrics values in a dictionary.
+    '''
+    def parse_performance(self, test_config_dict):
+        print("\n###### In parse_performance #####\n")
+        print(f"\n-- Performance results for {test_config_dict['test_name']}\n")
+        os.chdir(LOGS_DIR)
+        self.result[test_config_dict['test_name']] = dict()
+
+        for i in range(len(test_config_dict['exec_mode'])):
+            test_average = '{:0.3f}'.format(self.get_test_average(test_config_dict, test_config_dict['exec_mode'][i]))
+            self.result[test_config_dict['test_name']][test_config_dict['exec_mode'][i]] = test_average
+
+        os.chdir(FRAMEWORK_HOME_DIR)
+
+
+    def calculate_degradation(self, test_config_dict):
+        if 'native' in test_config_dict['exec_mode']:
+            exec_mode = [y for y in test_config_dict['exec_mode'] if y != "native"]
+            for y in exec_mode:
+                deg_index = y + "-degradation"
+                self.result[test_config_dict['test_name']][deg_index] = \
+                    self.percent_degradation(self.result[test_config_dict['test_name']]['native'], \
+                                            self.result[test_config_dict['test_name']][y])
+        else:
+            print(f"\n-- Workload not executed in 'native' mode. Cannot calculate performance degradation for {test_config_dict['test_name']}.")
+            return
+
+        print(self.result[test_config_dict['test_name']])
+
 
     # post_actions - implement in a subclass if needed
     def post_actions(self, TEST_CONFIG):
         pass
 
-    # parse_performance - implement in a subclass if needed
-    def parse_performance(self, TEST_CONFIG):
-        return True
 
-    def kill(self):
-        pass
-        #kill_exes([self.exe_name])
-
-    def get_performance_degradation(self):
-        return self.degradation
-
-    @staticmethod
-    def calculate_degradation(baseline, testapp, type):
-        degradation = ""
-        baseline = float(baseline)
-        testapp = float(testapp)
-        if testapp > 0 and (baseline == "" or baseline == 0):
-            # Native Failure
-            degradation = "NAT"
-        elif baseline > 0 and (testapp == "" or testapp == 0):
-            # BT Failure
-            degradation = "BT"
-        elif (baseline == "" or (baseline) == 0) and (testapp == "" or testapp == 0):
-            # Test Failure
-            degradation = "F"
-        else:
-            if type == "LIB":
-                if baseline > 0:
-                    degradation = str(((testapp / baseline) - 1) * 100)
-            elif type == "HIB":
-                if testapp > 0:
-                    degradation = str(((baseline / testapp) - 1) * 100)
-        if degradation == "":
-            degradation = "F"
-        return degradation

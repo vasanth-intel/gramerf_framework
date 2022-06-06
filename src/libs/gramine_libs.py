@@ -25,16 +25,14 @@ def fresh_gramine_checkout():
         shutil.rmtree(GRAMINE_HOME_DIR)
     
     print("\n-- Cloning Gramine git repo..\n", GRAMINE_CLONE_CMD)
-    if utils.exec_shell_cmd(GRAMINE_CLONE_CMD).returncode != 0:
-        print("\n-- Failure: Gramine git clone command returned non-zero error code..\n")
-    
+    utils.exec_shell_cmd(GRAMINE_CLONE_CMD)
+        
     # Git clone the examples repo too for workloads download.
     os.chdir(GRAMINE_HOME_DIR)
 
     print("\n-- Cloning Gramine examples git repo..\n", EXAMPLES_REPO_CLONE_CMD)
-    if utils.exec_shell_cmd(EXAMPLES_REPO_CLONE_CMD).returncode != 0:
-        print("\n-- Failure: Gramine examples git clone command returned non-zero error code..\n")
-
+    utils.exec_shell_cmd(EXAMPLES_REPO_CLONE_CMD)
+        
     os.chdir(FRAMEWORK_HOME_DIR)
 
 
@@ -76,18 +74,16 @@ def install_gramine_dependencies():
         pytest.exit("\n***** Unknown / Unsupported Distro.. Exiting test session. *****")
 
     print("\n-- Executing below mentioned system update cmd..\n", APT_UPDATE_CMD)
-    if utils.exec_shell_cmd(APT_UPDATE_CMD).returncode != 0:
-        print("\n-- Failure: apt-get update command returned non-zero error code..\n")
-    
+    utils.exec_shell_cmd(APT_UPDATE_CMD)
+       
     system_packages_cmd = SYS_PACKAGES_CMD + system_packages_str
     print("\n-- Executing below mentioned system packages installation cmd..\n", system_packages_cmd)
-    if utils.exec_shell_cmd(system_packages_cmd).returncode != 0:
-        print("\n-- Failure: Cannot update system packages..\n")
+    utils.exec_shell_cmd(system_packages_cmd)
 
     python_packages_cmd = PYTHON_PACKAGES_CMD + python_packages_str
     print("\n-- Executing below mentioned Python packages installation cmd..\n", python_packages_cmd)
-    if utils.exec_shell_cmd(python_packages_cmd).returncode != 0:
-        print("\n-- Failure: Cannot update python packages..\n")
+    utils.exec_shell_cmd(python_packages_cmd)
+    
     
 
 def build_and_install_gramine():
@@ -112,20 +108,16 @@ def build_and_install_gramine():
     os.makedirs(BUILD_PREFIX, exist_ok=True)
 
     print("\n-- Executing below mentioned gramine-sgx sed cmd..\n", GRAMINE_SGX_SED_CMD)
-    if utils.exec_shell_cmd(GRAMINE_SGX_SED_CMD).returncode != 0:
-        pytest.exit("\n-- Failure: SED command returned non-zero error code..\n")
+    utils.exec_shell_cmd(GRAMINE_SGX_SED_CMD)
         
     print("\n-- Executing below mentioned gramine build meson build cmd..\n", GRAMINE_BUILD_MESON_CMD)
-    if utils.exec_shell_cmd(GRAMINE_BUILD_MESON_CMD).returncode != 0:
-        pytest.exit("\n-- Failure: Gramine build meson command returned non-zero error code..\n")
+    utils.exec_shell_cmd(GRAMINE_BUILD_MESON_CMD)
     
     print("\n-- Executing below mentioned gramine ninja build cmd..\n", GRAMINE_NINJA_BUILD_CMD)
-    if utils.exec_shell_cmd(GRAMINE_NINJA_BUILD_CMD).returncode != 0:
-        pytest.exit("\n-- Failure: Gramine ninja build command returned non-zero error code..\n")
+    utils.exec_shell_cmd(GRAMINE_NINJA_BUILD_CMD)
 
     print("\n-- Executing below mentioned gramine ninja build install cmd..\n", GRAMINE_NINJA_INSTALL_CMD)
-    if utils.exec_shell_cmd(GRAMINE_NINJA_INSTALL_CMD).returncode != 0:
-        pytest.exit("\n-- Failure: Gramine ninja install command returned non-zero error code..\n")
+    utils.exec_shell_cmd(GRAMINE_NINJA_INSTALL_CMD)
      
     os.chdir(FRAMEWORK_HOME_DIR)
 
@@ -138,20 +130,32 @@ def setup_gramine_environment():
     utils.update_env_variables(BUILD_PREFIX)
 
     print("\n-- Generating gramine-sgx private key..\n", GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
-    if utils.exec_shell_cmd(GRAMINE_SGX_GEN_PRIVATE_KEY_CMD).returncode != 0:
-        pytest.exit("\n-- Failure: Gramine sgx generate private key command returned non-zero error code..\n")
+    utils.exec_shell_cmd(GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
 
 
 def build_gramine_binaries():
 
     print("\n###### In build_gramine #####\n")
 
-    # # Install Gramine dependencies
-    # install_gramine_dependencies()
+    # Install Gramine dependencies
+    install_gramine_dependencies()
 
-    # # Build and Install Gramine
-    # build_and_install_gramine()
+    # Build and Install Gramine
+    build_and_install_gramine()
 
     # Setup gramine env variables and generate sgx private key
     setup_gramine_environment()
-    
+
+def update_manifest_file(test_config_dict):
+    src_file = os.path.join(FRAMEWORK_HOME_DIR, "src/config_files" , test_config_dict['manifest_file'])
+    dest_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , test_config_dict['manifest_name']) + ".manifest.template"
+
+    shutil.copy2(src_file, dest_file)
+
+def generate_sgx_token_and_sig(test_config_dict):
+    if 'gramine-sgx' in test_config_dict['exec_mode']:
+        sign_cmd = "gramine-sgx-sign --manifest {0}.manifest --output {0}.manifest.sgx".format(test_config_dict['manifest_name'])
+        token_cmd = "gramine-sgx-get-token --output {0}.token --sig {0}.sig".format(test_config_dict['manifest_name'])
+        
+        utils.exec_shell_cmd(sign_cmd)
+        utils.exec_shell_cmd(token_cmd)

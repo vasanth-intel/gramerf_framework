@@ -41,12 +41,10 @@ class OpenvinoWorkload(Workload):
         untar_cmd = "tar xzf " + toolkit_name  + ".tgz"
 
         print("\n-- Fetching Openvino workload from source..")
-        if utils.exec_shell_cmd(wget_cmd).returncode != 0:
-            raise Exception("Failure: Openvino workload download failed..")
+        utils.exec_shell_cmd(wget_cmd)
 
         print("\n-- Extracting Openvino workload..")
-        if utils.exec_shell_cmd(untar_cmd).returncode != 0:
-            raise Exception("Failure: Openvino workload extraction failed..")
+        utils.exec_shell_cmd(untar_cmd)
 
         os.rename(toolkit_name, 'openvino_2021')       
 
@@ -60,8 +58,7 @@ class OpenvinoWorkload(Workload):
             ov_env_var_bld_cmd = f"bash -c 'source {self.setupvars_path} && make benchmark_app openvino/.INSTALLATION_OK intel_models public_models'"
             print("\n-- Setting up OpenVINO environment variables and building Openvino..\n", ov_env_var_bld_cmd)
 
-            if utils.exec_shell_cmd(ov_env_var_bld_cmd).returncode != 0: 
-                raise Exception("Failed in Openvino build and install workload")
+            utils.exec_shell_cmd(ov_env_var_bld_cmd)
             
         # Check for build status by verifying the existence of model.xml file and return accordingly.
         model_file_path = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['model_dir'], test_config_dict['fp'], 
@@ -78,11 +75,10 @@ class OpenvinoWorkload(Workload):
             LOG_LEVEL, os.environ.get('ARCH_LIBDIR'), openvino_path, inference_path
         )
         
-        if utils.exec_shell_cmd(manifest_cmd).returncode != 0:
-            raise Exception("Failed to generate manifest file for openvino workload")
+        utils.exec_shell_cmd(manifest_cmd)
         
     def pre_actions(self, test_config_dict):
-        return utils.set_cpu_freq_scaling_governor()
+        utils.set_cpu_freq_scaling_governor()
         
     def setup_workload(self, test_config_dict):
         self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])

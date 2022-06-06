@@ -8,7 +8,6 @@ import time
 from src.config_files.constants import *
 from src.libs import utils
 
-
 class Workload(object):
     # Initializer parameters
     #   name             Workload name, e.g. DiskSpd or PCMARK (required)
@@ -30,7 +29,7 @@ class Workload(object):
 
     # pre_actions - implement in a subclass if needed
     def pre_actions(self, test_config_dict):
-        return self.workload_obj.pre_actions(test_config_dict)
+        self.workload_obj.pre_actions(test_config_dict)
         
     # setup_workload - implement in a subclass if needed
     def setup_workload(self, test_config_dict):
@@ -49,8 +48,9 @@ class Workload(object):
                 if self.command == None:
                     raise Exception(f"\n-- Failure: Unable to construct command for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
 
-                subprocess.run(self.command, shell=True, check=True)
-                time.sleep(SUBPROCESS_SLEEP_TIME)
+                utils.exec_shell_cmd(self.command, None)
+                #subprocess.run(self.command, shell=True, check=True)
+
 
     # calculate the percent degradation
     @staticmethod

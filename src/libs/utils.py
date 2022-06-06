@@ -5,10 +5,20 @@ import subprocess
 import lsb_release
 from src.config_files.constants import *
 
-def exec_shell_cmd(cmd):
-     cmd_stdout = subprocess.run([cmd], shell=True, stdout=subprocess.PIPE, check=True, text=True)
-     return cmd_stdout
+def exec_shell_cmd(cmd, std_pipe = subprocess.PIPE):
      
+     pipe = subprocess.Popen([cmd], stdout=std_pipe, shell=True)
+     pipe.wait()
+     if pipe.returncode != 0:
+          raise Exception(f"\n-- Failed to execute the process cmd: {cmd}")
+     else:
+          cmd_stdout = pipe.communicate()[0]
+          if cmd_stdout != None:
+               cmd_stdout = cmd_stdout.decode("utf-8").strip()
+     
+     return cmd_stdout
+
+
 def str_to_bool(s):
     if s == 'True':
          return True
@@ -62,7 +72,7 @@ def update_env_variables(build_prefix):
      # Update environment 'PKG_CONFIG_PATH' variable to <prefix>/<libdir>/pkgconfig.
      libdir_path_cmd = "meson introspect " + GRAMINE_HOME_DIR + \
                     "/build/ --buildoptions | jq -r '(map(select(.name == \"libdir\"))) | map(.value) | join(\"/\")'"
-     libdir_path = subprocess.getoutput(libdir_path_cmd)
+     libdir_path = exec_shell_cmd(libdir_path_cmd)
 
      os.environ["PKG_CONFIG_PATH"] = build_prefix + "/" + libdir_path + "/pkgconfig" + os.pathsep + os.environ.get('PKG_CONFIG_PATH', '')
      print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
@@ -73,12 +83,7 @@ def update_env_variables(build_prefix):
           return
 
      print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
-     pythonpath_cmd_output =  exec_shell_cmd(PYTHONPATH_CMD)
-     if pythonpath_cmd_output.returncode != 0:
-          print(f"\n-- Failure: Setting 'PYTHONPATH' env variable command returned non-zero error code..\n")
-          return
-
-     os.environ["PYTHONPATH"] = pythonpath_cmd_output.stdout
+     os.environ["PYTHONPATH"] = exec_shell_cmd(PYTHONPATH_CMD)
      print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
 
 
@@ -104,21 +109,16 @@ def set_cpu_freq_scaling_governor():
      chmod_cmd = 'chmod +x ' + cpu_freq_file
      set_cpu_freq_cmd = 'sudo ' + cpu_freq_file
      
-     if exec_shell_cmd(chmod_cmd).returncode != 0:
-          print ("\n-- Failure: Changing permissions of scaling governor script failed..")
-          return False
+     exec_shell_cmd(chmod_cmd)
      
-     if exec_shell_cmd(set_cpu_freq_cmd).returncode != 0:
-          print ("\n-- Failure: Setting CPU frequency scaling governor to 'performance' mode failed..")
-          return False
-     
-     return True
+     exec_shell_cmd(set_cpu_freq_cmd)
+
 
 '''
 Function to determine and set 'THREADS_CNT' env var.
 '''
 def set_threads_cnt_env_var():
-     lscpu_output = subprocess.getoutput('lscpu')
+     lscpu_output = exec_shell_cmd('lscpu')
      lines = lscpu_output.splitlines()
      core_per_socket, threads_per_core = 0, 0
      for line in lines:

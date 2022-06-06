@@ -6,6 +6,7 @@ import yaml
 import inspect
 import shutil
 from src.libs.Workload import Workload
+from src.libs import gramine_libs
 from src.config_files.constants import *
 from src.libs import utils
 
@@ -44,22 +45,6 @@ def read_perf_suite_config(test_instance, test_yaml_file, test_name):
 
     return test_config_dict
 
-def update_manifest_file(test_config_dict):
-    src_file = os.path.join(FRAMEWORK_HOME_DIR, "src/config_files" , test_config_dict['manifest_file'])
-    dest_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , test_config_dict['manifest_name']) + ".manifest.template"
-
-    shutil.copy2(src_file, dest_file)
-
-def generate_sgx_token_and_sig(test_config_dict):
-    if 'gramine-sgx' in test_config_dict['exec_mode']:
-        sign_cmd = "gramine-sgx-sign --manifest {0}.manifest --output {0}.manifest.sgx".format(test_config_dict['manifest_name'])
-        token_cmd = "gramine-sgx-get-token --output {0}.token --sig {0}.sig".format(test_config_dict['manifest_name'])
-        
-        if utils.exec_shell_cmd(sign_cmd).returncode != 0: 
-            raise Exception("Failed in SGX signing")
-        if utils.exec_shell_cmd(token_cmd).returncode != 0: 
-            raise Exception("Failed to generate sgx token")
-
 def run_test(test_instance, test_yaml_file):
 
     test_name = inspect.stack()[1].function
@@ -71,13 +56,12 @@ def run_test(test_instance, test_yaml_file):
     os.chdir(workload_home_dir)
 
     # Workload pre-actions if any.
-    if not test_obj.pre_actions(test_config_dict):
-        return False
-    
-    update_manifest_file(test_config_dict)
+    test_obj.pre_actions(test_config_dict)
+        
+    gramine_libs.update_manifest_file(test_config_dict)
     # Download, build and install workload.
     test_obj.setup_workload(test_config_dict)
-    generate_sgx_token_and_sig(test_config_dict)
+    gramine_libs.generate_sgx_token_and_sig(test_config_dict)
     test_obj.execute_workload(test_config_dict)
     os.chdir(FRAMEWORK_HOME_DIR)
     

@@ -1,7 +1,3 @@
-#
-# Imports
-#
-import os
 from src.libs.Workload import Workload
 from src.config_files.constants import *
 from src.libs import utils
@@ -11,6 +7,7 @@ from src.libs import utils
 def is_true(env):
     value = os.environ.get(env, 'false').lower()
     return value == 'true'
+
 
 class OpenvinoWorkload(Workload):
     def __init__(self):
@@ -38,16 +35,12 @@ class OpenvinoWorkload(Workload):
             raise Exception("Unsupported distro for Openvino installation")
         
         wget_cmd = "wget https://storage.openvinotoolkit.org/repositories/openvino/packages/2021.4.2/" + toolkit_name + ".tgz"
-        untar_cmd = "tar xzf " + toolkit_name  + ".tgz"
+        untar_cmd = "tar xzf " + toolkit_name + ".tgz"
 
-        print("\n-- Fetching Openvino workload from source..")
+        print("\n-- Fetching and extracting Openvino workload from source..")
         utils.exec_shell_cmd(wget_cmd)
-
-        print("\n-- Extracting Openvino workload..")
         utils.exec_shell_cmd(untar_cmd)
-
         os.rename(toolkit_name, 'openvino_2021')
-        
 
     def download_and_convert_model(self, test_config_dict, model_file_path):
         if not os.path.exists(model_file_path):
@@ -64,7 +57,6 @@ class OpenvinoWorkload(Workload):
 
         os.chdir(self.workload_home_dir)
 
-        
     def build_and_install_workload(self, test_config_dict):
         print("\n###### In build_and_install_workload #####\n")
 
@@ -89,8 +81,7 @@ class OpenvinoWorkload(Workload):
         if not os.path.exists(model_file_path):
             raise Exception(f"\n-- Failure: Model {model_file_path} not found/built. Returning without building the model.")
 
-
-    def generate_manifest(self, test_config_dict):
+    def generate_manifest(self):
         openvino_path = os.path.join(self.workload_home_dir, 'openvino_2021')
         inference_path = os.path.join(self.workload_home_dir, 'inference_engine_cpp_samples_build')
 
@@ -101,29 +92,21 @@ class OpenvinoWorkload(Workload):
         
         utils.exec_shell_cmd(manifest_cmd)
 
-
-    def install_mimalloc(self, test_config_dict):
+    def install_mimalloc(self):
         if os.path.exists(MIMALLOC_INSTALL_PATH):
             print("\n-- Library 'mimalloc' already exists.. Returning without rebuilding.\n")
             return
 
-        print("\n-- Cloning mimalloc repo..\n", MIMALLOC_CLONE_CMD)
+        print("\n-- Setting up mimalloc for Openvino..\n", MIMALLOC_CLONE_CMD)
         utils.exec_shell_cmd(MIMALLOC_CLONE_CMD)
-
         mimalloc_dir = os.path.join(self.workload_home_dir, 'mimalloc')
         os.chdir(mimalloc_dir)
-
         mimalloc_make_dir_path = os.path.join(mimalloc_dir, 'out/release')
-
         os.makedirs(mimalloc_make_dir_path, exist_ok=True)
-
         os.chdir(mimalloc_make_dir_path)
 
-        print("\n-- Building mimalloc..\n")
         utils.exec_shell_cmd("cmake ../..")
         utils.exec_shell_cmd("make")
-
-        print("\n-- Installing mimalloc..\n")
         utils.exec_shell_cmd("sudo make install")
 
         os.chdir(self.workload_home_dir)
@@ -131,20 +114,17 @@ class OpenvinoWorkload(Workload):
         if not os.path.exists(MIMALLOC_INSTALL_PATH):
             raise Exception(f"\n-- Library {MIMALLOC_INSTALL_PATH} not generated/installed.\n")
 
-
     def pre_actions(self, test_config_dict):
         self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
 
+        utils.set_threads_cnt_env_var()
         utils.set_cpu_freq_scaling_governor()
-        self.install_mimalloc(test_config_dict)
-        
+        self.install_mimalloc()
 
     def setup_workload(self, test_config_dict):
-        
         self.download_workload(test_config_dict)
         self.build_and_install_workload(test_config_dict)
-        self.generate_manifest(test_config_dict)
-
+        self.generate_manifest()
 
     def construct_workload_exec_cmd(self, test_config_dict, exec_mode = 'native', iteration=1):
         ov_exec_cmd = None
@@ -164,10 +144,7 @@ class OpenvinoWorkload(Workload):
                             " -nstreams " + os.environ['THREADS_CNT'] + " -nthreads " + os.environ['THREADS_CNT'] + \
                             " -nireq " + os.environ['THREADS_CNT'] + " | tee " + output_file_name
 
-            if exec_mode == 'native':
-                os.environ['LD_PRELOAD'] = TCMALLOC_INSTALL_PATH
-            else:
-                os.environ['LD_PRELOAD'] = ''
+            os.environ['LD_PRELOAD'] = TCMALLOC_INSTALL_PATH if exec_mode == 'native' else ''
 
         elif test_config_dict['metric'] == 'Latency':
             ov_exec_cmd = "KMP_AFFINITY=granularity=fine,noverbose,compact,1,0 " + \
@@ -175,35 +152,21 @@ class OpenvinoWorkload(Workload):
                             " -d CPU -b 1 -t 20" + \
                             " -api sync | tee " + output_file_name
 
-            if exec_mode == 'native':
-                os.environ['LD_PRELOAD'] = MIMALLOC_INSTALL_PATH
-            else:
-                os.environ['LD_PRELOAD'] = ''
+            os.environ['LD_PRELOAD'] = MIMALLOC_INSTALL_PATH if exec_mode == 'native' else ''
 
         else:
             print("\n-- Failure: Internal error! Execution metric no set..")
 
         ov_exec_cmd = f"bash -c 'source {self.setupvars_path} && " + ov_exec_cmd + "'"
         print("\nCommand name = ", ov_exec_cmd)
-        return ov_exec_cmd                           
+        return ov_exec_cmd
 
-       
-    def post_actions(self, TEST_CONFIG):
-        pass
-
-    def get_command(self, TEST_CONFIG):
-        pass
-
-    def get_metric_value(self, test_config_dict, test_file_name):
+    @staticmethod
+    def get_metric_value(test_config_dict, test_file_name):
         with open(test_file_name, 'r') as test_fd:
             for line in test_fd:
                 if test_config_dict['metric'] in line:
                     return line.strip().split(': ')[1].split(' ')[0]
                         
 
-
-    
-
 WORKLOAD = OpenvinoWorkload()
-
-#eof

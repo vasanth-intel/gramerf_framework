@@ -1,6 +1,3 @@
-#
-# Imports
-#
 import os
 import time
 import shutil
@@ -8,10 +5,12 @@ import pytest
 from src.config_files.constants import *
 from src.libs import utils
 
-'''
-     Function to perform a fresh checkout of gramine repo.
-'''
+
 def fresh_gramine_checkout():
+    """
+    Function to perform a fresh checkout of gramine repo.
+    :return:
+    """
     print("\n###### In fresh_gramine_checkout #####\n")
     # Check if gramine folder exists. Delete it if exists, change directory to
     # user's home directory and git clone gramine within user's home dir.
@@ -53,10 +52,10 @@ def install_gramine_dependencies():
         python_packages = utils.read_config_yaml(python_packages_path)
         python_packages_str = python_packages['Default']
 
-        if system_packages.get(distro_version) != None:
+        if system_packages.get(distro_version) is not None:
             system_packages_str = system_packages_str + ' ' + system_packages[distro_version]
-        if python_packages.get(distro_version) != None:
-            python_packages_str = python_packages_str + ' ' +  python_packages[distro_version]
+        if python_packages.get(distro_version) is not None:
+            python_packages_str = python_packages_str + ' ' + python_packages[distro_version]
 
     else:
         pytest.exit("\n***** Unknown / Unsupported Distro.. Exiting test session. *****")
@@ -78,7 +77,6 @@ def install_gramine_dependencies():
     print("\n-- Executing below mentioned Python packages installation cmd..\n", python_packages_cmd)
     utils.exec_shell_cmd(python_packages_cmd)
     
-    
 
 def build_and_install_gramine():
     print("\n###### In build_and_install_gramine #####\n")
@@ -93,7 +91,7 @@ def build_and_install_gramine():
     # Cleanup existing gramine binaries (if any) before starting a fresh build.
     # Passing prefix path as argument, so that user installed (if any) gramine
     # binaries are also removed.
-    utils.cleaup_gramine_binaries(BUILD_PREFIX)
+    utils.cleanup_gramine_binaries(BUILD_PREFIX)
 
     # Create prefix dir
     print(f"\n-- Creating build prefix directory '{BUILD_PREFIX}'..\n")
@@ -114,6 +112,7 @@ def build_and_install_gramine():
     utils.exec_shell_cmd(GRAMINE_NINJA_INSTALL_CMD)
      
     os.chdir(FRAMEWORK_HOME_DIR)
+
 
 def setup_gramine_environment():
     # Update the following environment variables as the gramine binaries can be
@@ -140,11 +139,13 @@ def build_gramine_binaries():
     # Setup gramine env variables and generate sgx private key
     setup_gramine_environment()
 
+
 def update_manifest_file(test_config_dict):
     src_file = os.path.join(FRAMEWORK_HOME_DIR, "src/config_files" , test_config_dict['manifest_file'])
     dest_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , test_config_dict['manifest_name']) + ".manifest.template"
 
     shutil.copy2(src_file, dest_file)
+
 
 def generate_sgx_token_and_sig(test_config_dict):
     if 'gramine-sgx' in test_config_dict['exec_mode']:

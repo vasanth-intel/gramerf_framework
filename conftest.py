@@ -1,12 +1,8 @@
-#
-# Imports
-#
-import subprocess
 import pytest
-import os
 from src.config_files.constants import *
 from src.libs import utils
 from src.libs import gramine_libs
+
 
 @pytest.fixture(scope="session")
 def gramerf_setup():
@@ -21,23 +17,15 @@ def gramerf_setup():
     
     os.makedirs(LOGS_DIR, exist_ok=True)
  
-    # Set http and https proxies.
+    # Setting up the node environment and clearing cache.    
     utils.set_http_proxies()
-
-    # Clear system cache to get consistent results. This can be removed 
-    # after we implement the restart logic.
     utils.clear_system_cache()
 
     # Checkout gramine source and build the same.
     gramine_libs.build_gramine_binaries()
 
-    # Setting 'THREADS_CNT' env variable
-    utils.set_threads_cnt_env_var()
-        
-       
+
 def pytest_addoption(parser):
     print("\n##### In pytest_addoption #####\n")
     parser.addoption("--iterations", action="store", type=int, default=1)
     parser.addoption("--exec_mode", action="store", type=str, default="None")
-    
-

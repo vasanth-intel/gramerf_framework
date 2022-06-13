@@ -5,7 +5,7 @@ loader.log_level = "{{ log_level }}"
 
 loader.env.LD_LIBRARY_PATH = "/lib:{{ openvino_dir }}/deployment_tools/inference_engine/external/tbb/lib:{{ openvino_dir }}/deployment_tools/inference_engine/lib/intel64:{{ openvino_dir }}/opencv/lib:{{ openvino_dir }}/deployment_tools/ngraph/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
 
-loader.env.LD_PRELOAD = "/usr/local/lib/mimalloc-1.7/libmimalloc.so.1.7"
+loader.env.LD_PRELOAD = "/usr/local/lib/libmimalloc.so.1.7"
 
 fs.mounts = [
   { type = "chroot", uri = "file:{{ gramine.runtimedir() }}", path = "/lib" },
@@ -29,7 +29,7 @@ sgx.preheat_enclave = true
 libos.check_invalid_pointers = false
 
 sgx.trusted_files = [
-  "file:/usr/local/lib/mimalloc-1.7/libmimalloc.so.1.7",
+  "file:/usr/local/lib/libmimalloc.so.1.7",
   "file:benchmark_app",
   "file:{{ gramine.libos }}",
   "file:{{ gramine.runtimedir() }}/",

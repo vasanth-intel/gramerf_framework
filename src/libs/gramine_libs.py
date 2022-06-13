@@ -2,10 +2,8 @@
 # Imports
 #
 import os
-import yaml
-import subprocess
-import shutil
 import time
+import shutil
 import pytest
 from src.config_files.constants import *
 from src.libs import utils
@@ -47,23 +45,13 @@ def install_gramine_dependencies():
     if distro == 'ubuntu':
         # Read the system packages yaml file and update the actual system_packages string
         system_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', SYSTEM_PACKAGES_FILE)
-        with open(system_packages_path, "r") as sys_pack_fd:
-            try:
-                system_packages = yaml.safe_load(sys_pack_fd)
-            except yaml.YAMLError as exc:
-                print(exc)
-            #system_packages_dict.update(yaml_system_packages['Default'])
-            system_packages_str = system_packages['Default']
+        system_packages = utils.read_config_yaml(system_packages_path)
+        system_packages_str = system_packages['Default']
 
         # Read the python packages yaml file and update the actual python_packages string
         python_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', PYTHON_PACKAGES_FILE)
-        with open(python_packages_path, "r") as py_pack_fd:
-            try:
-                python_packages = yaml.safe_load(py_pack_fd)
-            except yaml.YAMLError as exc:
-                print(exc)
-            #python_packages_dict.update(yaml_python_packages['Default'])
-            python_packages_str = python_packages['Default']
+        python_packages = utils.read_config_yaml(python_packages_path)
+        python_packages_str = python_packages['Default']
 
         if system_packages.get(distro_version) != None:
             system_packages_str = system_packages_str + ' ' + system_packages[distro_version]
@@ -75,10 +63,16 @@ def install_gramine_dependencies():
 
     print("\n-- Executing below mentioned system update cmd..\n", APT_UPDATE_CMD)
     utils.exec_shell_cmd(APT_UPDATE_CMD)
-       
+    time.sleep(PKG_INSTALL_WAIT_TIME)
+
+    print("\n-- Executing below mentioned apt --fix-broken cmd..\n", APT_FIX_BROKEN_CMD)
+    utils.exec_shell_cmd(APT_FIX_BROKEN_CMD)
+    time.sleep(PKG_INSTALL_WAIT_TIME)
+
     system_packages_cmd = SYS_PACKAGES_CMD + system_packages_str
     print("\n-- Executing below mentioned system packages installation cmd..\n", system_packages_cmd)
     utils.exec_shell_cmd(system_packages_cmd)
+    time.sleep(PKG_INSTALL_WAIT_TIME)
 
     python_packages_cmd = PYTHON_PACKAGES_CMD + python_packages_str
     print("\n-- Executing below mentioned Python packages installation cmd..\n", python_packages_cmd)

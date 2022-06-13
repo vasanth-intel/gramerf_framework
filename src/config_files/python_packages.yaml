@@ -1,9 +1,8 @@
 ---
 # Need to enclose few of the below dependencies within quotes as the cmd string
 # will be formed with spaces and pip install will fail without the quotes.
-#"asv>=0.5.1"
 Default:
- asv
+ asv>=0.5.1
  "meson >=0.55, <0.56" 
 
 "18.04":

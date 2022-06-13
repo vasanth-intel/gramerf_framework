@@ -2,9 +2,7 @@
 # Imports
 #
 import os
-import yaml
 import inspect
-import shutil
 from src.libs.Workload import Workload
 from src.libs import gramine_libs
 from src.config_files.constants import *
@@ -14,19 +12,13 @@ def read_perf_suite_config(test_instance, test_yaml_file, test_name):
     # Reading global config data.
     config_file_name = "config.yaml"
     config_file_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', config_file_name)
-    with open(config_file_path, "r") as config_fd:
-        try:
-            test_config_dict = yaml.safe_load(config_fd)
-        except yaml.YAMLError as exc:
-            print(exc)
+
+    # Reading global config data.
+    test_config_dict = utils.read_config_yaml(config_file_path)
 
     # Reading workload specific data.
-    with open(test_yaml_file, "r") as test_default_fd:
-        try:
-            yaml_test_config = yaml.safe_load(test_default_fd)
-        except yaml.YAMLError as exc:
-            print(exc)
-
+    yaml_test_config = utils.read_config_yaml(test_yaml_file)
+    
     test_config_dict.update(yaml_test_config['Default'])
 
     # Reading test specific data.

@@ -7,7 +7,7 @@ HTTP_PROXY = "http://proxy-dmz.intel.com:911/"
 HTTPS_PROXY = "http://proxy-dmz.intel.com:912/"
 SYSTEM_PACKAGES_FILE = "system_packages.yaml"
 PYTHON_PACKAGES_FILE = "python_packages.yaml"
-SUBPROCESS_SLEEP_TIME = 2 # Sleep for 2 seconds after every subprocess run call
+PKG_INSTALL_WAIT_TIME = 25
 BUILD_TYPE = "release"
 BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 
@@ -15,6 +15,12 @@ BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
 
 EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.git"
+
+MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"
+
+MIMALLOC_INSTALL_PATH = "/usr/local/lib/libmimalloc.so.1.7"
+
+TCMALLOC_INSTALL_PATH = "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"
 
 BUILD_TYPE_PREFIX_STRING = "--prefix=" + BUILD_PREFIX + " --buildtype=" + BUILD_TYPE
 
@@ -34,6 +40,8 @@ PYTHONPATH_CMD = "gramine/Scripts/get-python-platlib.py " + BUILD_PREFIX
 GRAMINE_SGX_GEN_PRIVATE_KEY_CMD = "gramine-sgx-gen-private-key -f"
 
 APT_UPDATE_CMD = "sudo apt-get update"
+
+APT_FIX_BROKEN_CMD = "sudo apt --fix-broken install -y"
 
 SYS_PACKAGES_CMD = "sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "
 

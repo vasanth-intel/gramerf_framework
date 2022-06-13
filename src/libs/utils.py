@@ -1,9 +1,12 @@
 import sys
 import os
+import yaml
 import shutil
 import subprocess
 import lsb_release
 from src.config_files.constants import *
+
+verify_output = lambda cmd_output, search_str : True if search_str in cmd_output else False
 
 def exec_shell_cmd(cmd, std_pipe = subprocess.PIPE):
      
@@ -18,6 +21,14 @@ def exec_shell_cmd(cmd, std_pipe = subprocess.PIPE):
      
      return cmd_stdout
 
+def read_config_yaml(config_file_path):
+     with open(config_file_path, "r") as config_fd:
+          try:
+               config_dict = yaml.safe_load(config_fd)
+          except yaml.YAMLError as exc:
+               raise Exception(exc)
+     return config_dict
+
 
 def str_to_bool(s):
     if s == 'True':
@@ -30,6 +41,17 @@ def get_distro_and_version():
      distro = lsb_release.get_distro_information().get('ID').lower()
      distro_version = lsb_release.get_distro_information().get('RELEASE')
      return distro, distro_version
+
+
+'''
+Function to clear pagecache, dentries, and inodes. We need to clear system cache to get
+consistent results. This function can be removed after we implement the restart logic.
+'''
+def clear_system_cache():
+     echo_cmd_path = exec_shell_cmd('which echo')
+     clear_cache_cmd = "sudo sh -c \"" + echo_cmd_path + " 3 > /proc/sys/vm/drop_caches\""
+     print("\n-- Executing clear cache command..", clear_cache_cmd)
+     exec_shell_cmd(clear_cache_cmd)
 
 
 '''

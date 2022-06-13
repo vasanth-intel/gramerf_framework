@@ -24,6 +24,10 @@ def gramerf_setup():
     # Set http and https proxies.
     utils.set_http_proxies()
 
+    # Clear system cache to get consistent results. This can be removed 
+    # after we implement the restart logic.
+    utils.clear_system_cache()
+
     # Checkout gramine source and build the same.
     gramine_libs.build_gramine_binaries()
 

@@ -1,10 +1,8 @@
 #
 # Imports
 #
-import subprocess
 import sys
 import os
-import time
 from src.config_files.constants import *
 from src.libs import utils
 
@@ -48,7 +46,10 @@ class Workload(object):
                 if self.command == None:
                     raise Exception(f"\n-- Failure: Unable to construct command for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
 
-                utils.exec_shell_cmd(self.command, None)
+                cmd_output = utils.exec_shell_cmd(self.command)
+                print(cmd_output)
+                if cmd_output == None or utils.verify_output(cmd_output, test_config_dict['metric']) == False:
+                    raise Exception(f"\n-- Failure: Test workload execution failed for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
                 #subprocess.run(self.command, shell=True, check=True)
 
 
@@ -61,7 +62,7 @@ class Workload(object):
     def get_test_average(self, test_config_dict, exec_mode):
         metric_sum = 0
         for j in range(1, test_config_dict['iterations']+1):
-            test_file_name = test_config_dict['test_name'] + '_' + exec_mode + '_' + str(j) + '.txt'
+            test_file_name = test_config_dict['test_name'] + '_' + exec_mode + '_' + str(j) + '.log'
             if not os.path.exists(test_file_name):
                 raise Exception(f"\nFailure: File {test_file_name} does not exist for parsing performance..")
 

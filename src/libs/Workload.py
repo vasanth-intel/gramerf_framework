@@ -1,6 +1,6 @@
-import sys
 from src.config_files.constants import *
 from src.libs import utils
+import src.workloads as workloads
 
 
 class Workload(object):
@@ -18,9 +18,9 @@ class Workload(object):
         # it is a dict containing { test, {native, direct, sgx, direct_degradation, sgx_degradation} }
         self.result = dict()
 
-        workload_script = test_config_dict['workload_name'] + "_Workload"
-        sys.path.append(os.path.join(FRAMEWORK_HOME_DIR, "src", "workloads"))
-        self.workload_obj = getattr(__import__(workload_script), 'WORKLOAD')
+        workload_script = test_config_dict['workload_name'] + "Workload"
+        self.workload_class = getattr(globals()["workloads"], workload_script)
+        self.workload_obj = self.workload_class(test_config_dict)
 
     def pre_actions(self, test_config_dict):
         """
@@ -70,11 +70,12 @@ class Workload(object):
 
         return float(metric_sum / test_config_dict['iterations'])
 
-    '''
-    Read logs and capture the metrics values in a dictionary.
-    '''
-
     def parse_performance(self, test_config_dict):
+        """
+        Read logs and capture the metrics values in a dictionary.
+        :param test_config_dict:
+        :return:
+        """
         print("\n###### In parse_performance #####\n")
         print(f"\n-- Performance results for {test_config_dict['test_name']}\n")
         os.chdir(LOGS_DIR)

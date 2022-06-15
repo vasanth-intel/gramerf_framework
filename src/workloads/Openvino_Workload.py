@@ -1,4 +1,3 @@
-from src.libs.Workload import Workload
 from src.config_files.constants import *
 from src.libs import utils
 
@@ -9,9 +8,10 @@ def is_true(env):
     return value == 'true'
 
 
-class OpenvinoWorkload(Workload):
-    def __init__(self):
-        pass
+class OpenvinoWorkload():
+    def __init__(self, test_config_dict):
+        self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
+        self.setupvars_path = os.path.join(self.workload_home_dir, 'openvino_2021/bin', 'setupvars.sh')
         
     def download_workload(self, test_config_dict):
         # Installing Openvino within "/home/intel/test/gramine/examples/openvino/openvino_2021"
@@ -59,8 +59,6 @@ class OpenvinoWorkload(Workload):
 
     def build_and_install_workload(self, test_config_dict):
         print("\n###### In build_and_install_workload #####\n")
-
-        self.setupvars_path = os.path.join(self.workload_home_dir, 'openvino_2021/bin', 'setupvars.sh')
 
         if os.path.exists(self.setupvars_path):
             print(f"\n-- Building workload model '{test_config_dict['model_name']}'..\n")
@@ -115,8 +113,6 @@ class OpenvinoWorkload(Workload):
             raise Exception(f"\n-- Library {MIMALLOC_INSTALL_PATH} not generated/installed.\n")
 
     def pre_actions(self, test_config_dict):
-        self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR,test_config_dict['workload_home_dir'])
-
         utils.set_threads_cnt_env_var()
         utils.set_cpu_freq_scaling_governor()
         self.install_mimalloc()
@@ -166,7 +162,4 @@ class OpenvinoWorkload(Workload):
         with open(test_file_name, 'r') as test_fd:
             for line in test_fd:
                 if test_config_dict['metric'] in line:
-                    return line.strip().split(': ')[1].split(' ')[0]
-                        
-
-WORKLOAD = OpenvinoWorkload()
+                    return line.strip().split()[1]

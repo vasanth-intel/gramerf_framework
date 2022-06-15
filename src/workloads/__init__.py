@@ -1,0 +1,1 @@
+from src.workloads.Openvino_Workload import OpenvinoWorkload

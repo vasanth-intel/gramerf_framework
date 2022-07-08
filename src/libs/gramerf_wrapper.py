@@ -32,10 +32,10 @@ def read_perf_suite_config(test_instance, test_yaml_file, test_name):
 
 
 def run_test(test_instance, test_yaml_file):
-
     test_name = inspect.stack()[1].function
     print(f"\n********** Executing {test_name} **********\n")
     test_config_dict = read_perf_suite_config(test_instance, test_yaml_file, test_name)
+    utils.clear_system_cache()
     test_obj = Workload(test_config_dict)
 
     # Workload setup and execute.
@@ -47,9 +47,5 @@ def run_test(test_instance, test_yaml_file):
     gramine_libs.generate_sgx_token_and_sig(test_config_dict)
     test_obj.execute_workload(test_config_dict)
     os.chdir(FRAMEWORK_HOME_DIR)
-
-    # Calculating performance and degradation.
-    test_obj.parse_performance(test_config_dict)
-    test_obj.calculate_degradation(test_config_dict)
-
+  
     return True

@@ -3,20 +3,22 @@ import yaml
 import shutil
 import subprocess
 import lsb_release
+from datetime import date
+import collections
+import pandas as pd
 from src.config_files.constants import *
 
-verify_output = lambda cmd_output, search_str: True if search_str in cmd_output else False
+
+def verify_output(cmd_output, search_str): return True if search_str in cmd_output else False
 
 
-def exec_shell_cmd(cmd, std_pipe=subprocess.PIPE):
-    pipe = subprocess.Popen([cmd], stdout=std_pipe, shell=True)
-    pipe.wait()
-    if pipe.returncode != 0:
+def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
+    cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
+    if cmd_stdout.returncode != 0:
         raise Exception(f"\n-- Failed to execute the process cmd: {cmd}")
-    else:
-        cmd_stdout = pipe.communicate()[0]
-        if cmd_stdout is not None:
-            cmd_stdout = cmd_stdout.decode("utf-8").strip()
+
+    if stdout_val is not None and cmd_stdout.stdout is not None:
+        return cmd_stdout.stdout.strip()
 
     return cmd_stdout
 
@@ -99,7 +101,7 @@ def update_env_variables(build_prefix):
     print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
 
     # Update environment 'PYTHONPATH' variable to <prefix>/lib/python<version>/site-packages.
-    if not os.path.exists("gramine/Scripts/get-python-platlib.py"):
+    if not os.path.exists("gramine/scripts/get-python-platlib.py"):
         print(f"\n-- Failure to update 'PYTHONPATH' env variable. get-python-platlib.py does not exist..\n")
         return
 
@@ -155,3 +157,53 @@ def set_threads_cnt_env_var():
     os.environ['THREADS_CNT'] = str(core_per_socket * threads_per_core)
 
     print("\n-- Setting the THREADS_CNT env variable to ", os.environ['THREADS_CNT'])
+
+
+def write_to_report(workload_name, test_results):
+    throughput_dict = collections.defaultdict(dict)
+    latency_dict = collections.defaultdict(dict)
+    generic_dict = collections.defaultdict(dict)
+
+    for k in test_results:
+        if 'throughput' in k:
+            throughput_dict[k] = test_results[k]
+        elif 'latency' in k:
+            latency_dict[k] = test_results[k]
+        else:
+            generic_dict[k] = test_results[k]
+
+    report_name = os.path.join(PERF_RESULTS_DIR, "Gramine_Performance_Data_{}".format(str(date.today())) + ".xlsx")
+    if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
+    if os.path.exists(report_name):
+        writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
+    else:
+        writer = pd.ExcelWriter(report_name, engine='openpyxl')
+    
+    cols = ['native', 'gramine-direct', 'sgx', 'native-avg', 'direct-avg', 'sgx-avg', 'direct-deg', 'sgx-deg']
+
+    if len(throughput_dict) > 0:
+        throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols).dropna(axis=1)
+        throughput_df.columns = throughput_df.columns.str.upper()
+        throughput_df.to_excel(writer, sheet_name=workload_name)
+
+    if len(latency_dict) > 0:
+        latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols).dropna(axis=1)
+        latency_df.columns = latency_df.columns.str.upper()
+        if len(throughput_dict) > 0:
+            latency_df.to_excel(writer, sheet_name=workload_name, startcol=throughput_df.shape[1]+2)
+        else:
+            latency_df.to_excel(writer, sheet_name=workload_name)
+    
+    if len(generic_dict) > 0:
+        generic_df = pd.DataFrame.from_dict(generic_dict, orient='index', columns=cols).dropna(axis=1)
+        generic_df.columns = generic_df.columns.str.upper()
+        generic_df.to_excel(writer, sheet_name=workload_name)
+
+    writer.save()
+
+
+def generate_performance_report(trd):
+    print("\n###### In generate_performance_report #####\n")
+
+    for workload, tests in trd.items():
+        write_to_report(workload, tests)

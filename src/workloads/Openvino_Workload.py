@@ -49,9 +49,9 @@ class OpenvinoWorkload():
             convert_cmd = "python3 ./converter.py --name {0} -d {1}/model -o {1}/model".format(test_config_dict['model_name'], self.workload_home_dir)
             convert_cmd = f"bash -c 'source {self.setupvars_path} && source {self.workload_home_dir}/openvino/bin/activate && {convert_cmd}'"
             print("\n-- Model download cmd:", download_cmd)
-            utils.exec_shell_cmd(download_cmd)
+            utils.exec_shell_cmd(download_cmd, None)
             print("\n-- Model convert cmd:", convert_cmd)
-            utils.exec_shell_cmd(convert_cmd)
+            utils.exec_shell_cmd(convert_cmd, None)
         else:
             print("\n-- Models are already downloaded.")
 
@@ -78,6 +78,28 @@ class OpenvinoWorkload():
         # Check for build status by verifying the existence of model.xml file and return accordingly.
         if not os.path.exists(model_file_path):
             raise Exception(f"\n-- Failure: Model {model_file_path} not found/built. Returning without building the model.")
+
+    def update_manifest(self, test_config_dict):
+        if test_config_dict['metric'] == "Throughput":
+            # We are not changing the enclave size for 'Resnet' and 'SSD' models as they are the default values
+            # present within the manifest template.
+            if 'resnet' in test_config_dict['model_name'] or 'ssd' in test_config_dict['model_name']:
+                return
+
+            filename = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , test_config_dict['manifest_name']) + ".manifest.template"
+
+            with open(filename, 'r') as file:
+                read_data = file.read()
+
+            if 'bert' in test_config_dict['model_name'] or 'segmentation-0002' in test_config_dict['model_name']:
+                write_data = read_data.replace('sgx.enclave_size = "32G"', 'sgx.enclave_size = "64G"')
+
+            if 'segmentation-0001' in test_config_dict['model_name']:
+                tmpdata = read_data.replace('sgx.enclave_size = "32G"', 'sgx.enclave_size = "128G"')
+                write_data = tmpdata.replace('sgx.preheat_enclave = true', '')
+
+            with open(filename, 'w') as file:
+                file.write(write_data)
 
     def generate_manifest(self):
         openvino_path = os.path.join(self.workload_home_dir, 'openvino_2021')
@@ -120,6 +142,7 @@ class OpenvinoWorkload():
     def setup_workload(self, test_config_dict):
         self.download_workload(test_config_dict)
         self.build_and_install_workload(test_config_dict)
+        self.update_manifest(test_config_dict)
         self.generate_manifest()
 
     def construct_workload_exec_cmd(self, test_config_dict, exec_mode = 'native', iteration=1):

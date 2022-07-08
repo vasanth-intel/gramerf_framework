@@ -1,6 +1,8 @@
+import time
 from src.config_files.constants import *
 from src.libs import utils
 import src.workloads as workloads
+from conftest import trd
 
 
 class Workload(object):
@@ -13,10 +15,6 @@ class Workload(object):
                  test_config_dict):
         self.name = test_config_dict['workload_name']
         self.command = None
-        self.degradation = None
-        # result is the overall results for the workload
-        # it is a dict containing { test, {native, direct, sgx, direct_degradation, sgx_degradation} }
-        self.result = dict()
 
         workload_script = test_config_dict['workload_name'] + "Workload"
         self.workload_class = getattr(globals()["workloads"], workload_script)
@@ -35,69 +33,51 @@ class Workload(object):
         return self.workload_obj.setup_workload(test_config_dict)
 
     # Build the workload execution command based on execution params and execute it.
-    def execute_workload(self, test_config_dict):
+    def execute_workload(self, tcd):
         print("\n##### In execute_workload #####\n")
+        test_dict = {}
+        global trd
 
-        for i in range(len(test_config_dict['exec_mode'])):
-            print(f"\n-- Executing {test_config_dict['test_name']} in {test_config_dict['exec_mode'][i]} mode")
-            for j in range(test_config_dict['iterations']):
-                self.command = self.workload_obj.construct_workload_exec_cmd(test_config_dict,
-                                                                             test_config_dict['exec_mode'][i], j + 1)
+        for e_mode in tcd['exec_mode']:
+            print(f"\n-- Executing {tcd['test_name']} in {e_mode} mode")
+            test_dict[e_mode] = []
+            for j in range(tcd['iterations']):
+                self.command = self.workload_obj.construct_workload_exec_cmd(tcd, e_mode, j + 1)
 
                 if self.command is None:
                     raise Exception(
-                        f"\n-- Failure: Unable to construct command for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
+                        f"\n-- Failure: Unable to construct command for {tcd['test_name']} Exec_mode: {e_mode}")
 
                 cmd_output = utils.exec_shell_cmd(self.command)
                 print(cmd_output)
-                if cmd_output is None or utils.verify_output(cmd_output, test_config_dict['metric']) is False:
+                if cmd_output is None or utils.verify_output(cmd_output, tcd['metric']) is False:
                     raise Exception(
-                        f"\n-- Failure: Test workload execution failed for {test_config_dict['test_name']} Exec_mode: {test_config_dict['exec_mode'][i]}")
+                        f"\n-- Failure: Test workload execution failed for {tcd['test_name']} Exec_mode: {e_mode}")
+
+                test_file_name = LOGS_DIR + '/' + tcd['test_name'] + '_' + e_mode + '_' + str(j+1) + '.log'
+                if not os.path.exists(test_file_name):
+                    raise Exception(f"\nFailure: File {test_file_name} does not exist for parsing performance..")
+                metric_val = float(self.workload_obj.get_metric_value(tcd, test_file_name))
+                test_dict[e_mode].append(metric_val)
+                
+                time.sleep(TEST_SLEEP_TIME_BW_ITERATIONS)
+
+        if 'native' in tcd['exec_mode']:
+            test_dict['native-avg'] = '{:0.3f}'.format(sum(test_dict['native'])/len(test_dict['native']))
+
+            if 'gramine-direct' in tcd['exec_mode']:
+                test_dict['direct-avg'] = '{:0.3f}'.format(
+                    sum(test_dict['gramine-direct'])/len(test_dict['gramine-direct']))
+                test_dict['direct-deg'] = self.percent_degradation(test_dict['native-avg'], test_dict['direct-avg'])
+
+            if 'gramine-sgx' in tcd['exec_mode']:
+                test_dict['sgx-avg'] = '{:0.3f}'.format(sum(test_dict['gramine-sgx'])/len(test_dict['gramine-sgx']))
+                test_dict['sgx-deg'] = self.percent_degradation(test_dict['native-avg'], test_dict['sgx-avg'])
+
+        trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
+        trd[tcd['workload_name']].update({tcd['test_name']: test_dict})
 
     # calculate the percent degradation
     @staticmethod
     def percent_degradation(baseline, testapp):
         return '{:0.3f}'.format(100 * (float(baseline) - float(testapp)) / float(baseline))
-
-    def get_test_average(self, test_config_dict, exec_mode):
-        metric_sum = 0
-        for j in range(1, test_config_dict['iterations'] + 1):
-            test_file_name = test_config_dict['test_name'] + '_' + exec_mode + '_' + str(j) + '.log'
-            if not os.path.exists(test_file_name):
-                raise Exception(f"\nFailure: File {test_file_name} does not exist for parsing performance..")
-
-            metric_sum += float(self.workload_obj.get_metric_value(test_config_dict, test_file_name))
-
-        return float(metric_sum / test_config_dict['iterations'])
-
-    def parse_performance(self, test_config_dict):
-        """
-        Read logs and capture the metrics values in a dictionary.
-        :param test_config_dict:
-        :return:
-        """
-        print("\n###### In parse_performance #####\n")
-        print(f"\n-- Performance results for {test_config_dict['test_name']}\n")
-        os.chdir(LOGS_DIR)
-        self.result[test_config_dict['test_name']] = dict()
-
-        for i in range(len(test_config_dict['exec_mode'])):
-            test_average = '{:0.3f}'.format(self.get_test_average(test_config_dict, test_config_dict['exec_mode'][i]))
-            self.result[test_config_dict['test_name']][test_config_dict['exec_mode'][i]] = test_average
-
-        os.chdir(FRAMEWORK_HOME_DIR)
-
-    def calculate_degradation(self, test_config_dict):
-        if 'native' in test_config_dict['exec_mode']:
-            exec_mode = [y for y in test_config_dict['exec_mode'] if y != "native"]
-            for y in exec_mode:
-                deg_index = y + "-degradation"
-                self.result[test_config_dict['test_name']][deg_index] = \
-                    self.percent_degradation(self.result[test_config_dict['test_name']]['native'],
-                                             self.result[test_config_dict['test_name']][y])
-        else:
-            print(
-                f"\n-- Workload not executed in 'native' mode. Cannot calculate performance degradation for {test_config_dict['test_name']}.")
-            return
-
-        print(self.result[test_config_dict['test_name']])

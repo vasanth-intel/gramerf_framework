@@ -48,6 +48,7 @@ Default:
  netcat-openbsd
  ninja-build
  pkg-config
+ protobuf-compiler
  protobuf-c-compiler
  pylint3
  python

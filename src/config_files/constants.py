@@ -2,12 +2,14 @@ import os
 
 FRAMEWORK_HOME_DIR = os.getcwd()
 GRAMINE_HOME_DIR = FRAMEWORK_HOME_DIR + "/gramine"
-LOGS_DIR =  FRAMEWORK_HOME_DIR + "/logs"
+LOGS_DIR = FRAMEWORK_HOME_DIR + "/logs"
+PERF_RESULTS_DIR = FRAMEWORK_HOME_DIR + "/results"
 HTTP_PROXY = "http://proxy-dmz.intel.com:911/"
 HTTPS_PROXY = "http://proxy-dmz.intel.com:912/"
 SYSTEM_PACKAGES_FILE = "system_packages.yaml"
 PYTHON_PACKAGES_FILE = "python_packages.yaml"
 PKG_INSTALL_WAIT_TIME = 25
+TEST_SLEEP_TIME_BW_ITERATIONS = 15
 BUILD_TYPE = "release"
 BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 
@@ -35,7 +37,7 @@ GRAMINE_NINJA_BUILD_CMD = "ninja -vC build > " + LOGS_DIR + "/gramine_ninja_buil
 
 GRAMINE_NINJA_INSTALL_CMD = "ninja -vC build install > " + LOGS_DIR + "/gramine_ninja_install_cmd_output.txt"
 
-PYTHONPATH_CMD = "gramine/Scripts/get-python-platlib.py " + BUILD_PREFIX
+PYTHONPATH_CMD = "gramine/scripts/get-python-platlib.py " + BUILD_PREFIX
 
 GRAMINE_SGX_GEN_PRIVATE_KEY_CMD = "gramine-sgx-gen-private-key -f"
 

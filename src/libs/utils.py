@@ -179,7 +179,7 @@ def write_to_report(workload_name, test_results):
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
     
-    cols = ['native', 'gramine-direct', 'sgx', 'native-avg', 'direct-avg', 'sgx-avg', 'direct-deg', 'sgx-deg']
+    cols = ['native', 'gramine-direct', 'gramine-sgx', 'native-avg', 'direct-avg', 'sgx-avg', 'direct-deg', 'sgx-deg']
 
     if len(throughput_dict) > 0:
         throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols).dropna(axis=1)

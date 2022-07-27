@@ -20,6 +20,8 @@ EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.
 
 MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"
 
+REDIS_DOWNLOAD_CMD = "wget https://github.com/antirez/redis/archive/6.0.5.tar.gz"
+
 MIMALLOC_INSTALL_PATH = "/usr/local/lib/libmimalloc.so.1.7"
 
 TCMALLOC_INSTALL_PATH = "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"

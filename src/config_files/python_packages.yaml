@@ -3,7 +3,8 @@
 # will be formed with spaces and pip install will fail without the quotes.
 Default:
  asv>=0.5.1
- "meson >=0.55, <0.56" 
+ "meson >=0.55, <0.56"
+ openpyxl
 
 "18.04":
  recommonmark

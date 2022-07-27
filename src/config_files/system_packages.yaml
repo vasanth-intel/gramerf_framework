@@ -69,6 +69,7 @@ Default:
  python3-venv
  sqlite3
  shellcheck
+ sshpass
  sudo
  texinfo
  uthash-dev

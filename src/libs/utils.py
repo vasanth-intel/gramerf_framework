@@ -3,13 +3,20 @@ import yaml
 import shutil
 import subprocess
 import lsb_release
+import csv
 from datetime import date
 import collections
 import pandas as pd
+import socket
 from src.config_files.constants import *
 
 
 def verify_output(cmd_output, search_str): return True if search_str in cmd_output else False
+
+
+# calculate the percent degradation
+def percent_degradation(baseline, testapp):
+    return '{:0.3f}'.format(100 * (float(baseline) - float(testapp)) / float(baseline))
 
 
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
@@ -100,14 +107,12 @@ def update_env_variables(build_prefix):
         'PKG_CONFIG_PATH', '')
     print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
 
-    # Update environment 'PYTHONPATH' variable to <prefix>/lib/python<version>/site-packages.
-    if not os.path.exists("gramine/scripts/get-python-platlib.py"):
-        print(f"\n-- Failure to update 'PYTHONPATH' env variable. get-python-platlib.py does not exist..\n")
-        return
-
     print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
     os.environ["PYTHONPATH"] = exec_shell_cmd(PYTHONPATH_CMD)
     print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
+
+    print(f"\n-- Updating 'SSHPASS' env-var\n")
+    os.environ['SSHPASS'] = "intel@123"
 
 
 def set_http_proxies():
@@ -158,6 +163,26 @@ def set_threads_cnt_env_var():
 
     print("\n-- Setting the THREADS_CNT env variable to ", os.environ['THREADS_CNT'])
 
+
+def determine_host_ip_addr():
+    host_IP = socket.gethostbyname(socket.gethostname())
+    if host_IP.startswith("127."):
+        sock_obj = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # The IP address specified in below connect call doesn't have to be reachable..
+        sock_obj.connect(('10.255.255.255', 1))
+        host_IP = sock_obj.getsockname()[0]
+    return host_IP
+
+
+def write_to_csv(tcd, test_dict):
+    csv_res_folder = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'])
+    if not os.path.exists(csv_res_folder): os.makedirs(csv_res_folder)
+    csv_res_file = os.path.join(csv_res_folder, tcd['test_name']+'.csv')
+    with open(csv_res_file, 'w') as csvfile:
+        csvwriter = csv.DictWriter(csvfile, test_dict.keys())
+        csvwriter.writeheader()
+        csvwriter.writerow(test_dict)
+    
 
 def write_to_report(workload_name, test_results):
     throughput_dict = collections.defaultdict(dict)

@@ -207,6 +207,13 @@ class RedisWorkload:
     def execute_workload(self, tcd):
         print("\n##### In execute_workload #####\n")
 
+        print("\n-- Deleting older test results from client..")
+        test_res_path = os.path.join(tcd['client_results_path'], tcd['test_name'])
+        client_name = tcd['client_username'] + "@" + tcd['client_ip']
+        test_res_del_cmd = f"sshpass -e ssh {client_name} 'rm -rf {test_res_path}'"
+        print(test_res_del_cmd)
+        utils.exec_shell_cmd(test_res_del_cmd)
+
         for e_mode in tcd['exec_mode']:
             print(f"\n-- Executing {tcd['test_name']} in {e_mode} mode")
 
@@ -227,8 +234,6 @@ class RedisWorkload:
             time.sleep(5)
 
             self.free_redis_server_port(tcd)
-            # if cmd_output is None or utils.verify_output(cmd_output, tcd['metric']) is False:
-            #     raise Exception(f"\n-- Failure: Test workload execution failed for {tcd['test_name']} Exec_mode: {e_mode}")
 
             time.sleep(TEST_SLEEP_TIME_BW_ITERATIONS)
         

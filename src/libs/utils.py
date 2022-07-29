@@ -8,6 +8,7 @@ from datetime import date
 import collections
 import pandas as pd
 import socket
+import netifaces as ni
 from src.config_files.constants import *
 
 
@@ -166,11 +167,19 @@ def set_threads_cnt_env_var():
 
 def determine_host_ip_addr():
     host_IP = socket.gethostbyname(socket.gethostname())
+    
     if host_IP.startswith("127."):
         sock_obj = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # The IP address specified in below connect call doesn't have to be reachable..
         sock_obj.connect(('10.255.255.255', 1))
         host_IP = sock_obj.getsockname()[0]
+        
+    for ifaceName in ni.interfaces():
+        if ni.ifaddresses(ifaceName).setdefault(ni.AF_INET) is not None and \
+                ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr'].startswith('192.'):
+            host_IP = ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr']
+            break
+
     return host_IP
 
 

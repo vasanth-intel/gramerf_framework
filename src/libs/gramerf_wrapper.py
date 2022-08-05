@@ -1,60 +1,51 @@
-#
-# Imports
-#
-import json
-import yaml
 import inspect
-import conftest
-
-class test_config:
-    # constructor
-    def __init__(self, dict_obj):
-        self.__dict__.update(dict_obj)
-
-   
-def dict2obj(dict_instance):
-    # using json.loads method and passing json.dumps
-    # method and custom object hook as arguments
-    return json.loads(json.dumps(dict_instance), object_hook=test_config)
+from src.libs.Workload import Workload
+from src.libs import gramine_libs
+from src.config_files.constants import *
+from src.libs import utils
 
 
-def read_config(tests_yaml_path):
-    # Reading test specific configurations
-    test_name = inspect.stack()[1].function
+def read_perf_suite_config(test_instance, test_yaml_file, test_name):
+    # Reading global config data.
+    config_file_name = "config.yaml"
+    config_file_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', config_file_name)
 
-    with open(tests_yaml_path, "r") as fd:
-        try:
-            yaml_test_config = yaml.safe_load(fd)
-        except yaml.YAMLError as exc:
-            print(exc)
+    # Reading global config and workload specific data.
+    test_config_dict = utils.read_config_yaml(config_file_path)
+    yaml_test_config = utils.read_config_yaml(test_yaml_file)
+    test_config_dict.update(yaml_test_config['Default'])
 
-    print(conftest.test_config_dict)
-    
-    conftest.test_config_dict.update(yaml_test_config['Default'])
-
+    # Updating config for test specific data.
     if yaml_test_config.get(test_name):
-        conftest.test_config_dict.update(yaml_test_config[test_name])
-        conftest.test_config_dict['test_name'] = test_name
-        print ("\n\n Test Name = ", conftest.test_config_dict['test_name'])
+        test_config_dict.update(yaml_test_config[test_name])
+        test_config_dict['test_name'] = test_name
+
+    # Reading command line overrides.
+    if test_instance.config.getoption('--iterations') != 1:
+        test_config_dict['iterations'] = test_instance.config.getoption('iterations')
+    if test_instance.config.getoption('--exec_mode') != '' and test_instance.config.getoption('--exec_mode') != 'None':
+        test_config_dict['exec_mode'] = test_instance.config.getoption('exec_mode').split(' ')
+
+    print("\n-- Read the following Test Configuration Data : \n\n", test_config_dict)
+
+    return test_config_dict
 
 
-def run_test(test_obj):
-    #Update final test config from command line arguments
-    test_obj.update_test_config_from_cmd_line()
+def run_test(test_instance, test_yaml_file):
+    test_name = inspect.stack()[1].function
+    print(f"\n********** Executing {test_name} **********\n")
+    test_config_dict = read_perf_suite_config(test_instance, test_yaml_file, test_name)
+    utils.clear_system_cache()
+    test_obj = Workload(test_config_dict)
 
-    test_config_obj = dict2obj(conftest.test_config_dict)
-    #tco = test_config_obj
-    #print ("\n ########## Local ###########", tco.iterations)
-
-    test_obj.pre_actions(test_config_obj)
-
-    #print("\n\n", test_config_obj.iterations)
-    #print("\n\n", test_config_obj.metrics[0])
-    #print("\n\n", test_config_obj.model_dir)
-    #print("\n\n", test_config_dict['model_dir'])
-    #print("\n\n", test_config_dict)
-
-
-
-
-
+    # Workload setup and execute.
+    workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
+    os.chdir(workload_home_dir)
+    test_obj.pre_actions(test_config_dict)
+    gramine_libs.update_manifest_file(test_config_dict)
+    test_obj.setup_workload(test_config_dict)
+    gramine_libs.generate_sgx_token_and_sig(test_config_dict)
+    test_obj.execute_workload(test_config_dict)
+    os.chdir(FRAMEWORK_HOME_DIR)
+  
+    return True

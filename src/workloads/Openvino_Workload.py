@@ -1,15 +1,7 @@
-#
-# Imports
-#
-import pytest
-import collections
-import os
-import psutil
 import time
-import shutil
-from src.libs.Workload import Workload
-import conftest
-from src.config_files import constants
+from src.config_files.constants import *
+from src.libs import utils
+from conftest import trd
 
 
 # convert environment variable to boolean
@@ -17,123 +9,249 @@ def is_true(env):
     value = os.environ.get(env, 'false').lower()
     return value == 'true'
 
-class OpenvinoWorkload(Workload):
 
-    def update_test_config_from_cmd_line(self):
-        if pytest.config.getoption('--iterations') != 1:
-            conftest.test_config_dict['iterations'] = pytest.config.getoption('iterations')
+class OpenvinoWorkload():
+    def __init__(self, test_config_dict):
+        self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
+        self.setupvars_path = os.path.join(self.workload_home_dir, 'openvino_2021/bin', 'setupvars.sh')
+        self.command = None
+        
+    def download_workload(self, test_config_dict):
+        # Installing Openvino within "/home/intel/test/gramine/examples/openvino/openvino_2021"
+        install_dir = os.path.join(self.workload_home_dir, 'openvino_2021')
+        
+        # We would not install if the installation dir already exists.
+        if os.path.exists(install_dir):
+            print("\n-- Openvino already installed. Not fetching from source..")
+            return True
+        os.makedirs(install_dir, exist_ok=True)
+        
+        distro, distro_version = utils.get_distro_and_version()
+        if distro == 'ubuntu' and distro_version in ["18.04", "20.04"]:
+            if distro_version == '18.04':
+                toolkit_name = "l_openvino_toolkit_dev_ubuntu18_p_2021.4.752"
+            else:
+                toolkit_name = "l_openvino_toolkit_dev_ubuntu20_p_2021.4.752"
+        elif distro == 'rhel':
+            toolkit_name = "l_openvino_toolkit_dev_rhel8_p_2021.4.752"
+        else:
+            raise Exception("Unsupported distro for Openvino installation")
+        
+        wget_cmd = "wget https://storage.openvinotoolkit.org/repositories/openvino/packages/2021.4.2/" + toolkit_name + ".tgz"
+        untar_cmd = "tar xzf " + toolkit_name + ".tgz"
 
-        if pytest.config.getoption('--exec_mode') != '' and pytest.config.getoption('--exec_mode') != 'None':
-            conftest.test_config_dict['exec_mode'] = pytest.config.getoption('exec_mode').split(' ')
-                        
-        if pytest.config.getoption('--fp') != '' and pytest.config.getoption('--fp') != 'None':
-            conftest.test_config_dict['fp'] = pytest.config.getoption('fp').split(' ')
+        print("\n-- Fetching and extracting Openvino workload from source..")
+        utils.exec_shell_cmd(wget_cmd)
+        utils.exec_shell_cmd(untar_cmd)
+        os.rename(toolkit_name, 'openvino_2021')
 
-        print (conftest.test_config_dict)
-
-    '''
-    This method renames the existing manifest to original manifest (as '.ori'), copies
-    the manifest (latency/throughput) that needs to be overridden into the workload home dir
-    and renames the copied manifest to the expected name by the workload.
-    '''
-    def replace_manifest_file(self, test_config_obj, buildForThroughput = None):
-        original_manifest_file = os.path.join(test_config_obj.workload_home_dir, test_config_obj.original_manifest_file)
-        if buildForThroughput == True:
-            override_manifest_file = os.path.join(constants.FRAMEWORK_HOME_DIR, test_config_obj.throughput_manifest_file)
-        elif buildForThroughput == False:
-            override_manifest_file = os.path.join(constants.FRAMEWORK_HOME_DIR, test_config_obj.latency_manifest_file)
-        os.rename(original_manifest_file, original_manifest_file+'.ori')
-        # Copy the workload specific manifest to workload dir and 
-        # rename the same as per the expected original name
-        shutil.copy2(override_manifest_file, test_config_obj.workload_home_dir)
-        if buildForThroughput == True:
-            tmp_original_file = os.path.join(test_config_obj.workload_home_dir, os.path.basename(test_config_obj.throughput_manifest_file))
-        elif buildForThroughput == False:
-            tmp_original_file = os.path.join(test_config_obj.workload_home_dir, os.path.basename(test_config_obj.latency_manifest_file))
-        os.rename(tmp_original_file, original_manifest_file)
-
-    def build_workload(self, test_config_obj, buildForThroughput = None):
-        cwd = os.getcwd()
-
-        if buildForThroughput == None:
-            return
-        elif buildForThroughput:
-            self.replace_manifest_file(test_config_obj, True)
+        # Modify the onnx version comparison and restrict it to 1.8.1 within requirements.txt,
+        # only for Ubuntu 18.04 to address the Openvino build failure.
+        if distro == 'ubuntu' and distro_version  == '18.04':
             
-            #os.rename(override_manifest_file, original_manifest_file)
+            filename = os.path.join(self.workload_home_dir,  "openvino_2021/deployment_tools/model_optimizer/requirements.txt")
+
+            if not os.path.exists(filename):
+                raise Exception(f"\n-- Failure: {filename} not found!! Please check for the existence of this file within extracted workload.")
+
+            with open(filename, 'r') as file:
+                read_data = file.read()
+
+            write_data = read_data.replace('onnx>=1.8.1', 'onnx==1.8.1')
+
+            with open(filename, 'w') as file:
+                file.write(write_data)
+
+    def download_and_convert_model(self, test_config_dict, model_file_path):
+        if not os.path.exists(model_file_path):
+            os.chdir("openvino_2021/deployment_tools/open_model_zoo/tools/downloader")
+            download_cmd = "python3 ./downloader.py --name {0} -o {1}/model".format(test_config_dict['model_name'], self.workload_home_dir)
+            convert_cmd = "python3 ./converter.py --name {0} -d {1}/model -o {1}/model".format(test_config_dict['model_name'], self.workload_home_dir)
+            convert_cmd = f"bash -c 'source {self.setupvars_path} && source {self.workload_home_dir}/openvino/bin/activate && {convert_cmd}'"
+            print("\n-- Model download cmd:", download_cmd)
+            utils.exec_shell_cmd(download_cmd, None)
+            print("\n-- Model convert cmd:", convert_cmd)
+            utils.exec_shell_cmd(convert_cmd, None)
         else:
-            self.replace_manifest_file(test_config_obj, False)
+            print("\n-- Models are already downloaded.")
 
-            #os.rename(override_manifest_file, original_manifest_file)
+        os.chdir(self.workload_home_dir)
 
-        #After the build is complete we need to del the existing overridden manifest and rename
-        #manifest.ori to the expected original name by the workload
-        os.chdir(cwd)
+    def build_and_install_workload(self, test_config_dict):
+        print("\n###### In build_and_install_workload #####\n")
 
+        if os.path.exists(self.setupvars_path):
+            print(f"\n-- Building workload model '{test_config_dict['model_name']}'..\n")
+            ov_env_var_bld_cmd = f"bash -c 'source {self.setupvars_path} && make benchmark_app openvino/.INSTALLATION_OK'"
+            print("\n-- Setting up OpenVINO environment variables and building Openvino..\n", ov_env_var_bld_cmd)
 
-    def pre_actions(self, test_config_obj):
-        #global tco
+            openvino_make_log = LOGS_DIR + "/openvino" + test_config_dict['model_name'] + '_make.log'
+            log_fd = open(openvino_make_log, "w")
+            utils.exec_shell_cmd(ov_env_var_bld_cmd, log_fd)
+            log_fd.close()
+            
+        model_file_path = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['model_dir'], test_config_dict['fp'], 
+                            test_config_dict['model_name']+'.xml')
 
-        #print(tco)
-        if not os.path.exists(test_config_obj.model_dir):
-            self.build_workload(test_config_obj, True)
-            print("\n****** Model dir does not exist ******")
+        self.download_and_convert_model(test_config_dict, model_file_path)
+
+        # Check for build status by verifying the existence of model.xml file and return accordingly.
+        if not os.path.exists(model_file_path):
+            raise Exception(f"\n-- Failure: Model {model_file_path} not found/built. Returning without building the model.")
+
+    def update_manifest(self, test_config_dict):
+        if test_config_dict['metric'] == "Throughput":
+            # We are not changing the enclave size for 'Resnet' and 'SSD' models as they are the default values
+            # present within the manifest template.
+            if 'resnet' in test_config_dict['model_name'] or 'ssd' in test_config_dict['model_name']:
+                return
+
+            filename = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , test_config_dict['manifest_name']) + ".manifest.template"
+
+            with open(filename, 'r') as file:
+                read_data = file.read()
+
+            if 'bert' in test_config_dict['model_name'] or 'segmentation-0002' in test_config_dict['model_name']:
+                write_data = read_data.replace('sgx.enclave_size = "32G"', 'sgx.enclave_size = "64G"')
+
+            if 'segmentation-0001' in test_config_dict['model_name']:
+                tmpdata = read_data.replace('sgx.enclave_size = "32G"', 'sgx.enclave_size = "128G"')
+                write_data = tmpdata.replace('sgx.preheat_enclave = true', '')
+
+            with open(filename, 'w') as file:
+                file.write(write_data)
+
+    def generate_manifest(self):
+        openvino_path = os.path.join(self.workload_home_dir, 'openvino_2021')
+        inference_path = os.path.join(self.workload_home_dir, 'inference_engine_cpp_samples_build')
+
+        manifest_cmd = "gramine-manifest -Dlog_level={} -Darch_libdir={} -Dopenvino_dir={} -Dinference_engine_cpp_samples_build={} \
+                            benchmark_app.manifest.template > benchmark_app.manifest".format(
+            LOG_LEVEL, os.environ.get('ARCH_LIBDIR'), openvino_path, inference_path
+        )
+        
+        utils.exec_shell_cmd(manifest_cmd)
+
+    def install_mimalloc(self):
+        if os.path.exists(MIMALLOC_INSTALL_PATH):
+            print("\n-- Library 'mimalloc' already exists.. Returning without rebuilding.\n")
+            return
+
+        print("\n-- Setting up mimalloc for Openvino..\n", MIMALLOC_CLONE_CMD)
+        utils.exec_shell_cmd(MIMALLOC_CLONE_CMD)
+        mimalloc_dir = os.path.join(self.workload_home_dir, 'mimalloc')
+        os.chdir(mimalloc_dir)
+        mimalloc_make_dir_path = os.path.join(mimalloc_dir, 'out/release')
+        os.makedirs(mimalloc_make_dir_path, exist_ok=True)
+        os.chdir(mimalloc_make_dir_path)
+
+        utils.exec_shell_cmd("cmake ../..")
+        utils.exec_shell_cmd("make")
+        utils.exec_shell_cmd("sudo make install")
+
+        os.chdir(self.workload_home_dir)
+
+        if not os.path.exists(MIMALLOC_INSTALL_PATH):
+            raise Exception(f"\n-- Library {MIMALLOC_INSTALL_PATH} not generated/installed.\n")
+
+    def pre_actions(self, test_config_dict):
+        utils.set_threads_cnt_env_var()
+        utils.set_cpu_freq_scaling_governor()
+        self.install_mimalloc()
+
+    def setup_workload(self, test_config_dict):
+        self.download_workload(test_config_dict)
+        self.build_and_install_workload(test_config_dict)
+        self.update_manifest(test_config_dict)
+        self.generate_manifest()
+
+    def construct_workload_exec_cmd(self, test_config_dict, exec_mode = 'native', iteration=1):
+        ov_exec_cmd = None
+        exec_mode_str = './benchmark_app' if exec_mode == 'native' else exec_mode + ' benchmark_app'
+        
+        model_file_path = test_config_dict['model_dir'].split(test_config_dict['workload_home_dir'] + '/')[1]
+        model_str = ' -m ' + os.path.join(model_file_path, 
+                                test_config_dict['fp'],test_config_dict['model_name']+'.xml')
+
+        output_file_name = LOGS_DIR + "/" + test_config_dict['test_name'] + '_' + exec_mode + '_' + str(iteration) + '.log'
+
+        print("\nOutput file name = ", output_file_name)
+        if test_config_dict['metric'] == 'Throughput':
+            ov_exec_cmd = "KMP_AFFINITY=granularity=fine,noverbose,compact,1,0 " + \
+                            exec_mode_str + model_str + \
+                            " -d CPU -b 1 -t 20" + \
+                            " -nstreams " + os.environ['THREADS_CNT'] + " -nthreads " + os.environ['THREADS_CNT'] + \
+                            " -nireq " + os.environ['THREADS_CNT'] + " | tee " + output_file_name
+
+            os.environ['LD_PRELOAD'] = TCMALLOC_INSTALL_PATH if exec_mode == 'native' else ''
+
+        elif test_config_dict['metric'] == 'Latency':
+            ov_exec_cmd = "KMP_AFFINITY=granularity=fine,noverbose,compact,1,0 " + \
+                            exec_mode_str + model_str + \
+                            " -d CPU -b 1 -t 20" + \
+                            " -api sync | tee " + output_file_name
+
+            os.environ['LD_PRELOAD'] = MIMALLOC_INSTALL_PATH if exec_mode == 'native' else ''
+
         else:
-            # Model is present. Check for the existence of .xml
-            print("\n****** Model dir exists ******", test_config_obj.model_dir)
-            self.build_workload(test_config_obj, True)
-            #print(test_config_obj.iterations)
-            print(len(test_config_obj.metrics))
-         #       os.mkdir(self.result_type_folder)
-        #get command
-        #self.command = self.get_command(TEST_CONFIG)
+            print("\n-- Failure: Internal error! Execution metric no set..")
 
+        ov_exec_cmd = f"bash -c 'source {self.setupvars_path} && " + ov_exec_cmd + "'"
+        print("\nCommand name = ", ov_exec_cmd)
+        return ov_exec_cmd
 
-    def __init__(self,
-                 name,
-                 command,
-                 exe_name,
-                 working_dir=None,
-                 log_dir=None,
-                 baseline_subdir='baseline',
-                 testapp_subdir='testapp'):
-
-        self.preexisting_pids = psutil.pids()
-        # if ENV_OperatingSystem == "Linux":
-        #     self.exe_name=exe_name.split(".")[0]
-        # elif ENV_OperatingSystem == "Windows":
-        #     self.exe_name=exe_name
-
-
-        # result is the overall score for all benchmarks
-        # it is a list containing [baseline_score, testapp_score, percent_degradaton]
-        self.result = []
-        # self.records are the individual benchmark results
-        # {benchmark, [baseline_score, testapp_score, percent_degradaton]}
-        self.records = collections.OrderedDict()
-        time.sleep(1)
-        super(OpenvinoWorkload, self).__init__(name,
-                                              command,
-                                              exe_name,
-                                              working_dir,
-                                              log_dir,
-                                              baseline_subdir,
-                                              testapp_subdir)
-
-    def post_actions(self, TEST_CONFIG):
-        pass
-
-    def get_command(self, TEST_CONFIG):
-        pass
-
-    # calculate the percent degradation
     @staticmethod
-    def percent_degradation(baseline, testapp):
-        return '{:0.3f}'.format(100 * (float(baseline) - float(testapp)) / float(baseline))
+    def get_metric_value(test_config_dict, test_file_name):
+        with open(test_file_name, 'r') as test_fd:
+            for line in test_fd:
+                if test_config_dict['metric'] in line:
+                    return line.strip().split()[1]
 
-    def parse_performance(self, TEST_CONFIG):
-        pass
-    
+    # Build the workload execution command based on execution params and execute it.
+    def execute_workload(self, tcd):
+        print("\n##### In execute_workload #####\n")
+        test_dict = {}
+        global trd
 
+        for e_mode in tcd['exec_mode']:
+            print(f"\n-- Executing {tcd['test_name']} in {e_mode} mode")
+            test_dict[e_mode] = []
+            for j in range(tcd['iterations']):
+                self.command = self.construct_workload_exec_cmd(tcd, e_mode, j + 1)
 
-#eof
+                if self.command is None:
+                    raise Exception(
+                        f"\n-- Failure: Unable to construct command for {tcd['test_name']} Exec_mode: {e_mode}")
+
+                cmd_output = utils.exec_shell_cmd(self.command)
+                print(cmd_output)
+                if cmd_output is None or utils.verify_output(cmd_output, tcd['metric']) is False:
+                    raise Exception(
+                        f"\n-- Failure: Test workload execution failed for {tcd['test_name']} Exec_mode: {e_mode}")
+
+                test_file_name = LOGS_DIR + '/' + tcd['test_name'] + '_' + e_mode + '_' + str(j+1) + '.log'
+                if not os.path.exists(test_file_name):
+                    raise Exception(f"\nFailure: File {test_file_name} does not exist for parsing performance..")
+                metric_val = float(self.get_metric_value(tcd, test_file_name))
+                test_dict[e_mode].append(metric_val)
+                
+                time.sleep(TEST_SLEEP_TIME_BW_ITERATIONS)
+
+        if 'native' in tcd['exec_mode']:
+            test_dict['native-avg'] = '{:0.3f}'.format(sum(test_dict['native'])/len(test_dict['native']))
+
+        if 'gramine-direct' in tcd['exec_mode']:
+            test_dict['direct-avg'] = '{:0.3f}'.format(
+                sum(test_dict['gramine-direct'])/len(test_dict['gramine-direct']))
+            if 'native' in tcd['exec_mode']:
+                test_dict['direct-deg'] = utils.percent_degradation(test_dict['native-avg'], test_dict['direct-avg'])
+
+        if 'gramine-sgx' in tcd['exec_mode']:
+            test_dict['sgx-avg'] = '{:0.3f}'.format(sum(test_dict['gramine-sgx'])/len(test_dict['gramine-sgx']))
+            if 'native' in tcd['exec_mode']:
+                test_dict['sgx-deg'] = utils.percent_degradation(test_dict['native-avg'], test_dict['sgx-avg'])
+
+        utils.write_to_csv(tcd, test_dict)
+
+        trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
+        trd[tcd['workload_name']].update({tcd['test_name']: test_dict})

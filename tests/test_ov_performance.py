@@ -1,117 +1,236 @@
-#
-# Imports
-#
+import os
 import pytest
 import src.libs.gramerf_wrapper
-import os
-#from pprint import pprint
-from src.workloads.Openvino_Workload import OpenvinoWorkload
-
-# @pytest.fixture(scope="session")
-# def name(pytestconfig):
-#     print ("\n**** In name fixture *****")
-#     return pytestconfig.getoption("name")
-
-# @pytest.mark.ov_perf_resnet
-# def test_print_name(name):
-#     print(f"\ncommand line param (name): {name}")
-
-# @pytest.mark.ov_perf_resnet
-# def test_print_name2(name):
-#     print(f"\ncommand line param (name): {name}")
-
-# @pytest.mark.ov_perf_resnet
-# def test_print_name_2():
-#     print(f"\ncommand line param (name): {name}")
-#     print(f"test_print_name_2(name): {pytest.config.getoption('name')}")
-#     print(f"test_print_name_21(exec_mode): {pytest.config.getoption('exec_mode')}")
-
-    #print ("\nTest Config = ")
-    #pprint (vars(test_config_obj))
-    #print ("\nBenchmark = ", yaml.load(test_config_obj.workload_args)['BENCHMARKS'][1])
-
-@pytest.fixture(scope="class")
-def setup_fixture():
-    #operating_system = "linux"
-    #attack_type = "side_channel"
-    print ("\n##### In setup_fixture #####\n")
-    ini_file_name = "ov_performance_tests.yaml"
-    tests_ini_path = os.path.join(os.getcwd(), 'data', ini_file_name)
-    #print ("\nTest ini path = ", tests_ini_path)
-    return tests_ini_path
-    # yield tests_ini_path
-    #print("teardown")
 
 
-@pytest.mark.usefixtures("setup_fixture")
-@pytest.mark.usefixtures("build_gramine")
-#@pytest.mark.usefixtures("read_global_config")
+yaml_file_name = "ov_performance_tests.yaml"
+tests_yaml_path = os.path.join(os.getcwd(), 'data', yaml_file_name)
+
+
+@pytest.mark.usefixtures("gramerf_setup")
 class TestClass:
-    test_obj = OpenvinoWorkload("Openvino", None, None, None)
-    # @pytest.mark.ov_perf
-    # @pytest.mark.ov_perf_bert_large
-    # def test_ov_perf_bert_large(self, setup_fixture):
-    #     print("\n##### In test_ov_perf_bert_large #####\n")
-    #     test_name = "test_ov_perf_bert_large"
-    #     testid = "1"
-        
-    #     test_config_obj = src.libs.gramerf_wrapper.read_config(testid, test_name, setup_fixture)
-    #     #test_result = src.libs.gramerf_wrapper.run_test(test_config_obj)
 
-    #     #assert test_result
-
-
-    # @pytest.mark.ov_perf
-    # @pytest.mark.ov_perf_brain_tumor_seg_0001
-    # def test_ov_perf_brain_tumor_seg_0001(self, setup_fixture):
-    #     print ("\n##### In test_ov_perf_brain_tumor_seg_0001 #####\n")
-    #     test_name = "test_ov_perf_brain_tumor_seg_0001"
-    #     testid = "2"
-
-    #     test_config_obj = src.libs.gramerf_wrapper.read_config(testid, test_name, setup_fixture)
-    #     #test_result = src.libs.gramerf_wrapper.run_test(test_config_obj)
-
-    #     #assert test_result
-
+    # In order to use command line values within pytest, using 'pytest.config' global
+    # is deprecated from pytest version 4.0 onwards. Instead, we need to pass the config 
+    # instance via an autouse fixture in order to access it.
+    @pytest.fixture(autouse=True)
+    def inject_config(self, request):
+        self.config = request.config
 
     @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_bert_large
+    @pytest.mark.ov_perf_bert_large_throughput
+    @pytest.mark.ov_perf_bert_large_fp16_throughput
+    def test_ov_perf_bert_large_fp16_throughput(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_bert_large
+    @pytest.mark.ov_perf_bert_large_throughput
+    @pytest.mark.ov_perf_bert_large_fp32_throughput
+    def test_ov_perf_bert_large_fp32_throughput(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_bert_large
+    @pytest.mark.ov_perf_bert_large_latency
+    @pytest.mark.ov_perf_bert_large_fp16_latency
+    def test_ov_perf_bert_large_fp16_latency(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_bert_large
+    @pytest.mark.ov_perf_bert_large_latency
+    @pytest.mark.ov_perf_bert_large_fp32_latency
+    def test_ov_perf_bert_large_fp32_latency(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_bert_large
+    @pytest.mark.ov_perf_bert_large_int8_throughput
+    def test_ov_perf_bert_large_int8_throughput(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_bert_large
+    @pytest.mark.ov_perf_bert_large_int8_latency
+    def test_ov_perf_bert_large_int8_latency(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0001
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_fp16_throughput
+    def test_ov_perf_brain_tumor_seg_0001_fp16_throughput(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0001
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_fp32_throughput
+    def test_ov_perf_brain_tumor_seg_0001_fp32_throughput(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0001
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_fp16_latency
+    def test_ov_perf_brain_tumor_seg_0001_fp16_latency(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0001
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0001_fp32_latency
+    def test_ov_perf_brain_tumor_seg_0001_fp32_latency(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
     @pytest.mark.ov_perf_brain_tumor_seg_0002
-    def test_ov_perf_brain_tumor_seg_0002(self, setup_fixture):
-        print ("\n##### In test_ov_perf_brain_tumor_seg_0002 #####\n")
-        test_name = "test_ov_perf_brain_tumor_seg_0002"
-        testid = "3"
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_fp16_throughput
+    def test_ov_perf_brain_tumor_seg_0002_fp16_throughput(self):
 
-        src.libs.gramerf_wrapper.read_config(setup_fixture)
-        #print (test_config_dict)
-        test_result = src.libs.gramerf_wrapper.run_test(self.test_obj)
-
-    #     #assert test_result
-
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
 
     @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0002
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_throughput
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_fp32_throughput
+    def test_ov_perf_brain_tumor_seg_0002_fp32_throughput(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0002
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_fp16_latency
+    def test_ov_perf_brain_tumor_seg_0002_fp16_latency(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0002
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_latency
+    @pytest.mark.ov_perf_brain_tumor_seg_0002_fp32_latency
+    def test_ov_perf_brain_tumor_seg_0002_fp32_latency(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
     @pytest.mark.ov_perf_resnet
-    def test_ov_perf_resnet(self, setup_fixture):
-        print ("\n##### In test_ov_perf_resnet #####\n")
-        test_name = "test_ov_perf_resnet"
-        testid = "4"
-                
-        src.libs.gramerf_wrapper.read_config(setup_fixture)
-        #print (test_config_dict)
-        test_result = src.libs.gramerf_wrapper.run_test(self.test_obj)
+    @pytest.mark.ov_perf_resnet_throughput
+    @pytest.mark.ov_perf_resnet_fp16_throughput
+    def test_ov_perf_resnet_fp16_throughput(self):
 
-        #assert test_result
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
 
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_resnet
+    @pytest.mark.ov_perf_resnet_throughput
+    @pytest.mark.ov_perf_resnet_fp32_throughput
+    def test_ov_perf_resnet_fp32_throughput(self):
 
-    # @pytest.mark.ov_perf
-    # @pytest.mark.ov_perf_ssd_mobilenet
-    # def test_ov_perf_ssd_mobilenet(self, setup_fixture):
-    #     print ("\n##### In test_ov_perf_ssd_mobilenet #####\n")
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
 
-    #     test_name = "test_ov_perf_ssd_mobilenet"
-    #     testid = "5"
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_resnet
+    @pytest.mark.ov_perf_resnet_latency
+    @pytest.mark.ov_perf_resnet_fp16_latency
+    def test_ov_perf_resnet_fp16_latency(self):
 
-    #     test_config_obj = src.libs.gramerf_wrapper.read_config(testid, test_name, setup_fixture)
-    #     #test_result = src.libs.gramerf_wrapper.run_test(test_config_obj)
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
 
-    #     #assert test_result
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_resnet
+    @pytest.mark.ov_perf_resnet_latency
+    @pytest.mark.ov_perf_resnet_fp32_latency
+    def test_ov_perf_resnet_fp32_latency(self):
 
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_ssd_mobilenet
+    @pytest.mark.ov_perf_ssd_mobilenet_throughput
+    @pytest.mark.ov_perf_ssd_mobilenet_fp16_throughput
+    def test_ov_perf_ssd_mobilenet_fp16_throughput(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_throughput
+    @pytest.mark.ov_perf_ssd_mobilenet
+    @pytest.mark.ov_perf_ssd_mobilenet_throughput
+    @pytest.mark.ov_perf_ssd_mobilenet_fp32_throughput
+    def test_ov_perf_ssd_mobilenet_fp32_throughput(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_ssd_mobilenet
+    @pytest.mark.ov_perf_ssd_mobilenet_latency
+    @pytest.mark.ov_perf_ssd_mobilenet_fp16_latency
+    def test_ov_perf_ssd_mobilenet_fp16_latency(self):
+        
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.ov_perf
+    @pytest.mark.ov_perf_latency
+    @pytest.mark.ov_perf_ssd_mobilenet
+    @pytest.mark.ov_perf_ssd_mobilenet_latency
+    @pytest.mark.ov_perf_ssd_mobilenet_fp32_latency
+    def test_ov_perf_ssd_mobilenet_fp32_latency(self):
+
+        test_result = src.libs.gramerf_wrapper.run_test(self, tests_yaml_path)
+        assert test_result

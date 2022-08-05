@@ -1,7 +1,6 @@
 ---
 iterations: 2
-exec_mode: ["linux", "gdirect", "gsgx"]
-http_proxy: "http://proxy-dmz.intel.com:911/"
-https_proxy: "http://proxy-dmz.intel.com:912/"
+exec_mode: ["native", "gramine-direct", "gramine-sgx"]
+build_gramine: False
 
   

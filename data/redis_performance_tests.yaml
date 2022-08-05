@@ -1,0 +1,37 @@
+---
+Default:
+  workload_home_dir: "gramine/CI-Examples/redis/"
+  original_manifest_file: "redis-server.manifest.template"
+  timeout: 3000
+  workload_name: "Redis"
+  manifest_name: "redis-server"
+  manifest_file: "redis/redis-server.manifest.template.exitless"
+  server_size: 4
+  server_port: 9001
+  client_ip: "10.66.247.185"
+  client_username: "intel"
+  client_scripts_path: "/home/intel/perf_benchmarking/gramerf_redis_client"
+  client_results_path: "/home/intel/perf_benchmarking/redis-6.0.6/log/set/"
+  rw_ratio: "1:1"
+  
+test_redis_perf_48_data_size_1_1_rw_ratio:
+  data_size: 48
+
+test_redis_perf_48_data_size_1_9_rw_ratio:
+  data_size: 48
+  rw_ratio: "1:9"
+
+test_redis_perf_1024_data_size_1_1_rw_ratio:
+  data_size: 1024
+
+test_redis_perf_1024_data_size_1_9_rw_ratio:
+  data_size: 1024
+  rw_ratio: "1:9"
+
+test_redis_perf_4096_data_size_1_1_rw_ratio:
+  data_size: 4096
+
+test_redis_perf_4096_data_size_1_9_rw_ratio:
+  data_size: 4096
+  rw_ratio: "1:9"  
+  

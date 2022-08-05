@@ -1,0 +1,27 @@
+---
+Default:
+  original_manifest_file: "python.manifest.template"
+  metric: "Throughput"
+  workload_name: "Tensorflow"
+  manifest_name: "python"
+  workload_home_dir: "gramine/CI-Examples/resnet/"
+  manifest_file: "tensorflow/python_resnet.manifest.template"
+  batch_size: 1
+
+test_tf_perf_resnet_bs_1_throughput:
+  model_name: "resnet"
+
+test_tf_perf_resnet_bs_16_throughput:
+  model_name: "resnet"
+  batch_size: 16
+
+test_tf_perf_resnet_bs_512_throughput:
+  model_name: "resnet"
+  batch_size: 512
+
+test_tf_perf_bert_throughput:
+  workload_home_dir: "gramine/CI-Examples/bert/"
+  manifest_file: "tensorflow/python_bert.manifest.template"
+  model_name: "bert"
+  batch_size: 32
+  

@@ -40,8 +40,8 @@ class RedisWorkload:
             redis_bld_cmd = f"make -C {self.workload_bld_dir}"
             print(f"\n-- Building redis workload..\n", redis_bld_cmd)
 
-            openvino_make_log = LOGS_DIR + "/redis" + test_config_dict['test_name'] + '_make.log'
-            log_fd = open(openvino_make_log, "w")
+            redis_make_log = LOGS_DIR + "/redis" + test_config_dict['test_name'] + '_make.log'
+            log_fd = open(redis_make_log, "w")
             utils.exec_shell_cmd(redis_bld_cmd, log_fd)
             log_fd.close()
         else:

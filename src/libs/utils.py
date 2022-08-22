@@ -9,10 +9,11 @@ import collections
 import pandas as pd
 import socket
 import netifaces as ni
+import re
 from src.config_files.constants import *
 
 
-def verify_output(cmd_output, search_str): return True if search_str in cmd_output else False
+def verify_output(cmd_output, search_str): return re.search(search_str, cmd_output, re.IGNORECASE)
 
 
 # calculate the percent degradation
@@ -161,8 +162,10 @@ def set_threads_cnt_env_var():
         if core_per_socket and threads_per_core:
             break
     os.environ['THREADS_CNT'] = str(core_per_socket * threads_per_core)
+    os.environ['CORES_PER_SOCKET'] = str(core_per_socket)
 
     print("\n-- Setting the THREADS_CNT env variable to ", os.environ['THREADS_CNT'])
+    print("\n-- Setting the CORES_PER_SOCKET env variable to ", os.environ['CORES_PER_SOCKET'])
 
 
 def determine_host_ip_addr():

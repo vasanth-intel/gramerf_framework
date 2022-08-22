@@ -225,7 +225,7 @@ class OpenvinoWorkload():
 
                 cmd_output = utils.exec_shell_cmd(self.command)
                 print(cmd_output)
-                if cmd_output is None or utils.verify_output(cmd_output, tcd['metric']) is False:
+                if cmd_output is None or utils.verify_output(cmd_output, tcd['metric']) is None:
                     raise Exception(
                         f"\n-- Failure: Test workload execution failed for {tcd['test_name']} Exec_mode: {e_mode}")
 

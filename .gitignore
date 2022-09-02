@@ -1,5 +1,9 @@
 /build
 /install
+/gramine
+/contrib_repo
+/orig_contrib_repo
+/logs
 
 # No editor backup files.
 *.sw*

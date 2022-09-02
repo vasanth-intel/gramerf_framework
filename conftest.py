@@ -1,7 +1,8 @@
 import pytest
-from src.config_files.constants import *
-from src.libs import utils
-from src.libs import gramine_libs
+from common.config_files.constants import *
+from common.libs import utils
+from baremetal_benchmarking import gramine_libs
+from docker_benchmarking import curated_apps_lib
 from collections import defaultdict
 
 
@@ -19,7 +20,13 @@ trd = defaultdict(dict)
 
 
 @pytest.fixture(scope="session")
-def gramerf_setup():
+def gramerf_setup(request):
+    config = request.config
+    perf_config = config.option.perf_config
+    print("\n###### Executing in {} mode".format(perf_config))
+
+    os.environ["perf_config"] = perf_config
+
     print("\n###### In gramerf_setup #####\n")
     
     cmd_out = utils.exec_shell_cmd('cc -dumpmachine')
@@ -38,8 +45,12 @@ def gramerf_setup():
     utils.set_http_proxies()
     utils.clear_system_cache()
 
-    # Checkout gramine source and build the same.
-    gramine_libs.build_gramine_binaries()
+    if perf_config == "baremetal":
+        # Checkout gramine source and build the same.
+        gramine_libs.install_gramine_binaries()
+    else:
+        curated_apps_lib.curated_setup()
+        curated_apps_lib.copy_repo()
 
     yield
 
@@ -49,5 +60,5 @@ def gramerf_setup():
 
 def pytest_addoption(parser):
     print("\n##### In pytest_addoption #####\n")
-    parser.addoption("--iterations", action="store", type=int, default=1)
-    parser.addoption("--exec_mode", action="store", type=str, default="None")
+    parser.addoption("--perf_config", action="store", type=str, default="baremetal")
+

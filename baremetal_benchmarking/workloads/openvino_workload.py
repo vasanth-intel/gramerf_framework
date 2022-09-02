@@ -1,6 +1,6 @@
 import time
-from src.config_files.constants import *
-from src.libs import utils
+from common.config_files.constants import *
+from common.libs import utils
 from conftest import trd
 
 

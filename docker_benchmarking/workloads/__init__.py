@@ -1,0 +1,1 @@
+from docker_benchmarking.workloads.redis_workload import RedisWorkload

@@ -2,8 +2,8 @@ import os
 import time
 import shutil
 import pytest
-from src.config_files.constants import *
-from src.libs import utils
+from common.config_files.constants import *
+from common.libs import utils
 
 
 def fresh_gramine_checkout():
@@ -33,6 +33,33 @@ def fresh_gramine_checkout():
     os.chdir(FRAMEWORK_HOME_DIR)
 
 
+def setup_gramine_environment():
+    # Update the following environment variables as the gramine binaries can be
+    # installed at some other place other than '/usr/local'
+    # PATH, PYTHONPATH and PKG_CONFIG_PATH
+    # Need to update these variables only after building gramine as there would be some
+    # dereferences of few path values which are created only after successful build.
+
+    utils.update_env_variables(BUILD_PREFIX)
+
+    print("\n-- Generating gramine-sgx private key..\n", GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
+    utils.exec_shell_cmd(GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
+
+
+def gramine_package_install():
+    print("Installing latest Gramine package\n")
+
+    utils.exec_shell_cmd("sudo curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg")
+    utils.exec_shell_cmd("echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ stable main' | sudo tee /etc/apt/sources.list.d/gramine.list")
+
+    utils.exec_shell_cmd("curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | sudo apt-key add -")
+    utils.exec_shell_cmd("echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu bionic main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list")
+    # (if you're on Ubuntu 18.04, remember to write "bionic" instead of "focal")
+
+    utils.exec_shell_cmd(APT_UPDATE_CMD)
+    utils.exec_shell_cmd("sudo apt-get install -y gramine")
+
+
 def install_gramine_dependencies():
     print("\n###### In install_gramine_dependencies #####\n")
 
@@ -43,12 +70,12 @@ def install_gramine_dependencies():
     
     if distro == 'ubuntu':
         # Read the system packages yaml file and update the actual system_packages string
-        system_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', SYSTEM_PACKAGES_FILE)
+        system_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'baremetal_benchmarking/config_files', SYSTEM_PACKAGES_FILE)
         system_packages = utils.read_config_yaml(system_packages_path)
         system_packages_str = system_packages['Default']
 
         # Read the python packages yaml file and update the actual python_packages string
-        python_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', PYTHON_PACKAGES_FILE)
+        python_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'baremetal_benchmarking/config_files', PYTHON_PACKAGES_FILE)
         python_packages = utils.read_config_yaml(python_packages_path)
         python_packages_str = python_packages['Default']
 
@@ -81,9 +108,6 @@ def install_gramine_dependencies():
 def build_and_install_gramine():
     print("\n###### In build_and_install_gramine #####\n")
     
-    # Checkout fresh gramine source
-    fresh_gramine_checkout()
-    
     # Change dir to above checked out gramine folder and
     # start building the same.
     os.chdir(GRAMINE_HOME_DIR)
@@ -113,35 +137,24 @@ def build_and_install_gramine():
      
     os.chdir(FRAMEWORK_HOME_DIR)
 
+def install_gramine_binaries():
 
-def setup_gramine_environment():
-    # Update the following environment variables as the gramine binaries can be
-    # installed at some other place other than '/usr/local'
-    # PATH, PYTHONPATH and PKG_CONFIG_PATH
-    # Need to update these variables only after building gramine as there would be some
-    # dereferences of few path values which are created only after successful build.
-    utils.update_env_variables(BUILD_PREFIX)
+    fresh_gramine_checkout()
+    
+    if BUILD_GRAMINE == "package":
+        gramine_package_install()
+    else:
+        # Install Gramine dependencies
+        install_gramine_dependencies()
 
-    print("\n-- Generating gramine-sgx private key..\n", GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
-    utils.exec_shell_cmd(GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
-
-
-def build_gramine_binaries():
-
-    print("\n###### In build_gramine #####\n")
-
-    # Install Gramine dependencies
-    install_gramine_dependencies()
-
-    # Build and Install Gramine
-    build_and_install_gramine()
-
-    # Setup gramine env variables and generate sgx private key
+        # Build and Install Gramine
+        build_and_install_gramine()
+    
     setup_gramine_environment()
 
 
 def update_manifest_file(test_config_dict):
-    src_file = os.path.join(FRAMEWORK_HOME_DIR, "src/config_files" , test_config_dict['manifest_file'])
+    src_file = os.path.join(FRAMEWORK_HOME_DIR, "baremetal_benchmarking/config_files" , test_config_dict['manifest_file'])
     dest_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , test_config_dict['manifest_name']) + ".manifest.template"
 
     shutil.copy2(src_file, dest_file)

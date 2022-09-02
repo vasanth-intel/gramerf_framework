@@ -1,5 +1,6 @@
-from src.config_files.constants import *
-import src.workloads as workloads
+from common.config_files.constants import *
+import baremetal_benchmarking.workloads as baremetal_workloads
+import docker_benchmarking.workloads as container_workloads
 
 
 class Workload(object):
@@ -12,9 +13,12 @@ class Workload(object):
                  test_config_dict):
         self.name = test_config_dict['workload_name']
         self.command = None
-
         workload_script = test_config_dict['workload_name'] + "Workload"
-        self.workload_class = getattr(globals()["workloads"], workload_script)
+        if test_config_dict["perf_config"] == "container":
+            self.workload_class = getattr(globals()["container_workloads"], workload_script)
+        else:
+            self.workload_class = getattr(globals()["baremetal_workloads"], workload_script)
+        print(self.workload_class)
         self.workload_obj = self.workload_class(test_config_dict)
 
     def pre_actions(self, test_config_dict):

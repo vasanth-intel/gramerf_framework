@@ -1,6 +1,8 @@
 import sys
 import yaml
+import time
 import shutil
+import psutil
 import subprocess
 import lsb_release
 import csv
@@ -10,7 +12,7 @@ import pandas as pd
 import socket
 import netifaces as ni
 import re
-from src.config_files.constants import *
+from common.config_files.constants import *
 
 
 def verify_output(cmd_output, search_str): return re.search(search_str, cmd_output, re.IGNORECASE)
@@ -22,6 +24,7 @@ def percent_degradation(baseline, testapp):
 
 
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
+    print(cmd)
     cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
     if cmd_stdout.returncode != 0:
         raise Exception(f"\n-- Failed to execute the process cmd: {cmd}")
@@ -68,7 +71,7 @@ def cleanup_gramine_binaries(build_prefix):
     """
     if os.path.exists(build_prefix): shutil.rmtree(build_prefix)
 
-    gramine_uninstall_cmd = "sudo apt remove gramine"
+    gramine_uninstall_cmd = "sudo apt remove -y gramine"
     python_version_str = "python" + str(sys.version_info.major) + "." + str(sys.version_info.minor)
     # The substring "x86_64-linux-gnu" within below path is for Ubuntu. It would be different
     # for other distros like CentOS or RHEL. Currently, hardcoding it for Ubuntu but needs to
@@ -82,7 +85,6 @@ def cleanup_gramine_binaries(build_prefix):
 
     print("\n-- Removing user installed gramine binaries..\n", gramine_user_installed_bin_rm_cmd)
     os.system(gramine_user_installed_bin_rm_cmd)
-
 
 def update_env_variables(build_prefix):
     """
@@ -136,7 +138,7 @@ def set_cpu_freq_scaling_governor():
     :return:
     """
     print("\n-- Setting CPU frequency scaling governor to 'performance' mode..")
-    cpu_freq_file = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', 'set_cpu_freq_scaling_governor.sh')
+    cpu_freq_file = os.path.join(FRAMEWORK_HOME_DIR, 'common/config_files', 'set_cpu_freq_scaling_governor.sh')
 
     chmod_cmd = 'chmod +x ' + cpu_freq_file
     set_cpu_freq_cmd = 'sudo ' + cpu_freq_file
@@ -244,3 +246,69 @@ def generate_performance_report(trd):
 
     for workload, tests in trd.items():
         write_to_report(workload, tests)
+
+
+def check_machine():
+    service_cmd = "sudo systemctl --type=service --state=running"
+    service_output = exec_shell_cmd(service_cmd)
+    if "walinuxagent.service" in service_output:
+        print("Running on Azure Linux Agent")
+        return "Azure Linux Agent"
+    elif "pccs.service" in service_output:
+        print("Running on DCAP client")
+        return "DCAP client"
+    else:
+        print("No Provisioning service found, cannot run tests with attestation.")
+        return "No Provisioning enabled"
+
+
+def kill(proc_pid):
+    process = psutil.Process(proc_pid)
+    for proc in process.children(recursive=True):
+        proc.kill()
+    process.kill()
+
+
+def kill_process_by_name(processName):
+    procs = [p.pid for p in psutil.process_iter() for c in p.cmdline() if processName in c]
+    for process in procs:
+        try:
+            exec_shell_cmd("sudo kill -9 {}".format(process))
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+
+
+def get_workload_name(docker_image):
+    try:
+        return docker_image.split(" ")[1]
+    except Exception as e:
+        return ''
+
+
+def cleanup_after_test(workload):
+    import pdb
+    pdb.set_trace()
+    try:
+        kill_process_by_name("secret_prov_server_dcap")
+        kill_process_by_name("/gramine/app_files/apploader.sh")
+        kill_process_by_name("/gramine/app_files/entrypoint")
+        exec_shell_cmd('sudo sh -c "echo 3 > /proc/sys/vm/drop_caches"')
+        exec_shell_cmd("docker rmi gsc-{}x -f".format(workload))
+        exec_shell_cmd("docker rmi gsc-{}x-unsigned -f".format(workload))
+        exec_shell_cmd("docker rmi {}x -f".format(workload))
+        exec_shell_cmd("docker rmi verifier_image:latest -f")
+        exec_shell_cmd("docker system prune -f")
+    except Exception as e:
+        pass
+
+def popen_subprocess(command, dest_dir=None):
+    if dest_dir:
+        cwd = os.getcwd()
+        os.chdir(dest_dir)
+
+    print("Starting Process ", command)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding='utf-8')
+    time.sleep(1)
+   
+    if dest_dir: os.chdir(cwd)
+    return process

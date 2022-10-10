@@ -29,22 +29,22 @@ def gramerf_setup(request):
 
     print("\n###### In gramerf_setup #####\n")
     
-    cmd_out = utils.exec_shell_cmd('cc -dumpmachine')
-    os.environ['ARCH_LIBDIR'] = "/lib/" + cmd_out
     # Delete old logs if any and create new logs directory.
     if os.path.exists(LOGS_DIR):
         del_logs_cmd = 'rm -rf ' + LOGS_DIR
         os.system(del_logs_cmd)
+    if os.path.exists(PERF_RESULTS_DIR):
         del_logs_cmd = 'rm -rf ' + PERF_RESULTS_DIR
         os.system(del_logs_cmd)
 
     os.makedirs(LOGS_DIR, exist_ok=True)
     os.makedirs(PERF_RESULTS_DIR, exist_ok=True)
 
-    # Setting up the node environment and clearing cache.    
+    # Setting up the node environment and clearing cache.
+    utils.set_permissions()
     utils.set_http_proxies()
-    utils.clear_system_cache()
-
+    utils.clean_up_system()
+    
     if perf_config == "baremetal":
         # Checkout gramine source and build the same.
         gramine_libs.install_gramine_binaries()
@@ -61,4 +61,3 @@ def gramerf_setup(request):
 def pytest_addoption(parser):
     print("\n##### In pytest_addoption #####\n")
     parser.addoption("--perf_config", action="store", type=str, default="baremetal")
-

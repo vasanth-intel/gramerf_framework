@@ -1,11 +1,10 @@
 
 
-
-def construct_client_exec_cmd(self, tcd, exec_mode = 'native'):
+def construct_client_exec_cmd(tcd, exec_mode = 'native'):
     client_ssh_cmd = None
+
     client_name = tcd['client_username'] + "@" + tcd['client_ip']
     benchmark_exec_mode = 'native'
-
     if exec_mode == 'gramine-direct':
         benchmark_exec_mode = 'graphene'
     elif exec_mode == 'gramine-sgx':

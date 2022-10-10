@@ -1,5 +1,6 @@
 import re
 import sys
+import subprocess
 from common.libs import utils
 from common.config_files.constants import *
 
@@ -38,6 +39,13 @@ def copy_repo():
     utils.exec_shell_cmd(copy_cmd)
 
 
+def verify_image_creation(curation_output):
+    if re.search("The curated GSC image gsc-(.*) is ready", curation_output) or \
+            re.search("docker run", curation_output):
+        return True
+    return False
+
+
 def generate_curated_image(test_config_dict):
     curation_output = ''
     workload_image = test_config_dict["docker_image"]
@@ -45,18 +53,13 @@ def generate_curated_image(test_config_dict):
     curation_cmd = 'python3 curate.py ' + workload_image + ' test'
     
     print("Curation cmd ", curation_cmd)
-    process = utils.popen_subprocess(curation_cmd, CURATED_APPS_PATH)
+    os.chdir(CURATED_APPS_PATH)
+    result = subprocess.run([curation_cmd], input=b'\x07', shell=True, check=True, stdout=subprocess.PIPE)
+    os.chdir(FRAMEWORK_HOME_DIR)
+      
+    curation_output = result.stdout.strip()
+    print(curation_output.strip())
 
-    while True:
-        output = process.stdout.readline()
-        if process.poll() is not None and output == '':
-            break
-        if output:
-            print(output.strip())
-            curation_output += output
-            # if "docker run" in output:
-            #     curation_output = True
-            #     break
     return curation_output
 
 
@@ -86,12 +89,3 @@ def run_curated_image(docker_run_cmd):
             result = True
             break
     return result
-
-def pull_workload_default_image(self, test_config_dict):
-    try:
-        workload_docker_image_name = utils.get_workload_name(test_config_dict['docker_image'])
-        workload_docker_pull_cmd = f"docker pull {workload_docker_image_name}"
-        print(f"\n-- Pulling latest redis docker image from docker hub..\n", workload_docker_pull_cmd)
-        utils.exec_shell_cmd(workload_docker_pull_cmd, None)
-    except (docker.errors.ImageNotFound, docker.errors.APIError):
-        raise Exception(f"\n-- Docker pull for image {workload_docker_image_name} failed!!")

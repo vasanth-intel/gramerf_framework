@@ -1,6 +1,4 @@
 import inspect
-from baremetal_benchmarking import gramine_libs
-from docker_benchmarking import curated_apps_lib
 from common.libs.workload import Workload
 from common.config_files.constants import *
 from common.libs import utils
@@ -32,12 +30,24 @@ def run_test(test_instance, test_yaml_file):
     print(f"\n********** Executing {test_name} **********\n")
     test_config_dict = read_perf_suite_config(test_instance, test_yaml_file, test_name)
     test_config_dict["perf_config"] = perf_config
+    utils.clear_system_cache()
+
     test_obj = Workload(test_config_dict)
-    workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
-    os.chdir(workload_home_dir)
+    os.chdir(test_obj.get_workload_home_dir())
     test_obj.pre_actions(test_config_dict)
     test_obj.setup_workload(test_config_dict)
-    test_obj.execute_workload(test_config_dict)
+    
+    test_dict = {}
+    for e_mode in test_config_dict['exec_mode']:
+        print(f"\n-- Executing {test_config_dict['test_name']} in {e_mode} mode")
+        test_dict[e_mode] = []
+        test_obj.execute_workload(test_config_dict, e_mode, test_dict)
+    
+    if len(test_dict[test_config_dict['exec_mode'][0]]) > 0:
+        test_obj.update_test_results_in_global_dict(test_config_dict, test_dict)
+    else:
+        test_obj.process_results(test_config_dict)
+
     os.chdir(FRAMEWORK_HOME_DIR)
     
     return True

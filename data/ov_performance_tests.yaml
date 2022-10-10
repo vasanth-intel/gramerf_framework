@@ -5,7 +5,7 @@ Default:
   timeout: 3000
   metric: "Throughput"
   fp: "FP16"
-  workload_name: "OpenVino"
+  workload_name: "Openvino"
   manifest_name: "benchmark_app"
   manifest_file: "openvino_throughput.manifest.template"
   

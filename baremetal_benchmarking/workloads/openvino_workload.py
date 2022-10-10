@@ -1,6 +1,7 @@
 import time
 from common.config_files.constants import *
 from common.libs import utils
+from baremetal_benchmarking import gramine_libs
 from conftest import trd
 
 
@@ -15,6 +16,9 @@ class OpenvinoWorkload():
         self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
         self.setupvars_path = os.path.join(self.workload_home_dir, 'openvino_2021/bin', 'setupvars.sh')
         self.command = None
+
+    def get_workload_home_dir(self):
+        return self.workload_home_dir
         
     def download_workload(self, test_config_dict):
         # Installing Openvino within "/home/intel/test/gramine/examples/openvino/openvino_2021"
@@ -158,12 +162,14 @@ class OpenvinoWorkload():
         utils.set_threads_cnt_env_var()
         utils.set_cpu_freq_scaling_governor()
         self.install_mimalloc()
+        gramine_libs.update_manifest_file(test_config_dict)
 
     def setup_workload(self, test_config_dict):
         self.download_workload(test_config_dict)
         self.build_and_install_workload(test_config_dict)
         self.update_manifest(test_config_dict)
         self.generate_manifest()
+        gramine_libs.generate_sgx_token_and_sig(test_config_dict)
 
     def construct_workload_exec_cmd(self, test_config_dict, exec_mode = 'native', iteration=1):
         ov_exec_cmd = None
@@ -208,35 +214,32 @@ class OpenvinoWorkload():
                     return line.strip().split()[1]
 
     # Build the workload execution command based on execution params and execute it.
-    def execute_workload(self, tcd):
+    def execute_workload(self, tcd, e_mode, test_dict):
         print("\n##### In execute_workload #####\n")
-        test_dict = {}
+
+        for j in range(tcd['iterations']):
+            self.command = self.construct_workload_exec_cmd(tcd, e_mode, j + 1)
+
+            if self.command is None:
+                raise Exception(
+                    f"\n-- Failure: Unable to construct command for {tcd['test_name']} Exec_mode: {e_mode}")
+
+            cmd_output = utils.exec_shell_cmd(self.command)
+            print(cmd_output)
+            if cmd_output is None or utils.verify_output(cmd_output, tcd['metric']) is None:
+                raise Exception(
+                    f"\n-- Failure: Test workload execution failed for {tcd['test_name']} Exec_mode: {e_mode}")
+
+            test_file_name = LOGS_DIR + '/' + tcd['test_name'] + '_' + e_mode + '_' + str(j+1) + '.log'
+            if not os.path.exists(test_file_name):
+                raise Exception(f"\nFailure: File {test_file_name} does not exist for parsing performance..")
+            metric_val = float(self.get_metric_value(tcd, test_file_name))
+            test_dict[e_mode].append(metric_val)
+            
+            time.sleep(TEST_SLEEP_TIME_BW_ITERATIONS)
+
+    def update_test_results_in_global_dict(self, tcd, test_dict):
         global trd
-
-        for e_mode in tcd['exec_mode']:
-            print(f"\n-- Executing {tcd['test_name']} in {e_mode} mode")
-            test_dict[e_mode] = []
-            for j in range(tcd['iterations']):
-                self.command = self.construct_workload_exec_cmd(tcd, e_mode, j + 1)
-
-                if self.command is None:
-                    raise Exception(
-                        f"\n-- Failure: Unable to construct command for {tcd['test_name']} Exec_mode: {e_mode}")
-
-                cmd_output = utils.exec_shell_cmd(self.command)
-                print(cmd_output)
-                if cmd_output is None or utils.verify_output(cmd_output, tcd['metric']) is None:
-                    raise Exception(
-                        f"\n-- Failure: Test workload execution failed for {tcd['test_name']} Exec_mode: {e_mode}")
-
-                test_file_name = LOGS_DIR + '/' + tcd['test_name'] + '_' + e_mode + '_' + str(j+1) + '.log'
-                if not os.path.exists(test_file_name):
-                    raise Exception(f"\nFailure: File {test_file_name} does not exist for parsing performance..")
-                metric_val = float(self.get_metric_value(tcd, test_file_name))
-                test_dict[e_mode].append(metric_val)
-                
-                time.sleep(TEST_SLEEP_TIME_BW_ITERATIONS)
-
         if 'native' in tcd['exec_mode']:
             test_dict['native-avg'] = '{:0.3f}'.format(sum(test_dict['native'])/len(test_dict['native']))
 
@@ -244,12 +247,12 @@ class OpenvinoWorkload():
             test_dict['direct-avg'] = '{:0.3f}'.format(
                 sum(test_dict['gramine-direct'])/len(test_dict['gramine-direct']))
             if 'native' in tcd['exec_mode']:
-                test_dict['direct-deg'] = utils.percent_degradation(test_dict['native-avg'], test_dict['direct-avg'])
+                test_dict['direct-deg'] = utils.percent_degradation(tcd, test_dict['native-avg'], test_dict['direct-avg'])
 
         if 'gramine-sgx' in tcd['exec_mode']:
             test_dict['sgx-avg'] = '{:0.3f}'.format(sum(test_dict['gramine-sgx'])/len(test_dict['gramine-sgx']))
             if 'native' in tcd['exec_mode']:
-                test_dict['sgx-deg'] = utils.percent_degradation(test_dict['native-avg'], test_dict['sgx-avg'])
+                test_dict['sgx-deg'] = utils.percent_degradation(tcd, test_dict['native-avg'], test_dict['sgx-avg'])
 
         utils.write_to_csv(tcd, test_dict)
 

@@ -27,6 +27,11 @@ def fresh_gramine_checkout():
     # Git clone the examples repo too for workloads download.
     os.chdir(GRAMINE_HOME_DIR)
 
+    commit_id = os.getenv("COMMIT_ID")
+    if commit_id != None:
+        print("\n-- Checking out following Gramine commit: ", commit_id)
+        utils.exec_shell_cmd(f"git checkout {commit_id}")
+
     print("\n-- Cloning Gramine examples git repo..\n", EXAMPLES_REPO_CLONE_CMD)
     utils.exec_shell_cmd(EXAMPLES_REPO_CLONE_CMD)
         
@@ -112,11 +117,6 @@ def build_and_install_gramine():
     # start building the same.
     os.chdir(GRAMINE_HOME_DIR)
 
-    # Cleanup existing gramine binaries (if any) before starting a fresh build.
-    # Passing prefix path as argument, so that user installed (if any) gramine
-    # binaries are also removed.
-    utils.cleanup_gramine_binaries(BUILD_PREFIX)
-
     # Create prefix dir
     print(f"\n-- Creating build prefix directory '{BUILD_PREFIX}'..\n")
     # In the below makedirs call, if the target directory already exists an OSError is raised
@@ -137,7 +137,12 @@ def build_and_install_gramine():
      
     os.chdir(FRAMEWORK_HOME_DIR)
 
+
 def install_gramine_binaries():
+    # Cleanup existing gramine binaries (if any) before starting a fresh build.
+    # Passing prefix path as argument, so that user installed (if any) gramine
+    # binaries are also removed.
+    utils.cleanup_gramine_binaries(BUILD_PREFIX)
 
     fresh_gramine_checkout()
     

@@ -1,9 +1,10 @@
 import os
 import pytest
-import common.libs.gramerf_wrapper
+from common.libs.gramerf_wrapper import run_test
 
 yaml_file_name = "tf_performance_tests.yaml"
 tests_yaml_path = os.path.join(os.getcwd(), 'data', yaml_file_name)
+
 
 @pytest.mark.usefixtures("gramerf_setup")
 class TestClass:

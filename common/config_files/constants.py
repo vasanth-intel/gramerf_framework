@@ -54,9 +54,9 @@ SYS_PACKAGES_CMD = "sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "
 # -U option is to install the latest package (if upgrade is available).
 PYTHON_PACKAGES_CMD = "sudo -H python3 -m pip install -U "
 
-PIP_UPGRADE_CMD = "python3 -m pip install --upgrade pip"
+PIP_UPGRADE_CMD = "sudo python3 -m pip install --upgrade pip"
 
-TENSORFLOW_INSTALL_CMD = "python3 -m pip install intel-tensorflow-avx512==2.4.0"
+TENSORFLOW_INSTALL_CMD = "sudo python3 -m pip install intel-tensorflow-avx512==2.4.0 --no-cache-dir"
 
 TF_BERT_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
 

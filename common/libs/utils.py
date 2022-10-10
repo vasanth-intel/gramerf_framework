@@ -6,7 +6,7 @@ import psutil
 import subprocess
 import lsb_release
 import csv
-from datetime import date
+from datetime import datetime as dt
 import collections
 import pandas as pd
 import socket
@@ -19,12 +19,14 @@ def verify_output(cmd_output, search_str): return re.search(search_str, cmd_outp
 
 
 # calculate the percent degradation
-def percent_degradation(baseline, testapp):
-    return '{:0.3f}'.format(100 * (float(baseline) - float(testapp)) / float(baseline))
+def percent_degradation(tcd, baseline, testapp):
+    if 'throughput' in tcd['test_name']:
+        return '{:0.3f}'.format(100 * (float(baseline) - float(testapp)) / float(baseline))
+    else:
+        return '{:0.3f}'.format(100 * (float(testapp) - float(baseline)) / float(baseline))
 
 
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
-    print(cmd)
     cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
     if cmd_stdout.returncode != 0:
         raise Exception(f"\n-- Failed to execute the process cmd: {cmd}")
@@ -59,7 +61,56 @@ def clear_system_cache():
     echo_cmd_path = exec_shell_cmd('which echo')
     clear_cache_cmd = "sudo sh -c \"" + echo_cmd_path + " 3 > /proc/sys/vm/drop_caches\""
     print("\n-- Executing clear cache command..", clear_cache_cmd)
-    exec_shell_cmd(clear_cache_cmd)
+    exec_shell_cmd(clear_cache_cmd, None)
+
+
+def clean_up_system():
+    """
+    Function to cleanup to remove unwanted packages and their dependencies, pagecache,
+    dentries, inodes and apt cache.
+    :return:
+    """
+    print("\n-- Removing unnecessary packages and dependencies..")
+    exec_shell_cmd("sudo apt-get -y autoremove", None)
+    print("\n-- Clearing thumbnail cache..")
+    exec_shell_cmd("sudo rm -rf ~/.cache/thumbnails/*", None)
+    print("\n-- Clearing apt cache..")
+    exec_shell_cmd("sudo apt-get -y clean", None)
+    if os.path.exists("/var/run/docker.sock"):
+        print("\n-- Removing all docker images..")
+        exec_shell_cmd("docker system prune -f --all", None)
+        if os.environ["perf_config"] == "baremetal":
+            print("\n-- Stopping docker service..")
+            exec_shell_cmd("sudo systemctl stop docker", None)
+        else:
+            print("\n-- Restarting docker service..")
+            exec_shell_cmd("sudo systemctl daemon-reload", None)
+            exec_shell_cmd("sudo systemctl restart docker", None)
+
+    clear_system_cache()
+
+    print("\n-- Clearing swap memory..")
+    exec_shell_cmd("sudo sh -c 'swapoff -a && swapon -a'", None)
+
+
+def set_permissions():
+    """
+    Funciton to set appropriate permissions before tirggering the perf runs.
+    :return:
+    """
+    print("\n-- Setting required device persmissions :")
+    if os.path.exists("/dev/sgx_enclave") and os.path.exists("/dev/sgx_provision"):
+        exec_shell_cmd("sudo chmod 777 /dev/sgx_enclave /dev/sgx_provision")
+    else:
+        print("\n-- Warning - Unable to find SGX dev files. May not be able to execute workload with SGX..")
+    
+    if os.path.exists("/dev/cpu_dma_latency"):
+        logged_in_user = os.getlogin()
+        exec_shell_cmd(f"sudo chown {logged_in_user} /dev/cpu_dma_latency")
+        exec_shell_cmd("sudo chmod 0666 /dev/cpu_dma_latency")
+
+    if os.path.exists("/var/run/docker.sock"):
+        exec_shell_cmd("sudo chmod 666 /var/run/docker.sock")
 
 
 def cleanup_gramine_binaries(build_prefix):
@@ -71,7 +122,7 @@ def cleanup_gramine_binaries(build_prefix):
     """
     if os.path.exists(build_prefix): shutil.rmtree(build_prefix)
 
-    gramine_uninstall_cmd = "sudo apt remove -y gramine"
+    gramine_uninstall_cmd = "sudo apt-get remove -y gramine"
     python_version_str = "python" + str(sys.version_info.major) + "." + str(sys.version_info.minor)
     # The substring "x86_64-linux-gnu" within below path is for Ubuntu. It would be different
     # for other distros like CentOS or RHEL. Currently, hardcoding it for Ubuntu but needs to
@@ -86,6 +137,7 @@ def cleanup_gramine_binaries(build_prefix):
     print("\n-- Removing user installed gramine binaries..\n", gramine_user_installed_bin_rm_cmd)
     os.system(gramine_user_installed_bin_rm_cmd)
 
+
 def update_env_variables(build_prefix):
     """
     Function to update the following environment variables to below respective locations,
@@ -97,26 +149,30 @@ def update_env_variables(build_prefix):
     :return:
     """
 
-    # Update environment 'PATH' variable to the path (<prefix>/bin) where gramine
-    # binaries would be installed.
-    os.environ["PATH"] = build_prefix + "/bin" + os.pathsep + os.environ["PATH"]
-    print(f"\n-- Updated environment PATH variable to the following..\n", os.environ["PATH"])
+    if BUILD_GRAMINE != "package":
+        # Update environment 'PATH' variable to the path (<prefix>/bin) where gramine
+        # binaries would be installed.
+        os.environ["PATH"] = build_prefix + "/bin" + os.pathsep + os.environ["PATH"]
+        print(f"\n-- Updated environment PATH variable to the following..\n", os.environ["PATH"])
 
-    # Update environment 'PKG_CONFIG_PATH' variable to <prefix>/<libdir>/pkgconfig.
-    libdir_path_cmd = "meson introspect " + GRAMINE_HOME_DIR + \
-                      "/build/ --buildoptions | jq -r '(map(select(.name == \"libdir\"))) | map(.value) | join(\"/\")'"
-    libdir_path = exec_shell_cmd(libdir_path_cmd)
+        # Update environment 'PKG_CONFIG_PATH' variable to <prefix>/<libdir>/pkgconfig.
+        libdir_path_cmd = "meson introspect " + GRAMINE_HOME_DIR + \
+                        "/build/ --buildoptions | jq -r '(map(select(.name == \"libdir\"))) | map(.value) | join(\"/\")'"
+        libdir_path = exec_shell_cmd(libdir_path_cmd)
 
-    os.environ["PKG_CONFIG_PATH"] = build_prefix + "/" + libdir_path + "/pkgconfig" + os.pathsep + os.environ.get(
-        'PKG_CONFIG_PATH', '')
-    print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
+        os.environ["PKG_CONFIG_PATH"] = build_prefix + "/" + libdir_path + "/pkgconfig" + os.pathsep + os.environ.get(
+            'PKG_CONFIG_PATH', '')
+        print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
 
-    print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
-    os.environ["PYTHONPATH"] = exec_shell_cmd(PYTHONPATH_CMD)
-    print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
+        print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
+        os.environ["PYTHONPATH"] = exec_shell_cmd(PYTHONPATH_CMD)
+        print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
 
     print(f"\n-- Updating 'SSHPASS' env-var\n")
     os.environ['SSHPASS'] = "intel@123"
+
+    cmd_out = exec_shell_cmd('cc -dumpmachine')
+    os.environ['ARCH_LIBDIR'] = "/lib/" + cmd_out
 
 
 def set_http_proxies():
@@ -181,7 +237,7 @@ def determine_host_ip_addr():
         
     for ifaceName in ni.interfaces():
         if ni.ifaddresses(ifaceName).setdefault(ni.AF_INET) is not None and \
-                ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr'].startswith('192.'):
+                ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr'].startswith('192.168.0'):
             host_IP = ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr']
             break
 
@@ -211,7 +267,8 @@ def write_to_report(workload_name, test_results):
         else:
             generic_dict[k] = test_results[k]
 
-    report_name = os.path.join(PERF_RESULTS_DIR, "Gramine_Performance_Data_{}".format(str(date.today())) + ".xlsx")
+    now = dt.now()
+    report_name = os.path.join(PERF_RESULTS_DIR, "Gramine_Performance_Data_{}".format(dt.isoformat(now)) + ".xlsx")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
@@ -241,10 +298,10 @@ def write_to_report(workload_name, test_results):
     writer.save()
 
 
-def generate_performance_report(trd):
+def generate_performance_report(test_res_dict):
     print("\n###### In generate_performance_report #####\n")
 
-    for workload, tests in trd.items():
+    for workload, tests in test_res_dict.items():
         write_to_report(workload, tests)
 
 
@@ -263,10 +320,13 @@ def check_machine():
 
 
 def kill(proc_pid):
-    process = psutil.Process(proc_pid)
-    for proc in process.children(recursive=True):
-        proc.kill()
-    process.kill()
+    try:
+        process = psutil.Process(proc_pid)
+        for proc in process.children(recursive=True):
+            proc.terminate()
+        process.terminate()
+    except:
+        pass
 
 
 def kill_process_by_name(processName):
@@ -286,20 +346,19 @@ def get_workload_name(docker_image):
 
 
 def cleanup_after_test(workload):
-    import pdb
-    pdb.set_trace()
     try:
         kill_process_by_name("secret_prov_server_dcap")
         kill_process_by_name("/gramine/app_files/apploader.sh")
         kill_process_by_name("/gramine/app_files/entrypoint")
         exec_shell_cmd('sudo sh -c "echo 3 > /proc/sys/vm/drop_caches"')
-        exec_shell_cmd("docker rmi gsc-{}x -f".format(workload))
-        exec_shell_cmd("docker rmi gsc-{}x-unsigned -f".format(workload))
-        exec_shell_cmd("docker rmi {}x -f".format(workload))
+        exec_shell_cmd("docker rmi gsc-{} -f".format(workload))
+        exec_shell_cmd("docker rmi gsc-{}-unsigned -f".format(workload))
+        exec_shell_cmd("docker rmi {} -f".format(workload))
         exec_shell_cmd("docker rmi verifier_image:latest -f")
         exec_shell_cmd("docker system prune -f")
     except Exception as e:
         pass
+
 
 def popen_subprocess(command, dest_dir=None):
     if dest_dir:
@@ -307,7 +366,7 @@ def popen_subprocess(command, dest_dir=None):
         os.chdir(dest_dir)
 
     print("Starting Process ", command)
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding='utf-8')
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, encoding='utf-8')
     time.sleep(1)
    
     if dest_dir: os.chdir(cwd)

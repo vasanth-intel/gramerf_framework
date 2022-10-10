@@ -2,7 +2,7 @@
 Default:
   original_manifest_file: "python.manifest.template"
   metric: "Throughput"
-  workload_name: "tensorflow"
+  workload_name: "Tensorflow"
   manifest_name: "python"
   workload_home_dir: "gramine/CI-Examples/resnet/"
   manifest_file: "python_resnet.manifest.template"

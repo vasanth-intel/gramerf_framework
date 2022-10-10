@@ -7,7 +7,8 @@ Default:
   manifest_name: "redis-server"
   manifest_file: "redis-server.manifest.template.exitless"
   server_size: 4
-  server_port: 9001
+  baremetal_server_port: 9001
+  container_server_port: 6379
   client_ip: "10.66.247.185"
   client_username: "intel"
   client_scripts_path: "/home/intel/perf_benchmarking/gramerf_redis_client"

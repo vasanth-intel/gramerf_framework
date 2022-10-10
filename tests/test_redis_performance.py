@@ -4,7 +4,6 @@ import time
 from common.libs.gramerf_wrapper import run_test
 from common.libs import utils
 
-
 yaml_file_name = "redis_performance_tests.yaml"
 tests_yaml_path = os.path.join(os.getcwd(), 'data', yaml_file_name)
 

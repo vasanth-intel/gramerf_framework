@@ -7,7 +7,9 @@ def construct_client_exec_cmd(tcd, exec_mode = 'native'):
     benchmark_exec_mode = 'native'
     if exec_mode == 'gramine-direct':
         benchmark_exec_mode = 'graphene'
-    elif exec_mode == 'gramine-sgx':
+    elif exec_mode == 'gramine-sgx-single-thread-non-exitless':
+        benchmark_exec_mode = 'graphene_sgx_single_thread'
+    elif exec_mode == 'gramine-sgx-diff-core-exitless':
         benchmark_exec_mode = 'graphene_sgx_diff_core'
 
     benchmark_exec_cmd = f"cd {tcd['client_scripts_path']} && ./start_benchmark.sh {benchmark_exec_mode} {tcd['test_name']} {tcd['data_size']} {tcd['rw_ratio']} {tcd['iterations']}"

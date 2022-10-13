@@ -5,7 +5,7 @@ Default:
   timeout: 3000
   workload_name: "Redis"
   manifest_name: "redis-server"
-  manifest_file: "redis-server.manifest.template.exitless"
+  manifest_file: "redis-server.manifest.template.non-exitless"
   server_size: 4
   baremetal_server_port: 9001
   container_server_port: 6379

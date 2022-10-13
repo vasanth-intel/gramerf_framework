@@ -124,7 +124,9 @@ class RedisWorkload:
             redis_exec_cmd = "numactl -C 1 " + tmp_exec_cmd
         elif exec_mode == 'gramine-direct':
             redis_exec_cmd = "numactl -C 1 gramine-direct " + tmp_exec_cmd
-        elif exec_mode == 'gramine-sgx':
+        elif exec_mode == 'gramine-sgx-single-thread-non-exitless':
+            redis_exec_cmd = "numactl -C 1 gramine-sgx " + tmp_exec_cmd
+        elif exec_mode == 'gramine-sgx-diff-core-exitless':
             redis_exec_cmd = "numactl -C 1,2 gramine-sgx " + tmp_exec_cmd
         else:
             raise Exception(f"\nInvalid execution mode specified in config yaml!")
@@ -141,11 +143,23 @@ class RedisWorkload:
             print(kill_cmd)
             utils.exec_shell_cmd(kill_cmd)
 
+    # Default manifest specified in yaml would be 'redis-server.manifest.template.non-exitless'
+    # for single thread non-exitless execution. We need to override and re-generate the 
+    # manifest for multithreaded exitless configuration.
+    def override_manifest_for_exitless(self, tcd):
+        tcd['manifest_file'] = "redis-server.manifest.template.exitless"
+        gramine_libs.update_manifest_file(tcd)
+        self.generate_manifest()
+        gramine_libs.generate_sgx_token_and_sig(tcd)
+
     # Build the workload execution command based on execution params and execute it.
     def execute_workload(self, tcd, e_mode, test_dict=None):
         print("\n##### In execute_workload #####\n")
 
         print(f"\n-- Executing {tcd['test_name']} in {e_mode} mode")
+
+        if e_mode == 'gramine-sgx-diff-core-exitless':
+            self.override_manifest_for_exitless(tcd)
 
         self.command = self.construct_server_workload_exec_cmd(tcd, e_mode)
         if self.command is None:
@@ -197,9 +211,12 @@ class RedisWorkload:
                 if "native" in filename:
                     test_dict_latency['native'].append(float(avg_latency))
                     test_dict_throughput['native'].append(float(avg_throughput))
-                elif "graphene_sgx" in filename:
-                    test_dict_latency['gramine-sgx'].append(float(avg_latency))
-                    test_dict_throughput['gramine-sgx'].append(float(avg_throughput))
+                elif "graphene_sgx_single_thread" in filename:
+                    test_dict_latency['gramine-sgx-single-thread-non-exitless'].append(float(avg_latency))
+                    test_dict_throughput['gramine-sgx-single-thread-non-exitless'].append(float(avg_throughput))
+                elif "graphene_sgx_diff_core" in filename:
+                    test_dict_latency['gramine-sgx-diff-core-exitless'].append(float(avg_latency))
+                    test_dict_throughput['gramine-sgx-diff-core-exitless'].append(float(avg_throughput))
                 else:
                     test_dict_latency['gramine-direct'].append(float(avg_latency))
                     test_dict_throughput['gramine-direct'].append(float(avg_throughput))
@@ -217,12 +234,23 @@ class RedisWorkload:
                 test_dict_latency['direct-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-avg'], test_dict_latency['direct-avg'])
                 test_dict_throughput['direct-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['direct-avg'])
 
-        if 'gramine-sgx' in tcd['exec_mode']:
-            test_dict_latency['sgx-avg'] = '{:0.3f}'.format(sum(test_dict_latency['gramine-sgx'])/len(test_dict_latency['gramine-sgx']))
-            test_dict_throughput['sgx-avg'] = '{:0.3f}'.format(sum(test_dict_throughput['gramine-sgx'])/len(test_dict_throughput['gramine-sgx']))
+        if 'gramine-sgx-single-thread-non-exitless' in tcd['exec_mode']:
+            test_dict_latency['sgx-single-thread-avg'] = '{:0.3f}'.format(
+                sum(test_dict_latency['gramine-sgx-single-thread-non-exitless'])/len(test_dict_latency['gramine-sgx-single-thread-non-exitless']))
+            test_dict_throughput['sgx-single-thread-avg'] = '{:0.3f}'.format(
+                sum(test_dict_throughput['gramine-sgx-single-thread-non-exitless'])/len(test_dict_throughput['gramine-sgx-single-thread-non-exitless']))
             if 'native' in tcd['exec_mode']:
-                test_dict_latency['sgx-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-avg'], test_dict_latency['sgx-avg'])
-                test_dict_throughput['sgx-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['sgx-avg'])
+                test_dict_latency['sgx-single-thread-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-avg'], test_dict_latency['sgx-single-thread-avg'])
+                test_dict_throughput['sgx-single-thread-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['sgx-single-thread-avg'])
+
+        if 'gramine-sgx-diff-core-exitless' in tcd['exec_mode']:
+            test_dict_latency['sgx-diff-core-exitless-avg'] = '{:0.3f}'.format(
+                sum(test_dict_latency['gramine-sgx-diff-core-exitless'])/len(test_dict_latency['gramine-sgx-diff-core-exitless']))
+            test_dict_throughput['sgx-diff-core-exitless-avg'] = '{:0.3f}'.format(
+                sum(test_dict_throughput['gramine-sgx-diff-core-exitless'])/len(test_dict_throughput['gramine-sgx-diff-core-exitless']))
+            if 'native' in tcd['exec_mode']:
+                test_dict_latency['sgx-diff-core-exitless-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-avg'], test_dict_latency['sgx-diff-core-exitless-avg'])
+                test_dict_throughput['sgx-diff-core-exitless-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['sgx-diff-core-exitless-avg'])
 
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
         trd[tcd['workload_name']].update({tcd['test_name']+'_latency': test_dict_latency})

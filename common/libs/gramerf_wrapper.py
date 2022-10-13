@@ -19,6 +19,10 @@ def read_perf_suite_config(test_instance, test_yaml_file, test_name):
         test_config_dict.update(yaml_test_config[test_name])
         test_config_dict['test_name'] = test_name
 
+    if test_config_dict['workload_name'] == 'Redis':
+        del test_config_dict['exec_mode']
+        test_config_dict['exec_mode'] = test_config_dict.pop('redis_exec_mode')
+
     print("\n-- Read the following Test Configuration Data : \n\n", test_config_dict)
 
     return test_config_dict

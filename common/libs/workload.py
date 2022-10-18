@@ -14,7 +14,7 @@ class Workload(object):
         self.name = test_config_dict['workload_name']
         self.command = None
         workload_script = test_config_dict['workload_name'] + "Workload"
-        if test_config_dict["perf_config"] == "container":
+        if os.environ["perf_config"] == "container":
             self.workload_class = getattr(globals()["container_workloads"], workload_script)
         else:
             self.workload_class = getattr(globals()["baremetal_workloads"], workload_script)

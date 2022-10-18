@@ -5,12 +5,8 @@ from common.libs import utils
 
 
 def read_perf_suite_config(test_instance, test_yaml_file, test_name):
-    # Reading global config data.
-    config_file_name = "config.yaml"
-    config_file_path = os.path.join(FRAMEWORK_HOME_DIR, 'common/config_files', config_file_name)
-
-    # Reading global config and workload specific data.
-    test_config_dict = utils.read_config_yaml(config_file_path)
+    # Reading workload specific data.
+    test_config_dict = {}
     yaml_test_config = utils.read_config_yaml(test_yaml_file)
     test_config_dict.update(yaml_test_config['Default'])
 
@@ -19,9 +15,8 @@ def read_perf_suite_config(test_instance, test_yaml_file, test_name):
         test_config_dict.update(yaml_test_config[test_name])
         test_config_dict['test_name'] = test_name
 
-    if test_config_dict['workload_name'] == 'Redis':
-        del test_config_dict['exec_mode']
-        test_config_dict['exec_mode'] = test_config_dict.pop('redis_exec_mode')
+    test_config_dict['iterations'] = int(os.environ['iterations'])
+    test_config_dict['exec_mode'] = os.environ['exec_mode'].split(",")
 
     print("\n-- Read the following Test Configuration Data : \n\n", test_config_dict)
 
@@ -29,11 +24,9 @@ def read_perf_suite_config(test_instance, test_yaml_file, test_name):
 
 
 def run_test(test_instance, test_yaml_file):
-    perf_config = os.getenv("perf_config")
     test_name = inspect.stack()[1].function
     print(f"\n********** Executing {test_name} **********\n")
     test_config_dict = read_perf_suite_config(test_instance, test_yaml_file, test_name)
-    test_config_dict["perf_config"] = perf_config
     utils.clear_system_cache()
 
     test_obj = Workload(test_config_dict)

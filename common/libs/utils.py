@@ -149,7 +149,7 @@ def update_env_variables(build_prefix):
     :return:
     """
 
-    if BUILD_GRAMINE != "package":
+    if os.environ["build_gramine"] != "package":
         # Update environment 'PATH' variable to the path (<prefix>/bin) where gramine
         # binaries would be installed.
         os.environ["PATH"] = build_prefix + "/bin" + os.pathsep + os.environ["PATH"]
@@ -275,7 +275,12 @@ def write_to_report(workload_name, test_results):
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
     
-    cols = ['native', 'gramine-direct', 'gramine-sgx', 'native-avg', 'direct-avg', 'sgx-avg', 'direct-deg', 'sgx-deg']
+    if workload_name == 'Redis':
+        cols = ['native', 'gramine-direct', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', \
+                'native-avg', 'direct-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', \
+                'direct-deg', 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg']
+    else:
+        cols = ['native', 'gramine-direct', 'gramine-sgx', 'native-avg', 'direct-avg', 'sgx-avg', 'direct-deg', 'sgx-deg']
 
     if len(throughput_dict) > 0:
         throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols).dropna(axis=1)

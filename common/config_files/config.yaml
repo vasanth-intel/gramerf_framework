@@ -1,4 +1,0 @@
----
-iterations: 3
-exec_mode: ["native", "gramine-direct", "gramine-sgx"]
-redis_exec_mode: ["native", "gramine-direct", "gramine-sgx-single-thread-non-exitless", "gramine-sgx-diff-core-exitless"]

@@ -27,8 +27,8 @@ def fresh_gramine_checkout():
     # Git clone the examples repo too for workloads download.
     os.chdir(GRAMINE_HOME_DIR)
 
-    commit_id = os.getenv("COMMIT_ID")
-    if commit_id != None:
+    commit_id = os.environ["commit_id"]
+    if commit_id != '':
         print("\n-- Checking out following Gramine commit: ", commit_id)
         utils.exec_shell_cmd(f"git checkout {commit_id}")
 
@@ -54,15 +54,30 @@ def setup_gramine_environment():
 def gramine_package_install():
     print("Installing latest Gramine package\n")
 
+    distro, distro_version = utils.get_distro_and_version()
+    if distro == 'rhel':
+        utils.exec_shell_cmd("sudo curl -fsSLo /etc/yum.repos.d/gramine.repo https://packages.gramineproject.io/rpm/gramine.repo")
+        utils.exec_shell_cmd("sudo dnf -y install gramine")
+        return
+
+    if distro == 'ubuntu' and distro_version in ["18.04", "20.04", "22.04"]:
+        if distro_version == '18.04':
+            gramine_dist = sgx_dist = 'bionic'
+        elif distro_version == '20.04':
+            gramine_dist = sgx_dist = 'focal'
+        else: # 22.04
+            gramine_dist, sgx_dist = 'stable', 'focal'
+    else:
+        raise Exception("\n-- Failure: Unsupported distro for Gramine installation!!")
+
     utils.exec_shell_cmd("sudo curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg")
-    utils.exec_shell_cmd("echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ stable main' | sudo tee /etc/apt/sources.list.d/gramine.list")
+    utils.exec_shell_cmd(f"echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ {gramine_dist} main' | sudo tee /etc/apt/sources.list.d/gramine.list")
 
     utils.exec_shell_cmd("curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | sudo apt-key add -")
-    utils.exec_shell_cmd("echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu bionic main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list")
-    # (if you're on Ubuntu 18.04, remember to write "bionic" instead of "focal")
+    utils.exec_shell_cmd(f"echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu {sgx_dist} main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list")
 
     utils.exec_shell_cmd(APT_UPDATE_CMD)
-    utils.exec_shell_cmd("sudo apt-get install -y gramine")
+    utils.exec_shell_cmd("sudo apt-get -y install gramine")
 
 
 def install_gramine_dependencies():
@@ -146,7 +161,7 @@ def install_gramine_binaries():
 
     fresh_gramine_checkout()
     
-    if BUILD_GRAMINE == "package":
+    if os.environ["build_gramine"] == "package":
         gramine_package_install()
     else:
         # Install Gramine dependencies
@@ -166,7 +181,8 @@ def update_manifest_file(test_config_dict):
 
 
 def generate_sgx_token_and_sig(test_config_dict):
-    if 'gramine-sgx' in test_config_dict['exec_mode']:
+    sgx_exec = len(list(e_mode for e_mode in test_config_dict['exec_mode'] if 'gramine-sgx' in e_mode))
+    if sgx_exec > 0:
         sign_cmd = "gramine-sgx-sign --manifest {0}.manifest --output {0}.manifest.sgx".format(test_config_dict['manifest_name'])
         token_cmd = "gramine-sgx-get-token --output {0}.token --sig {0}.sig".format(test_config_dict['manifest_name'])
         

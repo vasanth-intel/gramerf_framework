@@ -19,16 +19,19 @@ from collections import defaultdict
 trd = defaultdict(dict)
 
 
+def read_command_line_args(config):
+    os.environ["perf_config"] = config.option.perf_config
+    os.environ["build_gramine"] = config.option.build_gramine
+    os.environ["commit_id"] = config.option.commit_id
+    os.environ["iterations"] = config.option.iterations
+    os.environ["exec_mode"] = config.option.exec_mode
+
+
 @pytest.fixture(scope="session")
 def gramerf_setup(request):
-    config = request.config
-    perf_config = config.option.perf_config
-    print("\n###### Executing in {} mode".format(perf_config))
-
-    os.environ["perf_config"] = perf_config
-
     print("\n###### In gramerf_setup #####\n")
-    
+    read_command_line_args(request.config)
+
     # Delete old logs if any and create new logs directory.
     if os.path.exists(LOGS_DIR):
         del_logs_cmd = 'rm -rf ' + LOGS_DIR
@@ -45,7 +48,7 @@ def gramerf_setup(request):
     utils.set_http_proxies()
     utils.clean_up_system()
     
-    if perf_config == "baremetal":
+    if os.environ['perf_config'] == "baremetal":
         # Checkout gramine source and build the same.
         gramine_libs.install_gramine_binaries()
     else:
@@ -60,4 +63,11 @@ def gramerf_setup(request):
 
 def pytest_addoption(parser):
     print("\n##### In pytest_addoption #####\n")
-    parser.addoption("--perf_config", action="store", type=str, default="baremetal")
+    parser.addoption("--perf_config", action="store", type=str, default="baremetal", help="Bare-metal or Docker based execution.")
+    parser.addoption("--build_gramine", action="store", type=str, default="source", help="Package or source based installation of Gramine.")
+    parser.addoption("--commit_id", action="store", type=str, default="", help="Any specific commit-id for source based installation.")
+    parser.addoption("--iterations", action="store", type=str, default='3', help="Number of times workload/benchmark app needs to be launched/executed.")
+    # Following will be value of 'exec_mode' that would be expected by the framework.
+    # For Redis workload: "native,gramine-direct,gramine-sgx-single-thread-non-exitless,gramine-sgx-diff-core-exitless"
+    # For other workloads: "native,gramine-direct,gramine-sgx"
+    parser.addoption("--exec_mode", action="store", type=str, default="native,gramine-direct,gramine-sgx", help="Workload execution modes.")

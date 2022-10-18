@@ -1,6 +1,5 @@
 import os
 
-BUILD_GRAMINE = "package"
 FRAMEWORK_HOME_DIR = os.getcwd()
 GRAMINE_HOME_DIR = FRAMEWORK_HOME_DIR + "/gramine"
 LOGS_DIR = FRAMEWORK_HOME_DIR + "/logs"

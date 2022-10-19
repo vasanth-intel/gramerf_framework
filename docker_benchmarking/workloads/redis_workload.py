@@ -9,13 +9,14 @@ from conftest import trd
 class RedisWorkload:
     def __init__(self, test_config_dict):
         # Redis home dir => "~/gramerf_framework"
-        # Before executing any workload action, we would be changing directory to
-        # workload home directory within wrapper. Changing to home dir is required
-        # for bare-metal case as we build the workload by downloading its source.
+        # Setting the workload home dir to framework root dir.
+        # Changing to home dir is required for bare-metal case as we build
+        # the workload by downloading its source.
         # In container case, we would just pull the docker image from the repo
         # and not build it. So, we do not require any workload home dir here.
-        # Hence, assigning the home dir as framework dir itself to mitigate the
-        # workload home dir change statement within the wrapper.
+        # Hence, assigning the home dir as framework dir itself and not
+        # changing to it within pre-actions in container case, as we would 
+        # anyways be executing from framework dir.
         self.workload_home_dir = FRAMEWORK_HOME_DIR
         self.server_ip_addr = utils.determine_host_ip_addr()
 
@@ -62,7 +63,6 @@ class RedisWorkload:
         utils.exec_shell_cmd(workload_docker_pull_cmd, None)
 
     def pre_actions(self, test_config_dict):
-        #utils.set_threads_cnt_env_var()
         utils.set_cpu_freq_scaling_governor()
         self.update_server_details_in_client(test_config_dict)
 

@@ -30,7 +30,6 @@ def run_test(test_instance, test_yaml_file):
     utils.clear_system_cache()
 
     test_obj = Workload(test_config_dict)
-    os.chdir(test_obj.get_workload_home_dir())
     test_obj.pre_actions(test_config_dict)
     test_obj.setup_workload(test_config_dict)
     

@@ -99,7 +99,7 @@ class RedisWorkload:
         utils.exec_shell_cmd(test_res_del_cmd)
 
     def pre_actions(self, test_config_dict):
-        #utils.set_threads_cnt_env_var()
+        os.chdir(self.get_workload_home_dir())
         utils.set_cpu_freq_scaling_governor()
         self.update_server_details_in_client(test_config_dict)
         gramine_libs.update_manifest_file(test_config_dict)

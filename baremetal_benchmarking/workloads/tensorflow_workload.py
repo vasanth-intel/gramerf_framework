@@ -103,6 +103,7 @@ class TensorflowWorkload():
             raise Exception(f"\n-- Library {MIMALLOC_INSTALL_PATH} not generated/installed.\n")
 
     def pre_actions(self, test_config_dict):
+        os.chdir(self.get_workload_home_dir())
         utils.set_threads_cnt_env_var()
         utils.set_cpu_freq_scaling_governor()
         if test_config_dict['model_name'] == 'bert':

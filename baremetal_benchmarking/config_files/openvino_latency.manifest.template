@@ -5,7 +5,7 @@ loader.log_level = "{{ log_level }}"
 
 loader.env.LD_LIBRARY_PATH = "/lib:{{ openvino_dir }}/deployment_tools/inference_engine/external/tbb/lib:{{ openvino_dir }}/deployment_tools/inference_engine/lib/intel64:{{ openvino_dir }}/opencv/lib:{{ openvino_dir }}/deployment_tools/ngraph/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
 
-loader.env.LD_PRELOAD = "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"
+loader.env.LD_PRELOAD = "/usr/local/lib/libmimalloc.so.1.7"
 
 fs.mounts = [
   { type = "chroot", uri = "file:{{ gramine.runtimedir() }}", path = "/lib" },
@@ -14,19 +14,20 @@ fs.mounts = [
   { type = "chroot", uri = "file:/etc", path = "/etc" },
   { type = "chroot", uri = "file:{{ openvino_dir }}", path = "{{ openvino_dir }}" },
   { type = "chroot", uri = "file:{{ inference_engine_cpp_samples_build }}", path = "{{ inference_engine_cpp_samples_build }}" },
+  { type = "chroot", uri = "file:/usr/local", path = "/usr/local" },
+
 ]
 
 loader.insecure__use_cmdline_argv = true
 
 sgx.enclave_size = "32G"
-sgx.thread_num = 196
+sgx.max_threads = 196
 
 sgx.preheat_enclave = true
 libos.check_invalid_pointers = false
 
 sgx.trusted_files = [
-  "file:/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4",
-  "file:/usr/lib/x86_64-linux-gnu/libunwind.so.8",
+  "file:/usr/local/lib/libmimalloc.so.1.7",
   "file:benchmark_app",
   "file:{{ gramine.libos }}",
   "file:{{ gramine.runtimedir() }}/",

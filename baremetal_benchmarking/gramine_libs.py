@@ -2,8 +2,8 @@ import os
 import time
 import shutil
 import pytest
-from src.config_files.constants import *
-from src.libs import utils
+from common.config_files.constants import *
+from common.libs import utils
 
 
 def fresh_gramine_checkout():
@@ -27,10 +27,60 @@ def fresh_gramine_checkout():
     # Git clone the examples repo too for workloads download.
     os.chdir(GRAMINE_HOME_DIR)
 
+    commit_id = os.environ["commit_id"]
+    if commit_id != '':
+        utils.exec_shell_cmd(f"git checkout {commit_id}")
+    else:
+        commit_id = utils.exec_shell_cmd("git rev-parse HEAD")
+
+    print("\n-- Checked out following Gramine commit: ", commit_id)
+
     print("\n-- Cloning Gramine examples git repo..\n", EXAMPLES_REPO_CLONE_CMD)
     utils.exec_shell_cmd(EXAMPLES_REPO_CLONE_CMD)
         
     os.chdir(FRAMEWORK_HOME_DIR)
+
+
+def setup_gramine_environment():
+    # Update the following environment variables as the gramine binaries can be
+    # installed at some other place other than '/usr/local'
+    # PATH, PYTHONPATH and PKG_CONFIG_PATH
+    # Need to update these variables only after building gramine as there would be some
+    # dereferences of few path values which are created only after successful build.
+
+    utils.update_env_variables(BUILD_PREFIX)
+
+    print("\n-- Generating gramine-sgx private key..\n", GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
+    utils.exec_shell_cmd(GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
+
+
+def gramine_package_install():
+    print("Installing latest Gramine package\n")
+
+    distro, distro_version = utils.get_distro_and_version()
+    if distro == 'rhel':
+        utils.exec_shell_cmd("sudo curl -fsSLo /etc/yum.repos.d/gramine.repo https://packages.gramineproject.io/rpm/gramine.repo")
+        utils.exec_shell_cmd("sudo dnf -y install gramine")
+        return
+
+    if distro == 'ubuntu' and distro_version in ["18.04", "20.04", "22.04"]:
+        if distro_version == '18.04':
+            gramine_dist = sgx_dist = 'bionic'
+        elif distro_version == '20.04':
+            gramine_dist = sgx_dist = 'focal'
+        else: # 22.04
+            gramine_dist, sgx_dist = 'stable', 'focal'
+    else:
+        raise Exception("\n-- Failure: Unsupported distro for Gramine installation!!")
+
+    utils.exec_shell_cmd("sudo curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg")
+    utils.exec_shell_cmd(f"echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ {gramine_dist} main' | sudo tee /etc/apt/sources.list.d/gramine.list")
+
+    utils.exec_shell_cmd("curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | sudo apt-key add -")
+    utils.exec_shell_cmd(f"echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu {sgx_dist} main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list")
+
+    utils.exec_shell_cmd(APT_UPDATE_CMD)
+    utils.exec_shell_cmd("sudo apt-get -y install gramine")
 
 
 def install_gramine_dependencies():
@@ -43,12 +93,12 @@ def install_gramine_dependencies():
     
     if distro == 'ubuntu':
         # Read the system packages yaml file and update the actual system_packages string
-        system_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', SYSTEM_PACKAGES_FILE)
+        system_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'baremetal_benchmarking/config_files', SYSTEM_PACKAGES_FILE)
         system_packages = utils.read_config_yaml(system_packages_path)
         system_packages_str = system_packages['Default']
 
         # Read the python packages yaml file and update the actual python_packages string
-        python_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'src/config_files', PYTHON_PACKAGES_FILE)
+        python_packages_path = os.path.join(FRAMEWORK_HOME_DIR, 'baremetal_benchmarking/config_files', PYTHON_PACKAGES_FILE)
         python_packages = utils.read_config_yaml(python_packages_path)
         python_packages_str = python_packages['Default']
 
@@ -81,17 +131,9 @@ def install_gramine_dependencies():
 def build_and_install_gramine():
     print("\n###### In build_and_install_gramine #####\n")
     
-    # Checkout fresh gramine source
-    fresh_gramine_checkout()
-    
     # Change dir to above checked out gramine folder and
     # start building the same.
     os.chdir(GRAMINE_HOME_DIR)
-
-    # Cleanup existing gramine binaries (if any) before starting a fresh build.
-    # Passing prefix path as argument, so that user installed (if any) gramine
-    # binaries are also removed.
-    utils.cleanup_gramine_binaries(BUILD_PREFIX)
 
     # Create prefix dir
     print(f"\n-- Creating build prefix directory '{BUILD_PREFIX}'..\n")
@@ -114,41 +156,47 @@ def build_and_install_gramine():
     os.chdir(FRAMEWORK_HOME_DIR)
 
 
-def setup_gramine_environment():
-    # Update the following environment variables as the gramine binaries can be
-    # installed at some other place other than '/usr/local'
-    # PATH, PYTHONPATH and PKG_CONFIG_PATH
-    # Need to update these variables only after building gramine as there would be some
-    # dereferences of few path values which are created only after successful build.
-    utils.update_env_variables(BUILD_PREFIX)
+def install_gramine_binaries():
+    # Cleanup existing gramine binaries (if any) before starting a fresh build.
+    # Passing prefix path as argument, so that user installed (if any) gramine
+    # binaries are also removed.
+    utils.cleanup_gramine_binaries(BUILD_PREFIX)
 
-    print("\n-- Generating gramine-sgx private key..\n", GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
-    utils.exec_shell_cmd(GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
+    fresh_gramine_checkout()
+    
+    if os.environ["build_gramine"] == "package":
+        gramine_package_install()
+    else:
+        # Install Gramine dependencies
+        install_gramine_dependencies()
 
-
-def build_gramine_binaries():
-
-    print("\n###### In build_gramine #####\n")
-
-    # Install Gramine dependencies
-    install_gramine_dependencies()
-
-    # Build and Install Gramine
-    build_and_install_gramine()
-
-    # Setup gramine env variables and generate sgx private key
+        # Build and Install Gramine
+        build_and_install_gramine()
+    
     setup_gramine_environment()
 
 
 def update_manifest_file(test_config_dict):
-    src_file = os.path.join(FRAMEWORK_HOME_DIR, "src/config_files" , test_config_dict['manifest_file'])
+    src_file = os.path.join(FRAMEWORK_HOME_DIR, "baremetal_benchmarking/config_files" , test_config_dict['manifest_file'])
     dest_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , test_config_dict['manifest_name']) + ".manifest.template"
 
     shutil.copy2(src_file, dest_file)
 
+    # Following 'if' condition is to mitigate the fix within the below commit,
+    # which is not yet applied to package binaries: 4e724c10210a435c8837875fe2a4e8e50257b9c9
+    # Since the fix is not applied on the package binaries, gramine-sgx execution will
+    # fail when the framework is run with gramine package installation.
+    # So, this if condition must be removed, once the above fix is applied on gramine package.
+    if os.environ["build_gramine"] == "package":
+        max_threads_cmd = f"sed -i 's/^sgx.max_threads/sgx.thread_num/' {dest_file}"
+        print("\n-- Replacing sgx.max_threads with sgx.thread_num within the manifest file..")
+        print(max_threads_cmd)
+        utils.exec_shell_cmd(max_threads_cmd)
+
 
 def generate_sgx_token_and_sig(test_config_dict):
-    if 'gramine-sgx' in test_config_dict['exec_mode']:
+    sgx_exec = len(list(e_mode for e_mode in test_config_dict['exec_mode'] if 'gramine-sgx' in e_mode))
+    if sgx_exec > 0:
         sign_cmd = "gramine-sgx-sign --manifest {0}.manifest --output {0}.manifest.sgx".format(test_config_dict['manifest_name'])
         token_cmd = "gramine-sgx-get-token --output {0}.token --sig {0}.sig".format(test_config_dict['manifest_name'])
         

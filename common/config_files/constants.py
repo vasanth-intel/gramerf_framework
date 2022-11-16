@@ -53,9 +53,9 @@ SYS_PACKAGES_CMD = "sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "
 # -U option is to install the latest package (if upgrade is available).
 PYTHON_PACKAGES_CMD = "sudo -H python3 -m pip install -U "
 
-PIP_UPGRADE_CMD = "python3 -m pip install --upgrade pip"
+PIP_UPGRADE_CMD = "sudo python3 -m pip install --upgrade pip"
 
-TENSORFLOW_INSTALL_CMD = "python3 -m pip install intel-tensorflow-avx512==2.4.0"
+TENSORFLOW_INSTALL_CMD = "sudo python3 -m pip install intel-tensorflow-avx512==2.4.0 --no-cache-dir"
 
 TF_BERT_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
 
@@ -71,3 +71,11 @@ TF_RESNET_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/mode
 TF_RESNET_INT8_MODEL_WGET_CMD = "wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/resnet50v1_5_int8_pretrained_model.pb"
 
 LOG_LEVEL = "error"
+
+REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
+ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
+CONTRIB_GIT_CMD       = "git clone -b aneessahib/gsc_image_curation https://github.com/aneessahib/contrib.git orig_contrib_repo"
+#GIT_CHECKOUT_CMD      = "git checkout gsc_image_curation"
+CURATED_PATH          = "Curated-Apps"
+CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)
+VERIFIER_DOCKERFILE   = os.path.join(ORIG_CURATED_PATH, CURATED_PATH, "verifier/verifier.dockerfile.template")

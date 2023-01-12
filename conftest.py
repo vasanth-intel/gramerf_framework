@@ -25,7 +25,7 @@ def read_command_line_args(config):
     os.environ["commit_id"] = config.option.commit_id
     os.environ["iterations"] = config.option.iterations
     os.environ["exec_mode"] = config.option.exec_mode
-
+    os.environ["EDMM"] = config.option.edmm
 
 @pytest.fixture(scope="session")
 def gramerf_setup(request):
@@ -71,3 +71,4 @@ def pytest_addoption(parser):
     # For Redis workload: "native,gramine-direct,gramine-sgx-single-thread-non-exitless,gramine-sgx-diff-core-exitless"
     # For other workloads: "native,gramine-direct,gramine-sgx"
     parser.addoption("--exec_mode", action="store", type=str, default="native,gramine-direct,gramine-sgx", help="Workload execution modes.")
+    parser.addoption("--edmm", action="store", type=str, default="0", help="EDMM mode")

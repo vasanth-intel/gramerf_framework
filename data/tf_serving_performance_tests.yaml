@@ -1,0 +1,4 @@
+Default:
+  docker_image: tensorflow-serving tf-serving-base
+  
+test_tf_serving_resnet:

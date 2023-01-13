@@ -54,7 +54,7 @@ def generate_curated_image(test_config_dict):
     
     print("Curation cmd ", curation_cmd)
     os.chdir(CURATED_APPS_PATH)
-    result = subprocess.run([curation_cmd], input=b'\x07', shell=True, check=True, stdout=subprocess.PIPE)
+    result = subprocess.run([curation_cmd], input=b'\x07', shell=True, check=True, stdout=subprocess.PIPE) #check if Ctrl+G character is required anymore
     os.chdir(FRAMEWORK_HOME_DIR)
       
     curation_output = result.stdout.strip()
@@ -64,6 +64,7 @@ def generate_curated_image(test_config_dict):
 
 
 def get_docker_run_command(workload_name):
+    # Add the command for tf-serving with Gramine SGX
     output = []
     wrapper_image = "gsc-{}".format(workload_name)
     gsc_workload = "docker run --rm --net=host --device=/dev/sgx/enclave -t {}".format(wrapper_image)

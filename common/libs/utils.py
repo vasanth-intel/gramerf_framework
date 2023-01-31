@@ -29,9 +29,11 @@ def percent_degradation(tcd, baseline, testapp, throughput = False):
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
     cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
     if cmd_stdout.returncode != 0:
+        print(cmd_stdout.stderr.strip())
         raise Exception(f"\n-- Failed to execute the process cmd: {cmd}")
 
     if stdout_val is not None and cmd_stdout.stdout is not None:
+        print(cmd_stdout.stdout.strip())
         return cmd_stdout.stdout.strip()
 
     return cmd_stdout
@@ -198,6 +200,12 @@ def set_http_proxies():
     print("\n-- Setting https_proxy : \n", os.environ['https_proxy'])
 
 
+def set_no_proxy():
+    os.environ['no_proxy'] = NO_PROXY
+    os.environ['NO_PROXY'] = NO_PROXY
+    print("\n-- Setting no_proxy : \n", os.environ['no_proxy'])
+
+
 def set_cpu_freq_scaling_governor():
     """
     Function to set the CPU frequency scaling governor to 'performance' mode.
@@ -289,6 +297,8 @@ def write_to_report(workload_name, test_results):
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
+    elif workload_name == 'TensorflowServing':
+        cols = ['native', 'gramine-sgx', 'native-avg', 'sgx-avg', 'sgx-deg']
     else:
         cols = ['native', 'gramine-sgx', 'gramine-direct', 'native-avg', 'sgx-avg', 'direct-avg', 'sgx-deg', 'direct-deg']
 

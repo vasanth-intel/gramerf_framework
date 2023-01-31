@@ -34,7 +34,10 @@ def getNodeName(){
     } else if (run_specific_perf_test.contains("redis") || run.contains("redis")){
         echo "redis workload is selected ..."
         return 'graphene_perf_redis_taken_out_for_vasanth'
-    } else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
+    } else if (run_specific_perf_test.contains("tf_serving") || run.contains("tf_serving")){
+        echo "tf_serving workload is selected ..."
+        return 'graphene_perf_redis_taken_out_for_vasanth'
+    }else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
         echo "tensorflow workload is selected ..."
         return 'graphene_wcity_02'
     }

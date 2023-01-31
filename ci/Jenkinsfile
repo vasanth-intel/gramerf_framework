@@ -37,6 +37,7 @@ pipeline {
             }
             steps {
                 script {
+                    cleanWs()
                     checkout scm
                     if (!run_specific_perf_test?.trim()){
                         echo " selected marker $run will be executed"

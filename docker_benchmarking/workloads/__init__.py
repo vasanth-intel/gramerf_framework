@@ -1,1 +1,2 @@
 from docker_benchmarking.workloads.redis_workload import RedisWorkload
+from docker_benchmarking.workloads.tf_serving_workload import TensorflowServingWorkload

@@ -52,6 +52,9 @@ def gramerf_setup(request):
         # Checkout gramine source and build the same.
         gramine_libs.install_gramine_binaries()
     else:
+        print(f"\n-- Updating 'SSHPASS' env-var\n")
+        os.environ['SSHPASS'] = "intel@123"
+
         curated_apps_lib.curated_setup()
         curated_apps_lib.copy_repo()
 

@@ -65,9 +65,9 @@ class TensorflowWorkload():
         print("\n###### In build_and_install_workload #####\n")
 
         if test_config_dict['model_name'] == 'bert':
-            self.download_bert_models(test_config_dict)
+            self.download_bert_models()
         elif test_config_dict['model_name'] == 'resnet':
-            self.download_resnet_models(test_config_dict)
+            self.download_resnet_models()
         else:
             raise Exception("Unknown tensorflow model. Please check the test yaml file.")
 
@@ -161,7 +161,7 @@ class TensorflowWorkload():
         gramine_libs.update_manifest_file(test_config_dict)
 
     def setup_workload(self, test_config_dict):
-        self.download_workload(test_config_dict)
+        self.download_workload()
         self.build_and_install_workload(test_config_dict)
         if os.environ['encryption'] == '1':
             hex_enc_key_dump, enc_key = utils.gen_encryption_key()

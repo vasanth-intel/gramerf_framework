@@ -52,6 +52,10 @@ def preActions(){
     {
         gramine_repo_commit_id = gramine_repo_commit_id.substring(0,gramine_repo_commit_id.length() - 1);
     }
+    if(encryption.endsWith(","))
+    {
+        encryption = encryption.substring(0,encryption.length() - 1).toBoolean();
+    }
 
 }
 

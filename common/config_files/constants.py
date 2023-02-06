@@ -69,7 +69,7 @@ TF_BERT_FP32_MODEL_WGET_CMD = "wget https://storage.googleapis.com/intel-optimiz
 TF_RESNET_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
 TF_RESNET_INT8_MODEL_WGET_CMD = "wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/resnet50v1_5_int8_pretrained_model.pb"
 
-TF_BERT_FP2_MDOEL_NAME = os.path.basename(TF_BERT_FP32_MODEL_WGET_CMD.split()[1])
+TF_BERT_FP32_MODEL_NAME = os.path.basename(TF_BERT_FP32_MODEL_WGET_CMD.split()[1])
 TF_RESNET_INT8_MODEL_NAME = os.path.basename(TF_RESNET_INT8_MODEL_WGET_CMD.split()[1])
 
 LOG_LEVEL = "error"

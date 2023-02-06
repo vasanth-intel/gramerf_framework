@@ -17,7 +17,7 @@ class TensorflowWorkload():
     def get_workload_home_dir(self):
         return self.workload_home_dir
         
-    def download_workload(self, test_config_dict):
+    def download_workload(self):
         if sys.version_info < (3, 6):
             raise Exception("Please upgrade Python version to atleast 3.6 or higher before executing this workload.")
 
@@ -27,7 +27,7 @@ class TensorflowWorkload():
         print("\n-- Installing Tensorflow..")
         utils.exec_shell_cmd(TENSORFLOW_INSTALL_CMD)
 
-    def download_bert_models(self, test_config_dict):
+    def download_bert_models(self):
         if not os.path.exists('./models'):
             utils.exec_shell_cmd(TF_BERT_INTEL_AI_MODELS_CLONE_CMD, None)
         
@@ -46,30 +46,16 @@ class TensorflowWorkload():
             utils.exec_shell_cmd(TF_BERT_CHECKPOINTS_WGET_CMD, None)
             utils.exec_shell_cmd(TF_BERT_CHECKPOINTS_UNZIP_CMD, None)
 
-        # We are deleting the model to avoid complication (with encryption in picture) on whether
-        # the model downloaded/present with previous framework execution would be plain or encrypted model.
-        # So, we download fresh model everytime we execute the test.
-        try:
-            os.remove("data/" + TF_BERT_FP2_MDOEL_NAME)
-        except OSError:
-            pass
         print("\n-- Downloading BERT FP32 model..")
         utils.exec_shell_cmd(TF_BERT_FP32_MODEL_WGET_CMD, None)
         
         print("\n-- Required BERT models downloaded..")
 
-    def download_resnet_models(self, test_config_dict):
+    def download_resnet_models(self):
         if not os.path.exists('./models'):
             print("\n-- Downloading RESNET Intel_AI models..")
             utils.exec_shell_cmd(TF_RESNET_INTEL_AI_MODELS_CLONE_CMD, None)
 
-        # We are deleting the model to avoid complication (with encryption in picture) on whether
-        # the model downloaded/present with previous framework execution would be plain or encrypted model.
-        # So, we download fresh model everytime we execute the test.
-        try:
-            os.remove(TF_RESNET_INT8_MODEL_NAME)
-        except OSError:
-            pass
         print("\n-- Downloading RESNET Pretrained model..")
         utils.exec_shell_cmd(TF_RESNET_INT8_MODEL_WGET_CMD, None)
 
@@ -122,12 +108,12 @@ class TensorflowWorkload():
         os.makedirs("./encrypted_models", exist_ok=True)
         if test_config_dict['model_name'] == 'bert':
             try: # Deleting old model if existing.
-                os.remove("encrypted_models/" + TF_BERT_FP2_MDOEL_NAME)
+                os.remove("encrypted_models/" + TF_BERT_FP32_MODEL_NAME)
             except OSError:
                 pass
             # We need to provide the absolute path of the output encrypted file within the below encrypt command.
-            encrypted_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'], "encrypted_models", TF_BERT_FP2_MDOEL_NAME)
-            encrypt_cmd = f"gramine-sgx-pf-crypt encrypt -w {enc_key} -i data/{TF_BERT_FP2_MDOEL_NAME} -o {encrypted_file}"
+            encrypted_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'], "encrypted_models", TF_BERT_FP32_MODEL_NAME)
+            encrypt_cmd = f"gramine-sgx-pf-crypt encrypt -w {enc_key} -i data/{TF_BERT_FP32_MODEL_NAME} -o {encrypted_file}"
             print("\n-- Encrypting BERT model..\n", encrypt_cmd)
         elif test_config_dict['model_name'] == 'resnet':
             try: # Deleting old model if existing.
@@ -146,7 +132,7 @@ class TensorflowWorkload():
     def update_manifest_entries(self, test_config_dict, hex_enc_key_dump):
         manifest_filename = test_config_dict['manifest_name'] + ".manifest.template"
         if test_config_dict['model_name'] == 'bert':
-            model_name = TF_BERT_FP2_MDOEL_NAME
+            model_name = TF_BERT_FP32_MODEL_NAME
         elif test_config_dict['model_name'] == 'resnet':
             model_name = TF_RESNET_INT8_MODEL_NAME
         else:
@@ -244,14 +230,14 @@ class TensorflowWorkload():
 
         if os.environ['encryption'] == '1' and e_mode == 'gramine-sgx':
             if tcd['model_name'] == 'bert':
-                input_model_file = os.path.join(FRAMEWORK_HOME_DIR, tcd['workload_home_dir'], "encrypted_models", TF_BERT_FP2_MDOEL_NAME)
+                input_model_file = os.path.join(FRAMEWORK_HOME_DIR, tcd['workload_home_dir'], "encrypted_models", TF_BERT_FP32_MODEL_NAME)
             elif tcd['model_name'] == 'resnet':
                 input_model_file = os.path.join(FRAMEWORK_HOME_DIR, tcd['workload_home_dir'], "encrypted_models", TF_RESNET_INT8_MODEL_NAME)
             else:
                 raise Exception("Unknown tensorflow model. Please check the test yaml file.")
         else:
             if tcd['model_name'] == 'bert':
-                input_model_file = "data/" + TF_BERT_FP2_MDOEL_NAME
+                input_model_file = "data/" + TF_BERT_FP32_MODEL_NAME
             elif tcd['model_name'] == 'resnet':
                 input_model_file = TF_RESNET_INT8_MODEL_NAME
             else:

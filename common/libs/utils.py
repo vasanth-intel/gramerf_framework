@@ -8,6 +8,7 @@ import lsb_release
 import csv
 from datetime import datetime as dt
 import collections
+import pkg_resources
 import pandas as pd
 import socket
 import netifaces as ni
@@ -27,14 +28,16 @@ def percent_degradation(tcd, baseline, testapp, throughput = False):
 
 
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
-    cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
-    if cmd_stdout.returncode != 0:
-        raise Exception(f"\n-- Failed to execute the process cmd: {cmd}")
+    try:
+        cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
 
-    if stdout_val is not None and cmd_stdout.stdout is not None:
-        return cmd_stdout.stdout.strip()
+        if stdout_val is not None and cmd_stdout.stdout is not None:
+            return cmd_stdout.stdout.strip()
 
-    return cmd_stdout
+        return cmd_stdout
+
+    except subprocess.CalledProcessError as e:
+        print(e.output)
 
 
 def read_config_yaml(config_file_path):
@@ -190,6 +193,9 @@ def update_env_variables(build_prefix):
 
     print(f"\n-- Updating 'LANG' env-var\n")
     os.environ['LANG'] = "C.UTF-8"
+	
+    os.environ['ENV_USER_UID'] = exec_shell_cmd('id -u')
+    os.environ['ENV_USER_GID'] = exec_shell_cmd('id -g')
 
 
 def set_http_proxies():
@@ -296,6 +302,8 @@ def write_to_report(workload_name, test_results):
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
+    elif workload_name == 'Sklearnex':
+        cols = ['data_type', 'dataset_name', 'rows', 'columns', 'classes', 'time', 'gramine-sgx', 'gramine-direct', 'gramine-sgx-deg', 'gramine-direct-deg']
     else:
         cols = ['native', 'gramine-sgx', 'gramine-direct', 'native-avg', 'sgx-avg', 'direct-avg', 'sgx-deg', 'direct-deg']
 
@@ -313,7 +321,12 @@ def write_to_report(workload_name, test_results):
             latency_df.to_excel(writer, sheet_name=workload_name)
     
     if len(generic_dict) > 0:
-        generic_df = pd.DataFrame.from_dict(generic_dict, orient='index', columns=cols).dropna(axis=1)
+        if workload_name == 'Sklearnex':
+            generic_df = pd.DataFrame.from_dict({(i,j): generic_dict[i][j] for i in generic_dict.keys() for j in generic_dict[i].keys()},
+                                                orient='index', columns=cols)
+            generic_df.rename(columns={'time':'native'}, inplace=True)
+        else:
+            generic_df = pd.DataFrame.from_dict(generic_dict, orient='index', columns=cols).dropna(axis=1)
         generic_df.columns = generic_df.columns.str.upper()
         generic_df.to_excel(writer, sheet_name=workload_name)
 
@@ -400,4 +413,13 @@ def gen_encryption_key():
     exec_shell_cmd("gramine-sgx-pf-crypt gen-key -w " + enc_key_name)
     hex_enc_key_dump = exec_shell_cmd("xxd -p " + enc_key_name)
     return hex_enc_key_dump, enc_key_name
+
+
+def is_package_installed(package_name):
+    installed_packages = pkg_resources.working_set
+    installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
+    if any(package_name in j for j in installed_packages_list):
+        return True
+    else:
+        return False
 

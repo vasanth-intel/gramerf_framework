@@ -386,7 +386,14 @@ class SklearnexWorkload():
         test_dict_training = {}
         test_dict_prediction = {}
 
-        algo = tcd['config_name'].split('.')[0]
+        # We are converting the config file name into list to simplify the 
+        # code further below which works well for both cases where a config 
+        # has either 1 algorithm or multiple algorithms.
+        if 'algorithms' in tcd:
+            # Case where a config has multiple algos.
+            algo_list = tcd['algorithms'].split(',')
+        else:
+            algo_list = [tcd['config_name'].split('.')[0]]
         for filename in xlsx_files:
             if "native" in filename:
                 e_mode = 'native'
@@ -396,48 +403,25 @@ class SklearnexWorkload():
                 e_mode = 'gramine-sgx'
             
             xlsx_file = pd.ExcelFile(filename, engine='openpyxl')
-            if not 'algorithms' in tcd:
-                sheet_names = [sheet for sheet in xlsx_file.sheet_names if sheet.lower().startswith(algo)]
+            for i in range(len(algo_list)):
+                sheet_names = [sheet for sheet in xlsx_file.sheet_names if sheet.lower().startswith(algo_list[i])]
                 if len(sheet_names) == 0:
-                    warnings.warn(f"\n-- Failure: Worksheet not present with name '{algo}' algorithm!!\n")
+                    warnings.warn(f"\n-- Failure: Worksheet not present with name '{algo_list[i]}' algorithm!!\n")
                     continue
-                dict_index = algo + "_" + e_mode
+                dict_index = algo_list[i] + "_" + e_mode
                 test_dict_training[dict_index] = self.get_training_prediction_dicts(filename, sheet_names[0], 'training')
-                if algo == 'pca':
+                if algo_list[i] == 'pca':
                     test_dict_prediction[dict_index] = self.get_training_prediction_dicts(filename, sheet_names[0], 'transformation')
                 else:
                     test_dict_prediction[dict_index] = self.get_training_prediction_dicts(filename, sheet_names[0], 'prediction')
-            else:
-                algo_list = tcd['algorithms'].split(',')
-                for i in range(len(algo_list)):
-                    sheet_names = [sheet for sheet in xlsx_file.sheet_names if sheet.lower().startswith(algo_list[i])]
-                    if len(sheet_names) == 0:
-                        warnings.warn(f"\n-- Failure: Worksheet not present with name '{algo_list[i]}' algorithm!!\n")
-                        continue
-                    dict_index = algo_list[i] + "_" + e_mode
-                    test_dict_training[dict_index] = self.get_training_prediction_dicts(filename, sheet_names[0], 'training')
-                    if algo_list[i] == 'pca':
-                        test_dict_prediction[dict_index] = self.get_training_prediction_dicts(filename, sheet_names[0], 'transformation')
-                    else:
-                        test_dict_prediction[dict_index] = self.get_training_prediction_dicts(filename, sheet_names[0], 'prediction')
 
-        if not 'algorithms' in tcd:
-            self.calc_deg_for_individual_algo(tcd, test_dict_training, test_dict_prediction, algo)
-            formatted_training_dict = self.format_dict(tcd, algo, test_dict_training)
-            formatted_prediction_dict = self.format_dict(tcd, algo, test_dict_prediction)
+        trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
+        for i in range(len(algo_list)):
+            self.calc_deg_for_individual_algo(tcd, test_dict_training, test_dict_prediction, algo_list[i])
+            formatted_training_dict = self.format_dict(tcd, algo_list[i], test_dict_training)
+            formatted_prediction_dict = self.format_dict(tcd, algo_list[i], test_dict_prediction)
 
-            trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
-            trd[tcd['workload_name']].update({tcd['test_name']+'_training': formatted_training_dict})
-            trd[tcd['workload_name']].update({tcd['test_name']+'_prediction': formatted_prediction_dict})
-        else:
-            algo_list = tcd['algorithms'].split(',')
-            trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
-            for i in range(len(algo_list)):
-                self.calc_deg_for_individual_algo(tcd, test_dict_training, test_dict_prediction, algo_list[i])
-                formatted_training_dict = self.format_dict(tcd, algo_list[i], test_dict_training)
-                formatted_prediction_dict = self.format_dict(tcd, algo_list[i], test_dict_prediction)
-
-                trd[tcd['workload_name']].update({tcd['test_name']+'_training_'+algo_list[i]: formatted_training_dict})
-                trd[tcd['workload_name']].update({tcd['test_name']+'_prediction_'+algo_list[i]: formatted_prediction_dict})
+            trd[tcd['workload_name']].update({tcd['test_name']+'_training_'+algo_list[i]: formatted_training_dict})
+            trd[tcd['workload_name']].update({tcd['test_name']+'_prediction_'+algo_list[i]: formatted_prediction_dict})
 
         os.chdir(self.workload_home_dir)

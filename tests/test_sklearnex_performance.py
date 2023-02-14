@@ -9,19 +9,19 @@ tests_yaml_path = os.path.join(os.getcwd(), 'data', yaml_file_name)
 @pytest.mark.usefixtures("gramerf_setup")
 class TestClass:
 
-#    @pytest.mark.sklearnex_perf
-#    @pytest.mark.sklearnex_perf_skl_config
-#    def test_sklearnex_perf_skl_config(self):
+    @pytest.mark.sklearnex_perf
+    @pytest.mark.sklearnex_perf_skl_config
+    def test_sklearnex_perf_skl_config(self):
 
-#        test_result = run_test(self, tests_yaml_path)
-#        assert test_result
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
 
-#    @pytest.mark.sklearnex_perf
-#    @pytest.mark.sklearnex_perf_dbscan
-#    def test_sklearnex_perf_dbscan(self):
+    @pytest.mark.sklearnex_perf
+    @pytest.mark.sklearnex_perf_dbscan
+    def test_sklearnex_perf_dbscan(self):
 
-#        test_result = run_test(self, tests_yaml_path)
-#        assert test_result
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
 
     @pytest.mark.sklearnex_perf
     @pytest.mark.sklearnex_perf_df_clsf

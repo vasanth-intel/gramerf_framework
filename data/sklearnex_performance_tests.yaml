@@ -27,15 +27,18 @@ test_sklearnex_perf_kmeans:
 
 test_sklearnex_perf_knn_clsf:
   config_name: "knn_clsf.json"
+  algorithms: "brute_knn_clsf,kd_tree_knn_clsf,brute_knn_search"
 
 test_sklearnex_perf_knn_regr:
   config_name: "knn_regr.json"
+  algorithms: "brute_knn_regr,kd_tree_knn_regr"
 
 test_sklearnex_perf_lasso:
   config_name: "lasso.json"
 
 test_sklearnex_perf_linear:
   config_name: "linear.json"
+  algorithms: "lin_reg"
 
 test_sklearnex_perf_log_reg:
   config_name: "log_reg.json"
@@ -54,6 +57,7 @@ test_sklearnex_perf_ridge:
 
 test_sklearnex_perf_svm:
   config_name: "svm.json"
+  algorithms: "svc"
 
 test_sklearnex_perf_svr:
   config_name: "svr.json"

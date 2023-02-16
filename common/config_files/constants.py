@@ -6,6 +6,7 @@ LOGS_DIR = FRAMEWORK_HOME_DIR + "/logs"
 PERF_RESULTS_DIR = FRAMEWORK_HOME_DIR + "/results"
 HTTP_PROXY = "http://proxy-dmz.intel.com:911/"
 HTTPS_PROXY = "http://proxy-dmz.intel.com:912/"
+NO_PROXY = "10.0.0.0/8,192.168.0.0./16,localhost,127.0.0.0/8,134.134.0.0/16"
 SYSTEM_PACKAGES_FILE = "system_packages.yaml"
 PYTHON_PACKAGES_FILE = "python_packages.yaml"
 PKG_INSTALL_WAIT_TIME = 25
@@ -76,8 +77,15 @@ LOG_LEVEL = "error"
 
 REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
 ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
-CONTRIB_GIT_CMD       = "git clone -b aneessahib/gsc_image_curation https://github.com/aneessahib/contrib.git orig_contrib_repo"
+CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
 #GIT_CHECKOUT_CMD      = "git checkout gsc_image_curation"
 CURATED_PATH          = "Curated-Apps"
 CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)
 VERIFIER_DOCKERFILE   = os.path.join(ORIG_CURATED_PATH, CURATED_PATH, "verifier/verifier.dockerfile.template")
+
+WORKLOADS_PATH         = os.path.join(CURATED_APPS_PATH, "workloads")
+TFSERVING_HELPER_PATH    = os.path.join(WORKLOADS_PATH, "tensorflow-serving", "base_image_helper")
+TFSERVING_HELPER_CMD     = f"bash {TFSERVING_HELPER_PATH}/helper.sh"
+TFSERVING_CLONE_CMD      = "git clone https://github.com/tensorflow/serving.git"
+TFSERVING_RESNET_SED_CMD = "sed -i 's/MODEL_ACCEPT_JPG = False/MODEL_ACCEPT_JPG = True/g' serving/tensorflow_serving/example/resnet_client.py"
+TFSERVING_RESNET_PERF_CMD = "python3 serving/tensorflow_serving/example/resnet_client.py"

@@ -33,7 +33,6 @@ def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
         raise Exception(f"\n-- Failed to execute the process cmd: {cmd}")
 
     if stdout_val is not None and cmd_stdout.stdout is not None:
-        print(cmd_stdout.stdout.strip())
         return cmd_stdout.stdout.strip()
 
     return cmd_stdout
@@ -183,8 +182,15 @@ def update_env_variables(build_prefix):
     print(f"\n-- Updating 'SSHPASS' env-var\n")
     os.environ['SSHPASS'] = "intel@123"
 
+    print(f"\n-- Updating 'ARCH_LIBDIR' env-var\n")
     cmd_out = exec_shell_cmd('cc -dumpmachine')
     os.environ['ARCH_LIBDIR'] = "/lib/" + cmd_out
+
+    print(f"\n-- Updating 'LC_ALL' env-var\n")
+    os.environ['LC_ALL'] = "C.UTF-8"
+
+    print(f"\n-- Updating 'LANG' env-var\n")
+    os.environ['LANG'] = "C.UTF-8"
 
 
 def set_http_proxies():
@@ -396,3 +402,11 @@ def popen_subprocess(command, dest_dir=None):
    
     if dest_dir: os.chdir(cwd)
     return process
+
+
+def gen_encryption_key():
+    enc_key_name = "encryption_key"
+    exec_shell_cmd("gramine-sgx-pf-crypt gen-key -w " + enc_key_name)
+    hex_enc_key_dump = exec_shell_cmd("xxd -p " + enc_key_name)
+    return hex_enc_key_dump, enc_key_name
+

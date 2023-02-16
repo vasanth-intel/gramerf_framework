@@ -50,13 +50,12 @@ APT_FIX_BROKEN_CMD = "sudo apt --fix-broken install -y"
 
 SYS_PACKAGES_CMD = "sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "
 
-# Providing -H option to sudo to suppress the pip home directory warning.
 # -U option is to install the latest package (if upgrade is available).
-PYTHON_PACKAGES_CMD = "sudo -H python3 -m pip install -U "
+PYTHON_PACKAGES_CMD = "python3 -m pip install -U "
 
-PIP_UPGRADE_CMD = "sudo python3 -m pip install --upgrade pip"
+PIP_UPGRADE_CMD = "python3 -m pip install --upgrade pip"
 
-TENSORFLOW_INSTALL_CMD = "sudo python3 -m pip install intel-tensorflow-avx512==2.4.0 --no-cache-dir"
+TENSORFLOW_INSTALL_CMD = "python3 -m pip install intel-tensorflow-avx512==2.4.0 --no-cache-dir"
 
 TF_BERT_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
 
@@ -70,6 +69,9 @@ TF_BERT_FP32_MODEL_WGET_CMD = "wget https://storage.googleapis.com/intel-optimiz
 
 TF_RESNET_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
 TF_RESNET_INT8_MODEL_WGET_CMD = "wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/resnet50v1_5_int8_pretrained_model.pb"
+
+TF_BERT_FP32_MODEL_NAME = os.path.basename(TF_BERT_FP32_MODEL_WGET_CMD.split()[1])
+TF_RESNET_INT8_MODEL_NAME = os.path.basename(TF_RESNET_INT8_MODEL_WGET_CMD.split()[1])
 
 LOG_LEVEL = "error"
 

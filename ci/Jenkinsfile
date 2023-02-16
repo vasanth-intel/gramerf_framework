@@ -39,12 +39,18 @@ pipeline {
                 script {
                     cleanWs()
                     checkout scm
+                    def args = "--ignore=gramine --disable-warnings --perf_config=${perf_config} --build_gramine=${build_gramine} --commit_id=${gramine_repo_commit_id} --iterations=${iterations} --exec_mode=${exec_mode}"
+                    echo "is encryption needed : $encryption"
+                    if (encryption) {
+                        args = args + " --encryption=1"
+                    }
+
                     if (!run_specific_perf_test?.trim()){
                         echo " selected marker $run will be executed"
-                        sh "python3 -m pytest -s -v -m $run --ignore=gramine --disable-warnings --perf_config=${perf_config} --build_gramine=${build_gramine} --commit_id=${gramine_repo_commit_id} --iterations=${iterations} --exec_mode=${exec_mode}"
+                        sh "python3 -m pytest -s -v -m $run $args"
                     } else {
                         echo " specific performance test $run_specific_perf_test will be executed"
-                        sh "python3 -m pytest -s -v -k $run_specific_perf_test --ignore=gramine --disable-warnings --perf_config=${perf_config} --build_gramine=${build_gramine} --commit_id=${gramine_repo_commit_id} --iterations=${iterations} --exec_mode=${exec_mode}"
+                        sh "python3 -m pytest -s -v -k $run_specific_perf_test $args"
                     }
                 }
             }

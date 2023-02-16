@@ -38,9 +38,11 @@ class TensorflowServingWorkload:
 
     def download_and_update_tfserving_repo(self):
         print("\n-- Cloning Tensorflow serving repo...")
-        utils.exec_shell_cmd(TFSERVING_CLONE_CMD, None)
+        output = utils.exec_shell_cmd(TFSERVING_CLONE_CMD, None)
+        print(output)
         print("\n-- Update Tensorflow serving repo...")
-        utils.exec_shell_cmd(TFSERVING_RESNET_SED_CMD)
+        output = utils.exec_shell_cmd(TFSERVING_RESNET_SED_CMD)
+        print(output)
 
     def exec_workload_perf_cmd(self, test_config_dict, test_dict, exec_mode = 'native'):
         iteration = test_config_dict['iterations']
@@ -90,7 +92,8 @@ class TensorflowServingWorkload:
 
         # workload cleanup
         if e_mode == 'native':
-            utils.exec_shell_cmd("docker stop $(docker ps -a -q)")
+            output = utils.exec_shell_cmd("docker stop $(docker ps -a -q)")
+            print(output)
         else:
             utils.cleanup_after_test(workload_docker_image_name)
 

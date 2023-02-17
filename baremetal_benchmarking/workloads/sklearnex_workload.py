@@ -235,19 +235,19 @@ class SklearnexWorkload():
 
         return filtered_dict
 
-    # Search for the existence of native row within direct/sgx dict.
+    # Search for the existence of super dict row within sub dict.
     # If found, calculate degradation and update the same within 
-    # direct/sgx dict and return True.
+    # sub dict and return True.
     # Return False if not found.
-    def check_row_presence(self, tr_pd_dict, native_dict_row, dict_index):
-        # Remove 'time : value' key value pair entries/column from direct/sgx dict
-        # and copy the other key values to a temp dict, so that searching the native 
-        # row within direct/sgx dict becomes easy.
-        temp_dict = [{key : val for key, val in sub.items() if key != 'time'} for sub in tr_pd_dict[dict_index]]
-        temp_native_row = native_dict_row.copy() # Making a shallow copy so that original native dict row is not changed.
-        del temp_native_row['time'] # Removing 'time : value' column.
+    def check_row_presence(self, tr_pd_dict, super_dict_row, sub_index):
+        # Remove 'time : value' key value pair entries/column from sub dict
+        # and copy the other key values to a temp dict, so that searching the super 
+        # row within sub dict becomes easy.
+        temp_dict = [{key : val for key, val in sub.items() if key != 'time'} for sub in tr_pd_dict[sub_index]]
+        temp_super_row = super_dict_row.copy() # Making a shallow copy so that original super dict row is not changed.
+        del temp_super_row['time'] # Removing 'time : value' column.
         try:
-            found_index = temp_dict.index(temp_native_row)
+            found_index = temp_dict.index(temp_super_row)
             return found_index
         except ValueError:
             return -1
@@ -257,23 +257,29 @@ class SklearnexWorkload():
         # when 'native' is part of execution mode list.
         dict_index = algo + "_" + e_mode # Index/name of either direct or sgx dicts within training/prediciton dicts
         native_index = algo + "_native" # Index/name of native dict within training/prediciton dicts
-        for i in range(len(tr_pd_dict[native_index])):
-            # Find the existence of native row within direct/sgx dict and retrieve the matching index. 
-            found_index = self.check_row_presence(tr_pd_dict, tr_pd_dict[native_index][i], dict_index)
+        if len(tr_pd_dict[native_index]) > len(tr_pd_dict[dict_index]):
+            super_index = native_index
+            sub_index = dict_index
+        else:
+            super_index = dict_index
+            sub_index = native_index
+        for i in range(len(tr_pd_dict[super_index])):
+            # Find the existence of super dict row within sub dict and retrieve the matching index. 
+            found_index = self.check_row_presence(tr_pd_dict, tr_pd_dict[super_index][i], sub_index)
             if found_index != -1:
-                # Native row entry found in direct/sgx dict. Hence, calculate the degradation
-                # in the correspoding index (found_index) entry of the direct/sgx dict.
+                # Super dict row entry found in sub dict. Hence, calculate the degradation
+                # in the correspoding index (found_index) entry of the sub dict.
                 tr_pd_dict[dict_index][found_index][e_mode+"-deg"] = utils.percent_degradation(tcd, tr_pd_dict[native_index][i]['time'],
                                                                                                     tr_pd_dict[dict_index][found_index]['time'])
             else:
-                # Native row entry not found in direct/sgx dict. So, insert the
-                # row entry at the right position of direct/sgx dict and mark the
-                # degradation with 'NA' as direct/sgx data is unavailable.  
+                # Super dict row entry not found in sub dict. So, insert the
+                # row entry at the right position of sub dict and mark the
+                # degradation with 'NA' as sub dict data is unavailable.  
                 # This is a failure case in Gramine, which should be escalated.
-                temp_native_row = tr_pd_dict[native_index][i].copy()
-                tr_pd_dict[dict_index].insert(i, temp_native_row)
-                tr_pd_dict[dict_index][i]["time"] = 'NA'
-                tr_pd_dict[dict_index][i][e_mode+"-deg"] = 'NA'
+                temp_super_row = tr_pd_dict[super_index][i].copy()
+                tr_pd_dict[sub_index].insert(i, temp_super_row)
+                tr_pd_dict[sub_index][i]["time"] = 'NA'
+                tr_pd_dict[sub_index][i][e_mode+"-deg"] = 'NA'
 
     # This method is used to re-structure the training/predcition dictionaries (which have
     # the degradation data already computed) to match the dataframe column structure 
@@ -296,12 +302,14 @@ class SklearnexWorkload():
                     dict_index = algo + "_gramine-direct"
                     if test_dict.get(dict_index) != None:
                         formatted_dict[i]['gramine-direct'] = test_dict[dict_index][i]['time']
-                        formatted_dict[i]['gramine-direct-deg'] = test_dict[dict_index][i]['gramine-direct-deg']
+                        if test_dict[dict_index][i].get('gramine-direct-deg') != None:
+                            formatted_dict[i]['gramine-direct-deg'] = test_dict[dict_index][i]['gramine-direct-deg']
                 if 'gramine-sgx' in tcd['exec_mode']:
                     dict_index = algo + "_gramine-sgx"
                     if test_dict.get(dict_index) != None:
                         formatted_dict[i]['gramine-sgx'] = test_dict[dict_index][i]['time']
-                        formatted_dict[i]['gramine-sgx-deg'] = test_dict[dict_index][i]['gramine-sgx-deg']
+                        if test_dict[dict_index][i].get('gramine-sgx-deg') != None:
+                            formatted_dict[i]['gramine-sgx-deg'] = test_dict[dict_index][i]['gramine-sgx-deg']
             # We are done with all formatting for all modes if 'native' is present in exec mode.
             # So, return the final formatted dict without further processing.
             return formatted_dict

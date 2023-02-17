@@ -33,11 +33,12 @@ fs.mounts = [
   # scikit-learn and its dependencies install shared libs under this path (e.g. daal4py package
   # installs libonedal_core.so lib); note that we use `/home/user/` prefix inside Gramine and
   # specify this prefix in LD_LIBRARY_PATH envvar above
-  { path = "/home/user/.local/lib", uri = "file:{{ env.HOME }}/.local/lib" },
+  { path = "/home/user/.local", uri = "file:{{ env.HOME }}/.local" },
     
   { type = "tmpfs", path = "/tmp" },
-  { path = "/usr/bin", uri = "file:/usr/bin" },
+  { path = "/usr", uri = "file:/usr" },
   { path = "/etc", uri = "file:/etc" },
+  { path = "data", uri = "file:data" },
 
 ]
 
@@ -58,8 +59,8 @@ sgx.trusted_files = [
 {% for path in python.get_sys_path(entrypoint) %}
   "file:{{ path }}{{ '/' if path.is_dir() else '' }}",
 {% endfor %}
-  "file:{{ env.HOME }}/.local/lib/",
-  "file:/usr/bin/",
+  "file:{{ env.HOME }}/.local/",
+  "file:/usr/",
   "file:/etc/",
 
 ]

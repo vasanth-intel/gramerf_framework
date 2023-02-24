@@ -2,12 +2,11 @@ def g_gramerf_lib
 def g_nodelabel
 
 pipeline {
-    agent none
+    agent {
+        label 'JK_POOL_MASTER'
+    }
     stages {
         stage('setup') {
-            agent {
-                label 'JK_POOL_MASTER'
-            }
             environment {
                 GRAMERF_GROOVY_LIB='ci/lib/gramerf-groovy-lib.groovy'
             }
@@ -32,32 +31,16 @@ pipeline {
             }
         }
         stage('run performance benchmarking'){
-            agent {
-                label g_nodelabel
-            }
             steps {
                 script {
-                    cleanWs()
-                    checkout scm
-                    def args = "--ignore=gramine --disable-warnings --perf_config=${perf_config} --build_gramine=${build_gramine} --commit_id=${gramine_repo_commit_id} --iterations=${iterations} --exec_mode=${exec_mode}"
-                    echo "is encryption needed : $encryption"
-                    if (encryption) {
-                        args = args + " --encryption=1"
-                    }
-
-                    if (!run_specific_perf_test?.trim()){
-                        echo " selected marker $run will be executed"
-                        sh "python3 -m pytest -s -v -m $run $args"
-                    } else {
-                        echo " specific performance test $run_specific_perf_test will be executed"
-                        sh "python3 -m pytest -s -v -k $run_specific_perf_test $args"
-                    }
+                     g_gramerf_lib.run_perf(g_nodelabel)
                 }
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'logs/*, results/*'
-                    // cleanWs()
+                    script{
+                        g_gramerf_lib.download_artifacts()
+                    }
                 }
             }
         }

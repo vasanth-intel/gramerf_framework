@@ -37,8 +37,11 @@ def getNodeName(){
     } else if (run_specific_perf_test.contains("tf_serving") || run.contains("tf_serving")){
         echo "tf_serving workload is selected ..."
         return 'graphene_perf_redis_taken_out_for_vasanth'
-    }else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
+    } else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
         echo "tensorflow workload is selected ..."
+        return 'graphene_wcity_02'
+    } else if (run_specific_perf_test.contains("sklearnex") || run.contains("sklearnex")){
+        echo "sklearn workload is selected ..."
         return 'graphene_wcity_02'
     }
 
@@ -58,6 +61,10 @@ def preActions(){
     if(encryption.endsWith(","))
     {
         encryption = encryption.substring(0,encryption.length() - 1).toBoolean();
+    }
+    if(performance_configuration.endsWith(","))
+    {
+        performance_configuration = performance_configuration.substring(0,performance_configuration.length() - 1);
     }
 
 }

@@ -46,8 +46,12 @@ pipeline {
                     }
 
                     if (!run_specific_perf_test?.trim()){
-                        echo " selected marker $run will be executed"
-                        sh "python3 -m pytest -s -v -m $run $args"
+                        if (run.equals("sklearnex_perf")) {
+                            sh "python3 -m pytest -s -v -m $performance_configuration $args"
+                        } else {
+                            sh "python3 -m pytest -s -v -m $run $args"
+                        }
+                        
                     } else {
                         echo " specific performance test $run_specific_perf_test will be executed"
                         sh "python3 -m pytest -s -v -k $run_specific_perf_test $args"

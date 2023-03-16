@@ -9,7 +9,10 @@ tests_yaml_path = os.path.join(os.getcwd(), 'data', yaml_file_name)
 @pytest.mark.usefixtures("gramerf_setup")
 class TestClass:
 
-    @pytest.mark.sklearnex_perf
+    # Will not have 'sklearnex_perf' marker for this test, as we will
+    # have an option to run this test separately within Jenkins. i.e.
+    # we will either run full blown tests listed below or run only this 
+    # test which is a subset of all the below tests.
     @pytest.mark.sklearnex_perf_skl_config
     def test_sklearnex_perf_skl_config(self):
 

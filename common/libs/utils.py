@@ -118,6 +118,8 @@ def set_permissions():
 
     if os.path.exists("/var/run/docker.sock"):
         exec_shell_cmd("sudo chmod 666 /var/run/docker.sock")
+    
+    exec_shell_cmd("sudo mount -o remount,exec /dev")
 
 
 def cleanup_gramine_binaries(build_prefix):

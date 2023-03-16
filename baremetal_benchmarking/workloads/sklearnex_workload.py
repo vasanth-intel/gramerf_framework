@@ -286,6 +286,7 @@ class SklearnexWorkload():
     # while creating the final report.
     def format_dict(self, tcd, algo, test_dict):
         formatted_dict = defaultdict(dict)
+        temp_dict = {}
         if 'native' in tcd['exec_mode']:
             dict_index = algo + "_native"
         elif 'gramine-direct' in tcd['exec_mode']:
@@ -295,7 +296,7 @@ class SklearnexWorkload():
         if test_dict.get(dict_index) != None:
             temp_dict = dict(enumerate(test_dict[dict_index]))
 
-        if 'native' in tcd['exec_mode']:
+        if 'native' in tcd['exec_mode'] and temp_dict:
             for i in range(len(temp_dict)):
                 formatted_dict[i] = (temp_dict[i])
                 if 'gramine-direct' in tcd['exec_mode']:

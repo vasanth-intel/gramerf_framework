@@ -27,8 +27,9 @@ class TensorflowServingWorkload:
 
     def pull_workload_default_image(self):
         print("Starting Process %s from %s" %(TFSERVING_HELPER_CMD, os.getcwd()))
+        logged_in_user = os.getlogin()
         # The following command needs to run on tty.
-        tf_serving_base_image_cmd = f"sshpass -e ssh -tt intel@localhost 'cd {CURATED_APPS_PATH} && {TFSERVING_HELPER_CMD}'"
+        tf_serving_base_image_cmd = f"ssh -tt {logged_in_user}@localhost 'cd {CURATED_APPS_PATH} && {TFSERVING_HELPER_CMD}'"
         process = subprocess.run(tf_serving_base_image_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     universal_newlines=True, shell=True)
         if process.returncode != 0:

@@ -213,6 +213,12 @@ def set_http_proxies():
     print("\n-- Setting https_proxy : \n", os.environ['https_proxy'])
 
 
+def set_no_proxy():
+    os.environ['no_proxy'] = NO_PROXY
+    os.environ['NO_PROXY'] = NO_PROXY
+    print("\n-- Setting no_proxy : \n", os.environ['no_proxy'])
+
+
 def set_cpu_freq_scaling_governor():
     """
     Function to set the CPU frequency scaling governor to 'performance' mode.
@@ -300,12 +306,14 @@ def write_to_report(workload_name, test_results):
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
     
-    if workload_name == 'Redis':
+    if workload_name == 'Redis' or workload_name == 'Memcached':
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
     elif workload_name == 'Sklearnex':
         cols = ['data_type', 'dataset_name', 'rows', 'columns', 'classes', 'time', 'gramine-sgx', 'gramine-direct', 'gramine-sgx-deg', 'gramine-direct-deg']
+    elif workload_name == 'TensorflowServing':
+        cols = ['native', 'gramine-sgx', 'native-avg', 'sgx-avg', 'sgx-deg']
     else:
         cols = ['native', 'gramine-sgx', 'gramine-direct', 'native-avg', 'sgx-avg', 'direct-avg', 'sgx-deg', 'direct-deg']
 

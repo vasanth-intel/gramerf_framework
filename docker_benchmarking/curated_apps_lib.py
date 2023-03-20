@@ -49,11 +49,12 @@ def verify_image_creation(curation_output):
 def generate_curated_image(test_config_dict):
     curation_output = ''
     workload_image = test_config_dict["docker_image"]
+    logged_in_user = os.getlogin()
+    # The following ssh command is to mitigate the curses error faced while launching the command through Jenkins.
+    curation_cmd = f"ssh -tt {logged_in_user}@localhost 'cd {CURATED_APPS_PATH} && python3 curate.py {workload_image} test'"
 
-    curation_cmd = 'python3 curate.py ' + workload_image + ' test'
-    
     print("Curation cmd ", curation_cmd)
-    os.chdir(CURATED_APPS_PATH)
+
     result = subprocess.run([curation_cmd], input=b'\x07', shell=True, check=True, stdout=subprocess.PIPE)
     os.chdir(FRAMEWORK_HOME_DIR)
       
@@ -70,22 +71,41 @@ def get_docker_run_command(workload_name):
     output.append(gsc_workload)
     return output
 
+def get_workload_result(test_config_dict):
+    if "workload_result" in test_config_dict.keys():
+        workload_result = [test_config_dict["workload_result"]]
+    elif "bash" in test_config_dict["docker_image"]:
+        workload_result = ["total        used        free      shared  buff/cache   available"]
+    elif "redis" in test_config_dict["docker_image"]:
+        workload_result = ["Ready to accept connections"]
+    elif "pytorch" in test_config_dict["docker_image"]:
+        workload_result = ["Done. The result was written to `result.txt`."]
+    elif "sklearn" in test_config_dict["docker_image"]:
+        workload_result = "Kmeans perf evaluation finished"
+    elif "tensorflow-serving" in test_config_dict["docker_image"]:
+        workload_result = "Running gRPC ModelServer at 0.0.0.0:8500"
+    return workload_result
 
-def run_curated_image(docker_run_cmd):
+def verify_process(test_config_dict, process=None):
     result = False
-    pytorch_result = ["Result", "Labrador retriever", "golden retriever", "Saluki, gazelle hound", "whippet", "Ibizan hound, Ibizan Podenco"]
-    gsc_docker_command = docker_run_cmd[-1]
+    debug_log = None
+    workload_result = get_workload_result(test_config_dict)
 
-    process = utils.popen_subprocess(gsc_docker_command)
     while True:
         nextline = process.stdout.readline()
         print(nextline.strip())
         if nextline == '' and process.poll() is not None:
             break
-        if "Ready to accept connections" in nextline or all(x in nextline for x in pytorch_result):
+        if all(x in nextline for x in workload_result):
             process.stdout.close()
-            utils.kill(process.pid)
             sys.stdout.flush()
             result = True
             break
     return result
+
+def run_curated_image(test_config_dict, docker_run_cmd):
+    result = False
+    gsc_docker_command = docker_run_cmd[-1]
+
+    process = utils.popen_subprocess(gsc_docker_command)
+    return verify_process(test_config_dict, process)

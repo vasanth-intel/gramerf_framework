@@ -23,6 +23,8 @@ MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.
 
 REDIS_DOWNLOAD_CMD = "wget https://github.com/antirez/redis/archive/6.0.5.tar.gz"
 
+MEMCACHED_DOWNLOAD_CMD = "wget https://memcached.org/files/memcached-1.5.21.tar.gz"
+
 MIMALLOC_INSTALL_PATH = "/usr/local/lib/libmimalloc.so.1.7"
 
 TCMALLOC_INSTALL_PATH = "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"

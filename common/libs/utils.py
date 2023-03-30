@@ -299,7 +299,7 @@ def write_to_report(workload_name, test_results):
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
     
-    if workload_name == 'Redis':
+    if workload_name == 'Redis' or workload_name == 'Memcached':
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']

@@ -8,7 +8,8 @@ Default:
 
 test_sklearnex_perf_skl_config:
   config_name: "skl_config.json"
-  algorithms: "kmeans,pca,df_clsf,df_regr,ridge,lin_reg,log_reg,svc,nusvc,svr,nusvr,brute_knn_clsf,kd_tree_knn_clsf,train_test_split,elasticnet,tsne"
+  algorithms: "kmeans,kd_tree_knn_clsf"
+  #algorithms: "kmeans,pca,df_clsf,df_regr,ridge,lin_reg,log_reg,svc,nusvc,svr,nusvr,brute_knn_clsf,kd_tree_knn_clsf,train_test_split,elasticnet,tsne"
 
 test_sklearnex_perf_dbscan:
   config_name: "dbscan.json"

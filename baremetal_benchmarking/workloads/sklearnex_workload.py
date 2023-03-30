@@ -93,28 +93,18 @@ class SklearnexWorkload():
         self.delete_old_test_reports(test_config_dict)
         gramine_libs.generate_sgx_token_and_sig(test_config_dict)
 
-    def remove_algo_from_json(self, config_file, algo):
-        with open(config_file) as data_file:
-            data = json.load(data_file)
+    def copy_local_skl_config_json(self, test_config_dict):
+        src_file = os.path.join(FRAMEWORK_HOME_DIR, "baremetal_benchmarking/config_files" , test_config_dict['config_name'])
+        dest_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'] , "configs", test_config_dict['config_name'])
 
-        for i in range(len(data['cases'])):
-            if len(data['cases'][i]) > 0 and data['cases'][i]['algorithm'] == algo:
-                del data['cases'][i]['algorithm']
-                del data['cases'][i]['dataset']
-
-        with open(config_file, 'w') as data_file:
-            json.dump(data, data_file, indent=4)
-
-        # Delete the empty entry within the config.
-        del_empty_json_str = "sed -i 's/{},//' " + config_file
-        utils.exec_shell_cmd(del_empty_json_str, None)
-
+        shutil.copy2(src_file, dest_file)
+        
     def construct_workload_exec_cmd(self, test_config_dict, exec_mode = 'native'):
         skl_exec_cmd = None
         exec_mode_cmd = 'python3' if exec_mode == 'native' else exec_mode + ' sklearnex'
         if test_config_dict['test_name'] == 'test_sklearnex_perf_skl_config':
+            self.copy_local_skl_config_json(test_config_dict)
             config_file = os.path.join("configs", test_config_dict['config_name'])
-            self.remove_algo_from_json(config_file, "dbscan")
         else:
             config_file = os.path.join(test_config_dict['config_dir'], test_config_dict['config_name'])
         path_obj = Path(test_config_dict['config_name'])

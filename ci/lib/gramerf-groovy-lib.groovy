@@ -37,9 +37,13 @@ def getNodeName(){
     } else if (run_specific_perf_test.contains("tf_serving") || run.contains("tf_serving")){
         echo "tf_serving workload is selected ..."
         return 'graphene_perf_redis_taken_out_for_vasanth'
-    }else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
+    } else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
         echo "tensorflow workload is selected ..."
         return 'graphene_wcity_02'
+    } else if (run_specific_perf_test.contains("sklearnex") || run.contains("sklearnex")){
+        echo "sklearn workload is selected ..."
+        env.isSklearn = true
+        return 'graphene_sklearn'
     }
 
 }
@@ -60,6 +64,15 @@ def preActions(){
         encryption = encryption.substring(0,encryption.length() - 1).toBoolean();
     }
 
+}
+
+def run_sklearn_perf(exec_cmd){
+    sh "mkdir sklearn_reports"
+    for(int i=0; i<iterations.toInteger();i++) {
+        sh "$exec_cmd"
+        sh "cp -rf logs/ results/ sklearn_reports"
+        sleep(time:120,unit:"SECONDS")
+    }
 }
 
 return this

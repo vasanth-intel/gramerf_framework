@@ -1,5 +1,6 @@
 def g_gramerf_lib
 def g_nodelabel
+env.isSklearn = false
 
 pipeline {
     agent none
@@ -54,7 +55,7 @@ pipeline {
                         exec_cmd = "python3 -m pytest -s -v -k $run_specific_perf_test $args"
                     }
                     
-                    if(isSklearn){
+                    if(isSklearn.toBoolean()){
                         g_gramerf_lib.run_sklearn_perf(exec_cmd)
                     } else {
                         sh "$exec_cmd"
@@ -64,10 +65,10 @@ pipeline {
             post {
                 always {
                     script {
-                        if (isSklearn){
-                            archiveArtifacts artifacts: 'sklearn_reports'
+                        if (isSklearn.toBoolean()){
+                            archiveArtifacts artifacts: 'sklearn_reports/**/*'
                         } else {
-                            archiveArtifacts artifacts: 'logs, results'
+                            archiveArtifacts artifacts: 'logs/*, results/*'
                         }
                     // cleanWs()
                     }

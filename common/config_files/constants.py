@@ -75,6 +75,8 @@ TF_RESNET_INT8_MODEL_WGET_CMD = "wget https://storage.googleapis.com/intel-optim
 TF_BERT_FP32_MODEL_NAME = os.path.basename(TF_BERT_FP32_MODEL_WGET_CMD.split()[1])
 TF_RESNET_INT8_MODEL_NAME = os.path.basename(TF_RESNET_INT8_MODEL_WGET_CMD.split()[1])
 
+SKL_REPO_CLONE_CMD = "git clone https://github.com/IntelPython/scikit-learn_bench.git ."
+
 LOG_LEVEL = "error"
 
 REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")

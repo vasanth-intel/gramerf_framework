@@ -21,6 +21,8 @@ def verify_output(cmd_output, search_str): return re.search(search_str, cmd_outp
 
 # calculate the percent degradation
 def percent_degradation(tcd, baseline, testapp, throughput = False):
+    if float(baseline) == 0:
+        return 0
     if 'throughput' in tcd['test_name'] or throughput:
         return '{:0.3f}'.format(100 * (float(baseline) - float(testapp)) / float(baseline))
     else:
@@ -243,17 +245,22 @@ def set_threads_cnt_env_var():
     """
     lscpu_output = exec_shell_cmd('lscpu')
     lines = lscpu_output.splitlines()
-    core_per_socket, threads_per_core = 0, 0
+    cores_count, core_per_socket, threads_per_core = 0, 0, 0
     for line in lines:
+        if 'CPU(s):' in line:
+            cores_count = int(line.split(':')[-1].strip())
         if 'Core(s) per socket:' in line:
             core_per_socket = int(line.split(':')[-1].strip())
         if 'Thread(s) per core:' in line:
             threads_per_core = int(line.split(':')[-1].strip())
-        if core_per_socket and threads_per_core:
+        if cores_count and core_per_socket and threads_per_core:
             break
+    
+    os.environ['CORES_COUNT'] = str(cores_count)
     os.environ['THREADS_CNT'] = str(core_per_socket * threads_per_core)
     os.environ['CORES_PER_SOCKET'] = str(core_per_socket)
 
+    print("\n-- Setting the CORES_COUNT env variable to ", os.environ['CORES_COUNT'])
     print("\n-- Setting the THREADS_CNT env variable to ", os.environ['THREADS_CNT'])
     print("\n-- Setting the CORES_PER_SOCKET env variable to ", os.environ['CORES_PER_SOCKET'])
 
@@ -315,7 +322,7 @@ def write_to_report(workload_name, test_results):
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
     elif workload_name == 'Sklearnex':
         cols = ['data_type', 'dataset_name', 'rows', 'columns', 'classes', 'time', 'gramine-sgx', 'gramine-direct', 'gramine-sgx-deg', 'gramine-direct-deg']
-    elif workload_name == 'TensorflowServing':
+    elif workload_name == 'TensorflowServing' or workload_name == 'MySql':
         cols = ['native', 'gramine-sgx', 'native-avg', 'sgx-avg', 'sgx-deg']
     else:
         cols = ['native', 'gramine-sgx', 'gramine-direct', 'native-avg', 'sgx-avg', 'direct-avg', 'sgx-deg', 'direct-deg']

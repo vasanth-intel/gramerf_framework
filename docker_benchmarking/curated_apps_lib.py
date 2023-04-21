@@ -82,6 +82,8 @@ def get_workload_result(test_config_dict):
         workload_result = "Kmeans perf evaluation finished"
     elif "tensorflow-serving" in test_config_dict["docker_image"]:
         workload_result = "Running gRPC ModelServer at 0.0.0.0:8500"
+    elif "mysql" in test_config_dict["docker_image"]:
+        workload_result = "/usr/sbin/mysqld: ready for connections"
     return workload_result
 
 
@@ -126,6 +128,6 @@ def verify_process(test_config_dict, process=None, timeout=0):
 
 
 def run_curated_image(test_config_dict, docker_run_cmd):
-    process = utils.popen_subprocess(gsc_docker_command)
+    process = utils.popen_subprocess(docker_run_cmd)
     return verify_process(test_config_dict, process)
 

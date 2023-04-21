@@ -26,7 +26,7 @@ def read_command_line_args(config):
     os.environ["iterations"] = config.option.iterations
     os.environ["exec_mode"] = config.option.exec_mode
     os.environ["encryption"] = config.option.encryption
-
+    os.environ["curation_commit"] = config.option.curation_commit
 
 @pytest.fixture(scope="session")
 def gramerf_setup(request):
@@ -73,3 +73,8 @@ def pytest_addoption(parser):
     # For other workloads: "native,gramine-direct,gramine-sgx"
     parser.addoption("--exec_mode", action="store", type=str, default="native,gramine-direct,gramine-sgx", help="Workload execution modes.")
     parser.addoption("--encryption", action="store", type=str, default='0', help="Enable encryption for model/s before workload command execution.")
+    # Following option is applicable only for curated workloads, to use the right gramine binaries for executing the workload.
+    # If the following option is not provided at command line, we use the default gramine binaries installed on the system.
+    # If any gramine specific commit-id is provided, we use the binaries after building from the specified commit-id.
+    # If 'master' is provided as value to below option in command line, we use the binaires after building from the latest Gramine commit.
+    parser.addoption("--curation_commit", action="store", type=str, default="", help="Any specific commit/master to be checked out for curated workloads.")

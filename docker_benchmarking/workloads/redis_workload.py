@@ -76,29 +76,8 @@ class RedisWorkload:
         curation_output_result = curated_apps_lib.verify_image_creation(decode_curation_output)
         if curation_output_result == False:
             raise Exception("\n-- Failed to create the curated image!!")
+        print(f"\n-- Successfully created graminized image..")
         self.delete_old_test_results(test_config_dict)
-
-    def construct_server_workload_exec_cmd(self, test_config_dict, exec_mode = 'native'):
-        redis_exec_cmd = None
-
-        server_size = test_config_dict['server_size'] * 1024 * 1024 * 1024
-        exec_bin_str = './redis-server' if exec_mode == 'native' else 'redis-server'
-
-        tmp_exec_cmd = f"{exec_bin_str} --port {test_config_dict['container_server_port']} --maxmemory {server_size} --maxmemory-policy allkeys-lru --appendonly no --protected-mode no --save '' &"
-        
-        if exec_mode == 'native':
-            redis_exec_cmd = "numactl -C 1 " + tmp_exec_cmd
-        elif exec_mode == 'gramine-direct':
-            redis_exec_cmd = "numactl -C 1 gramine-direct " + tmp_exec_cmd
-        elif exec_mode == 'gramine-sgx-single-thread-non-exitless':
-            redis_exec_cmd = "numactl -C 1 gramine-sgx " + tmp_exec_cmd
-        elif exec_mode == 'gramine-sgx-diff-core-exitless':
-            redis_exec_cmd = "numactl -C 1,2 gramine-sgx " + tmp_exec_cmd
-        else:
-            raise Exception(f"\nInvalid execution mode specified in config yaml!")
-
-        print("\n-- Server command name = \n", redis_exec_cmd)
-        return redis_exec_cmd
 
     def free_redis_server_port(self, tcd, e_mode):
         container_id = None
@@ -115,7 +94,7 @@ class RedisWorkload:
         if container_id is None:
             raise Exception(f"\n-- Could not find Container ID for {workload_docker_image_name}")
         
-        docker_kill_cmd = f"docker kill {container_id}"
+        docker_kill_cmd = f"docker stop {container_id}"
         utils.exec_shell_cmd(docker_kill_cmd)
     
     # Build the workload execution command based on execution params and execute it.
@@ -127,11 +106,14 @@ class RedisWorkload:
         workload_docker_image_name = utils.get_workload_name(tcd['docker_image'])
         if e_mode == 'native':
             # Pull and bring up the native redis server.
-            docker_native_cmd = f"docker run --rm --net=host -t {workload_docker_image_name} &"
+            docker_native_cmd = f"docker run --rm --net=host -t {workload_docker_image_name} --protected-mode no --save '' &"
+            print(f"\n-- Launching Redis server in {e_mode} mode..\n", docker_native_cmd)
             utils.exec_shell_cmd(docker_native_cmd, None)
         else:
             docker_run_cmd = curated_apps_lib.get_docker_run_command(workload_docker_image_name)
-            result = curated_apps_lib.run_curated_image(docker_run_cmd)
+            docker_run_cmd += " --protected-mode no --save ''"
+            print(f"\n-- Launching Redis server in {e_mode} mode..\n", docker_run_cmd)
+            result = curated_apps_lib.run_curated_image(tcd, docker_run_cmd)
             if result == False:
                 raise Exception(f"\n-- Failure - Couldn't launch redis server in {e_mode} mode!!")
 
@@ -144,9 +126,6 @@ class RedisWorkload:
         time.sleep(5)
 
         self.free_redis_server_port(tcd, e_mode)
-        if 'gramine-sgx' in tcd['exec_mode']:
-                workload_docker_image_name = utils.get_workload_name(tcd['docker_image'])
-                utils.cleanup_after_test(workload_docker_image_name)
 
         time.sleep(TEST_SLEEP_TIME_BW_ITERATIONS)
 

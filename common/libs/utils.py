@@ -85,7 +85,7 @@ def clean_up_system():
     exec_shell_cmd("sudo apt-get -y clean", None)
     if os.path.exists("/var/run/docker.sock"):
         print("\n-- Removing all docker images..")
-        exec_shell_cmd("docker system prune -f --all", None)
+        exec_shell_cmd("docker system prune -f", None)
         if os.environ["perf_config"] == "baremetal":
             print("\n-- Stopping docker service..")
             exec_shell_cmd("sudo systemctl stop docker", None)
@@ -111,12 +111,13 @@ def set_permissions():
     else:
         print("\n-- Warning - Unable to find SGX dev files. May not be able to execute workload with SGX..")
     
+    logged_in_user = os.getlogin()
     if os.path.exists("/dev/cpu_dma_latency"):
-        logged_in_user = os.getlogin()
         exec_shell_cmd(f"sudo chown {logged_in_user} /dev/cpu_dma_latency")
         exec_shell_cmd("sudo chmod 0666 /dev/cpu_dma_latency")
 
     if os.path.exists("/var/run/docker.sock"):
+        exec_shell_cmd(f"sudo chown {logged_in_user} /var/run/docker.sock", None)
         exec_shell_cmd("sudo chmod 666 /var/run/docker.sock")
     
     exec_shell_cmd("sudo mount -o remount,exec /dev")
@@ -413,7 +414,7 @@ def popen_subprocess(command, dest_dir=None):
         os.chdir(dest_dir)
 
     print("Starting Process ", command)
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, encoding='utf-8')
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, encoding='utf-8')
     time.sleep(1)
    
     if dest_dir: os.chdir(cwd)
@@ -435,3 +436,19 @@ def is_package_installed(package_name):
     else:
         return False
 
+def read_file(filename):
+    fd = open(filename)
+    fd_contents = fd.read()
+    fd.close()
+    return fd_contents
+
+def update_file_contents(old_contents, new_contents, filename, append=False):
+    fd_contents = read_file(filename)
+    if append:
+        old_data = (old_contents).join(re.search("(.*){}(.*)".format(old_contents), fd_contents).groups())
+        new_data = re.sub(old_data, new_contents+old_data, fd_contents)
+    else:
+        new_data = re.sub(old_contents, new_contents, fd_contents)
+    fd = open(filename, "w")
+    fd.write(new_data)
+    fd.close()

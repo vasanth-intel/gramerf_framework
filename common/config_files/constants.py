@@ -17,6 +17,9 @@ BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 # Commands constants
 GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
 
+GRAMINE_1_4_CLONE = "RUN git clone --depth 1 --branch v1.4 https://github.com/gramineproject/gramine.git"
+DEPTH_STR = "--depth 1 --branch v1.4 "
+
 EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.git"
 
 MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"
@@ -82,10 +85,11 @@ LOG_LEVEL = "error"
 REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
 ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
 CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
-#GIT_CHECKOUT_CMD      = "git checkout gsc_image_curation"
 CURATED_PATH          = "Curated-Apps"
 CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)
-VERIFIER_DOCKERFILE   = os.path.join(ORIG_CURATED_PATH, CURATED_PATH, "verifier/verifier.dockerfile.template")
+VERIFIER_TEMPLATE      = "verifier.dockerfile.template"
+ORIG_BASE_PATH         = os.path.join(ORIG_CURATED_PATH, CURATED_PATH)
+VERIFIER_DOCKERFILE    = os.path.join(ORIG_BASE_PATH, "verifier", VERIFIER_TEMPLATE)
 
 WORKLOADS_PATH         = os.path.join(CURATED_APPS_PATH, "workloads")
 TFSERVING_HELPER_PATH    = os.path.join(WORKLOADS_PATH, "tensorflow-serving", "base_image_helper")

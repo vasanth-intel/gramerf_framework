@@ -12,7 +12,7 @@ import re
 
 class MySqlWorkload:
     def __init__(self, test_config_dict):
-        # MySql home dir => "~/gramerf_framework/contrib_repo/Curated-Apps/"
+        # MySql home dir => "~/gramerf_framework/contrib_repo/Intel-Confidential-Compute-for-X/"
         # Ideally, changing to home dir is required for bare-metal case as we build
         # the workload by downloading its source.
         # But, we are setting the workload home dir to CURATED_APPS_PATH in this

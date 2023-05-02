@@ -71,6 +71,7 @@ sgx.enclave_size = "32G"
 sgx.max_threads = 256
 sgx.preheat_enclave = true
 sgx.nonpie_binary = true
+sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
 
 sgx.trusted_files = [
   "file:{{ gramine.runtimedir() }}/",

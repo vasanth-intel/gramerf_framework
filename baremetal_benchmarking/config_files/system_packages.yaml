@@ -90,6 +90,7 @@ Default:
  python3-recommonmark
  python3-sphinx-rtd-theme
  python3-toml
+ python-is-python3
  sphinx-doc
  
 "21.04":
@@ -99,4 +100,5 @@ Default:
  python3-recommonmark
  python3-sphinx-rtd-theme
  python3-toml
+ python-is-python3
  sphinx-doc

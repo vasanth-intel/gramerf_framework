@@ -55,6 +55,21 @@ class TensorflowWorkload():
         if not os.path.exists('./models'):
             print("\n-- Downloading RESNET Intel_AI models..")
             utils.exec_shell_cmd(TF_RESNET_INTEL_AI_MODELS_CLONE_CMD, None)
+            # Until r2.9 branch of Resnet IntelAI models repo, inference was
+            # performed only on int8 precision.
+            # When the Resnet command is executed, it looks out for a file
+            # 'eval_image_classifier_inference_weight_sharing.py' to be present
+            # in below path.
+            # "models/image_recognition/tensorflow/resnet50v1_5/inference/"
+            # Now, with the latest branch (r2.11) of Resnet IntelAI models repo,
+            # inference is performed on few additional precisions and the above
+            # mentioned file is added for all precisions inside respective folders.
+            # Until dev team informs us as to what precision to run on, we will
+            # execute perf runs by checking out the older branch (r2.9) of the repo.
+            os.chdir('models')
+            print("\n-- Checking out RESNET models r2.9 branch..")
+            utils.exec_shell_cmd("git checkout r2.9", None)
+            os.chdir(self.workload_home_dir)
 
         print("\n-- Downloading RESNET Pretrained model..")
         utils.exec_shell_cmd(TF_RESNET_INT8_MODEL_WGET_CMD, None)

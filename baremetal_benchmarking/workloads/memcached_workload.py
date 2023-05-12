@@ -127,18 +127,15 @@ class MemcachedWorkload:
         #server_size = test_config_dict['server_size'] * 1024 * 1024 * 1024
         exec_bin_str = './memcached' if exec_mode == 'native' else 'memcached'
 
-        #tmp_exec_cmd = f"{exec_bin_str} --port {test_config_dict['baremetal_server_port']} --maxmemory {server_size} --maxmemory-policy allkeys-lru --appendonly no --protected-mode no --save '' &"
-        tmp_exec_cmd = f"{exec_bin_str} --port {test_config_dict['baremetal_server_port']} -m {test_config_dict['server_size']} &"
-        #tmp_exec_cmd = f"{exec_bin_str} &"
+        #tmp_exec_cmd = f"{exec_bin_str} --port {test_config_dict['baremetal_server_port']} -m {test_config_dict['server_size']} &"
+        tmp_exec_cmd = f"{exec_bin_str} --port {test_config_dict['baremetal_server_port']} -t 16 &"
         
         if exec_mode == 'native':
-            memcached_exec_cmd = "numactl -C 1 " + tmp_exec_cmd
+            memcached_exec_cmd = tmp_exec_cmd
         elif exec_mode == 'gramine-direct':
-            memcached_exec_cmd = "numactl -C 1 gramine-direct " + tmp_exec_cmd
+            memcached_exec_cmd = "gramine-direct " + tmp_exec_cmd
         elif exec_mode == 'gramine-sgx-single-thread-non-exitless':
-            memcached_exec_cmd = "numactl -C 1 gramine-sgx " + tmp_exec_cmd
-        elif exec_mode == 'gramine-sgx-diff-core-exitless':
-            memcached_exec_cmd = "numactl -C 1,2 gramine-sgx " + tmp_exec_cmd
+            memcached_exec_cmd = "gramine-sgx " + tmp_exec_cmd
         else:
             raise Exception(f"\nInvalid execution mode specified in config yaml!")
 
@@ -154,23 +151,11 @@ class MemcachedWorkload:
             print(kill_cmd)
             utils.exec_shell_cmd(kill_cmd)
 
-    # Default manifest specified in yaml would be 'memcached.manifest.template.non-exitless'
-    # for single thread non-exitless execution. We need to override and re-generate the 
-    # manifest for multithreaded exitless configuration.
-    def override_manifest_for_exitless(self, tcd):
-        tcd['manifest_file'] = "memcached.manifest.template.exitless"
-        gramine_libs.update_manifest_file(tcd)
-        self.generate_manifest()
-        gramine_libs.generate_sgx_token_and_sig(tcd)
-
     # Build the workload execution command based on execution params and execute it.
     def execute_workload(self, tcd, e_mode, test_dict=None):
         print("\n##### In execute_workload #####\n")
 
         print(f"\n-- Executing {tcd['test_name']} in {e_mode} mode")
-
-        if e_mode == 'gramine-sgx-diff-core-exitless':
-            self.override_manifest_for_exitless(tcd)
 
         self.command = self.construct_server_workload_exec_cmd(tcd, e_mode)
         if self.command is None:
@@ -225,9 +210,6 @@ class MemcachedWorkload:
                 elif "graphene_sgx_single_thread" in filename:
                     test_dict_latency['gramine-sgx-single-thread-non-exitless'].append(float(avg_latency))
                     test_dict_throughput['gramine-sgx-single-thread-non-exitless'].append(float(avg_throughput))
-                elif "graphene_sgx_diff_core" in filename:
-                    test_dict_latency['gramine-sgx-diff-core-exitless'].append(float(avg_latency))
-                    test_dict_throughput['gramine-sgx-diff-core-exitless'].append(float(avg_throughput))
                 else:
                     test_dict_latency['gramine-direct'].append(float(avg_latency))
                     test_dict_throughput['gramine-direct'].append(float(avg_throughput))
@@ -249,13 +231,6 @@ class MemcachedWorkload:
             if 'native' in tcd['exec_mode']:
                 test_dict_latency['sgx-single-thread-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-avg'], test_dict_latency['sgx-single-thread-avg'])
                 test_dict_throughput['sgx-single-thread-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['sgx-single-thread-avg'], True)
-
-        if 'gramine-sgx-diff-core-exitless' in tcd['exec_mode']:
-            test_dict_latency['sgx-diff-core-exitless-avg'] = '{:0.3f}'.format(statistics.median(test_dict_latency['gramine-sgx-diff-core-exitless']))
-            test_dict_throughput['sgx-diff-core-exitless-avg'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-sgx-diff-core-exitless']))
-            if 'native' in tcd['exec_mode']:
-                test_dict_latency['sgx-diff-core-exitless-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-avg'], test_dict_latency['sgx-diff-core-exitless-avg'])
-                test_dict_throughput['sgx-diff-core-exitless-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['sgx-diff-core-exitless-avg'], True)
 
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
         trd[tcd['workload_name']].update({tcd['test_name']+'_latency': test_dict_latency})

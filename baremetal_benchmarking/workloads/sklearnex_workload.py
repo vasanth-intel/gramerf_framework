@@ -37,6 +37,9 @@ class SklearnexWorkload():
             print("\n-- Executing pip upgrade command..")
             utils.exec_shell_cmd(PIP_UPGRADE_CMD)
         
+        if distro == 'ubuntu' and (distro_version == '20.04' or distro_version == '21.04'):
+            utils.exec_shell_cmd("sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y python-is-python3", None)
+
         # Checking if the directory is empty or not
         if not os.listdir(self.workload_home_dir):
             print("\n-- Cloning scikit-learn benchmark..")

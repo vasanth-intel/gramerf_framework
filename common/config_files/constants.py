@@ -38,7 +38,7 @@ GRAMINE_SGX_SED_CMD = "sed -i \"/uname/ a '/usr/src/linux-headers-@0@/arch/x86/i
 
 GRAMINE_BUILD_MESON_CMD = "meson setup build/ --werror " + \
                         BUILD_TYPE_PREFIX_STRING + \
-                        " -Ddirect=enabled -Dsgx=enabled -Dtests=enabled > " + \
+                        " -Ddirect=enabled -Dsgx=enabled > " + \
                         LOGS_DIR + "/gramine_build_meson_cmd_output.txt"
 
 GRAMINE_NINJA_BUILD_CMD = "ninja -vC build > " + LOGS_DIR + "/gramine_ninja_build_cmd_output.txt"

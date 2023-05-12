@@ -35,5 +35,12 @@ test_memcached_perf_4096_data_size_1_1_rw_ratio:
 
 test_memcached_perf_4096_data_size_1_9_rw_ratio:
   data_size: 4096
-  rw_ratio: "1:9"  
+  rw_ratio: "1:9"
+
+test_memcached_perf_77824_data_size_1_1_rw_ratio:
+  data_size: 77824
+
+test_memcached_perf_77824_data_size_1_9_rw_ratio:
+  data_size: 77824
+  rw_ratio: "1:9"
   

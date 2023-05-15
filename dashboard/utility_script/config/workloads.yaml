@@ -1,0 +1,6 @@
+workloads:
+- redis
+- openvino
+- tensorflow
+- tensorflow_encrypted
+- tensorflow_serving

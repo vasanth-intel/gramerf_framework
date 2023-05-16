@@ -39,8 +39,13 @@ def init_db(workload_name):
         utils.kill(process.pid)
     if init_result:
         utils.exec_shell_cmd(STOP_TEST_DB_CMD)
+        utils.exec_shell_cmd("sudo rm -rf /var/run/test_db_plain && \
+                             sudo mkdir -p /var/run/test_db_plain")
         if "mariadb" in workload_name:
             utils.exec_shell_cmd(MARIADB_CHMOD)
+            utils.exec_shell_cmd(COPY_MARIADB_TESTDB)
+        else:
+            utils.exec_shell_cmd(COPY_MYSQL_TESTDB)
     return init_result
 
 

@@ -101,6 +101,7 @@ TFSERVING_RESNET_PERF_CMD = "python3 serving/tensorflow_serving/example/resnet_c
 CURATION_SCRIPT        = os.path.join(ORIG_BASE_PATH, "util", "curation_script.sh")
 MYSQL_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/mysql/test_db")
 MYSQL_INIT_FOLDER_PATH = os.path.join(MYSQL_TESTDB_PATH, "mysql")
+COPY_MYSQL_TESTDB      = f"sudo cp -rf {MYSQL_TESTDB_PATH}/* /var/run/test_db_plain"
 MYSQL_CREATE_TESTDB_CMD = f"mkdir -p {MYSQL_TESTDB_PATH}"
 MYSQL_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db --user $(id -u):$(id -g) \
                             -v $PWD/workloads/mysql/test_db:/test_db \
@@ -115,6 +116,7 @@ MYSQL_CLIENT_INSTALL_CMD = f"sudo apt-get -y install mysql-client"
 MYSQL_CLIENT_CMD       = f"printf 'SELECT User FROM mysql.user;\nexit' > input.txt | mysql -h 127.0.0.1 -uroot < input.txt"
 
 MARIADB_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/mariadb/test_db")
+COPY_MARIADB_TESTDB      = f"sudo cp -rf {MARIADB_TESTDB_PATH}/* /var/run/test_db_plain"
 MARIADB_INIT_FOLDER_PATH = os.path.join(MARIADB_TESTDB_PATH, "mariadb")
 MARIADB_CREATE_TESTDB_CMD = f"mkdir -p {MARIADB_TESTDB_PATH}"
 MARIADB_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db \

@@ -45,7 +45,9 @@ def init_db(workload_name):
             utils.exec_shell_cmd(MARIADB_CHMOD)
             utils.exec_shell_cmd(COPY_MARIADB_TESTDB)
         else:
-            utils.exec_shell_cmd(COPY_MYSQL_TESTDB)
+            if os.environ["encryption"] != "1":
+                print(f"Copying Test DB to /var/run/test_db_plain")
+                utils.exec_shell_cmd(COPY_MYSQL_TESTDB)
     return init_result
 
 

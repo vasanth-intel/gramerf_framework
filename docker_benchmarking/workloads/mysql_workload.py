@@ -62,6 +62,11 @@ class MySqlWorkload:
             if not 'MALLOC_ARENA_MAX' in f.read():
                 arena_sed_cmd = f"sed -i '/sys.enable_extra_runtime_domain_names_conf = true/a loader.env.MALLOC_ARENA_MAX = \"1\"' {manifest_file}"
                 utils.exec_shell_cmd(arena_sed_cmd, None)
+        if os.environ["encryption"] != "1":
+            insecure_args_file = os.path.join(CURATED_APPS_PATH, "workloads/mysql/insecure_args.txt")
+            docker_run_flags_file = os.path.join(CURATED_APPS_PATH, "workloads/mysql/docker_run_flags.txt")
+            replace_db_path_cmd = f"sed -i 's/\/var\/run\/test_db_encrypted/\/var\/run\/test_db_plain/g' {insecure_args_file} {docker_run_flags_file}"
+            utils.exec_shell_cmd(replace_db_path_cmd, None)
 
         # Create graminized image for gramine direct and sgx runs.
         if os.environ["exec_mode"] != "native":
@@ -76,7 +81,7 @@ class MySqlWorkload:
     def get_mysql_server_exec_cmd(self, tcd, e_mode, container_name):
         workload_docker_image_name = utils.get_workload_name(tcd['docker_image'])
         if e_mode == 'native':
-            mysql_init_db_cmd = f"docker run --net=host --name init_native_test_db -v /var/run/test_db_plain:/var/run/test_db_plain \
+            mysql_init_db_cmd = f"docker run --net=host --name {container_name} -v /var/run/test_db_plain:/var/run/test_db_plain \
                                  -it mysql:8.0.32-debian --datadir /var/run/test_db_plain"
         elif e_mode == 'gramine-sgx':
             if os.environ['encryption'] == '1':
@@ -84,10 +89,10 @@ class MySqlWorkload:
                                         -v /var/run/test_db_encrypted:/var/run/test_db_encrypted \
                                         -t gsc-{workload_docker_image_name} --datadir /var/run/test_db_encrypted"
             else:
-                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave --user $(id -u):$(id -g) \
-                                        -v $PWD/workloads/mysql/test_db:/test_db \
-                                        -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_DATABASE=test_db gsc-{workload_docker_image_name} \
-                                        --datadir /test_db"
+                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                                        -v /var/run/test_db_plain:/var/run/test_db_plain \
+                                        gsc-{workload_docker_image_name} \
+                                        --datadir /var/run/test_db_plain"
         return mysql_init_db_cmd
 
     def get_container_name(self, e_mode):

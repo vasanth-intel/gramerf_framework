@@ -40,22 +40,43 @@ def init_db(workload_name):
     if init_result:
         utils.exec_shell_cmd(STOP_TEST_DB_CMD)
         utils.exec_shell_cmd("sudo rm -rf /var/run/test_db_plain && \
-                             sudo mkdir -p /var/run/test_db_plain")
+                            sudo mkdir -p /var/run/test_db_plain")
         if "mariadb" in workload_name:
             utils.exec_shell_cmd(MARIADB_CHMOD)
             utils.exec_shell_cmd(COPY_MARIADB_TESTDB)
         else:
-            if os.environ["encryption"] != "1":
-                print(f"Copying Test DB to /var/run/test_db_plain")
-                utils.exec_shell_cmd(COPY_MYSQL_TESTDB)
+            if os.environ["encryption"] != "1" and os.environ["tmpfs"] == "1":
+                utils.exec_shell_cmd(f"sudo rm -rf {PLAIN_DB_TMPFS_PATH} && \
+                            sudo mkdir -p {PLAIN_DB_TMPFS_PATH}")
+                print(f"Copying Test DB to {PLAIN_DB_TMPFS_PATH}")
+                utils.exec_shell_cmd(f"sudo cp -rf {MYSQL_TESTDB_PATH}/* {PLAIN_DB_TMPFS_PATH}")
+            elif os.environ["encryption"] != "1" and os.environ["tmpfs"] != "1":
+                utils.exec_shell_cmd(f"sudo rm -rf {PLAIN_DB_REGFS_PATH} && \
+                            sudo mkdir -p {PLAIN_DB_REGFS_PATH}")
+                print(f"Copying Test DB to {PLAIN_DB_REGFS_PATH}")
+                utils.exec_shell_cmd(f"sudo cp -rf {MYSQL_TESTDB_PATH}/* {PLAIN_DB_REGFS_PATH}")
+            elif os.environ["encryption"] == "1" and os.environ["tmpfs"] != "1":
+                utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_REGFS_PATH} && \
+                            sudo mkdir -p {ENCRYPTED_DB_REGFS_PATH}")
+                #print(f"Copying Test DB to {ENCRYPTED_DB_REGFS_PATH}")
+                #utils.exec_shell_cmd(f"sudo cp -rf {MYSQL_TESTDB_PATH}/* {ENCRYPTED_DB_REGFS_PATH}")
+            elif os.environ["encryption"] == "1" and os.environ["tmpfs"] == "1":
+                utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_TMPFS_PATH} && \
+                            sudo mkdir -p {ENCRYPTED_DB_TMPFS_PATH}")
+                #print(f"Copying Test DB to {ENCRYPTED_DB_TMPFS_PATH}")
+                #utils.exec_shell_cmd(f"sudo cp -rf {MYSQL_TESTDB_PATH}/* {ENCRYPTED_DB_TMPFS_PATH}")
     return init_result
 
 
 def encrypt_db(workload_name):
     output = utils.popen_subprocess(eval(workload_name.upper()+"_TEST_ENCRYPTION_KEY"), CURATED_APPS_PATH)
-    output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB, CURATED_APPS_PATH)
-    encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_CMD"), CURATED_APPS_PATH)
-
+    if os.environ["encryption"] == "1":
+        if os.environ["tmpfs"] == "1":
+            output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_TMPFS, CURATED_APPS_PATH)
+            encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_TMPFS_CMD"), CURATED_APPS_PATH)
+        else:
+            output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_REGFS, CURATED_APPS_PATH)
+            encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_REGFS_CMD"), CURATED_APPS_PATH)
 
 @pytest.fixture(scope="session")
 def execute_workload_setup():

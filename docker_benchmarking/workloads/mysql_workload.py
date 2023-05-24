@@ -64,31 +64,45 @@ class MySqlWorkload:
                 utils.exec_shell_cmd(arena_sed_cmd, None)
 
         # Create graminized image for gramine direct and sgx runs.
-        print(f"\n-- Creating graminized image for SGX runs..")
-        curation_output = curated_apps_lib.generate_curated_image(test_config_dict)
-        decode_curation_output = curation_output.decode('utf-8')
-        curation_output_result = curated_apps_lib.verify_image_creation(decode_curation_output)
-        if curation_output_result == False:
-            raise Exception("\n-- Failed to create the curated image!!")
-        print(f"\n-- Successfully created graminized image..")
+        if os.environ["exec_mode"] != "native":
+            print(f"\n-- Creating graminized image for SGX runs..")
+            curation_output = curated_apps_lib.generate_curated_image(test_config_dict)
+            decode_curation_output = curation_output.decode('utf-8')
+            curation_output_result = curated_apps_lib.verify_image_creation(decode_curation_output)
+            if curation_output_result == False:
+                raise Exception("\n-- Failed to create the curated image!!")
+            print(f"\n-- Successfully created graminized image..")
 
     def get_mysql_server_exec_cmd(self, tcd, e_mode, container_name):
         workload_docker_image_name = utils.get_workload_name(tcd['docker_image'])
         if e_mode == 'native':
-            mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --user $(id -u):$(id -g) \
-                                    -v $PWD/workloads/mysql/test_db:/test_db \
-                                    -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_DATABASE=test_db {workload_docker_image_name} \
-                                    --datadir /test_db"
-        elif e_mode == 'gramine-sgx':
-            if os.environ['encryption'] == '1':
-                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
-                                        -v /var/run/test_db_encrypted:/var/run/test_db_encrypted \
-                                        -t gsc-{workload_docker_image_name} --datadir /var/run/test_db_encrypted"
+            if os.environ["tmpfs"] == "1":
+                mysql_init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
+                                    -it mysql:8.0.32-debian --datadir {PLAIN_DB_TMPFS_PATH}"
             else:
-                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave --user $(id -u):$(id -g) \
-                                        -v $PWD/workloads/mysql/test_db:/test_db \
-                                        -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_DATABASE=test_db gsc-{workload_docker_image_name} \
-                                        --datadir /test_db"
+                mysql_init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
+                                    -it mysql:8.0.32-debian --datadir {PLAIN_DB_REGFS_PATH}"
+            
+        elif e_mode == 'gramine-sgx':
+            if os.environ['encryption'] == '1' and os.environ["tmpfs"] == "1":
+                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                                        -v {ENCRYPTED_DB_TMPFS_PATH}:{ENCRYPTED_DB_TMPFS_PATH} \
+                                        -t gsc-{workload_docker_image_name} --datadir {ENCRYPTED_DB_TMPFS_PATH}"
+            elif os.environ['encryption'] != '1' and os.environ["tmpfs"] == "1":
+                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                                        -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
+                                        gsc-{workload_docker_image_name} \
+                                        --datadir {PLAIN_DB_TMPFS_PATH}"
+            elif os.environ['encryption'] == '1' and os.environ["tmpfs"] != "1":
+                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                                        -v {ENCRYPTED_DB_REGFS_PATH}:{ENCRYPTED_DB_REGFS_PATH} \
+                                        gsc-{workload_docker_image_name} \
+                                        --datadir {ENCRYPTED_DB_REGFS_PATH}"
+            elif os.environ['encryption'] != '1' and os.environ["tmpfs"] != "1":
+                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                                        -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
+                                        gsc-{workload_docker_image_name} \
+                                        --datadir {PLAIN_DB_REGFS_PATH}"
         return mysql_init_db_cmd
 
     def get_container_name(self, e_mode):
@@ -160,6 +174,8 @@ class MySqlWorkload:
         print(f"\n\n-- Stopping MySql Server DB running in {e_mode} mode..\n")
         output = utils.exec_shell_cmd(f"docker stop {container_name}")
         print(output)
+        rm_output = utils.exec_shell_cmd(f"docker rm -f {container_name}")
+        print(rm_output)
         
     def process_results(self, tcd):
         log_test_res_folder = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])

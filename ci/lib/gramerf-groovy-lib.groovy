@@ -66,6 +66,10 @@ def preActions(){
     {
         encryption = encryption.substring(0,encryption.length() - 1).toBoolean();
     }
+    if(curation_commit.endsWith(","))
+    {
+        curation_commit = curation_commit.substring(0,curation_commit.length() - 1);
+    }
 
 }
 

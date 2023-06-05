@@ -1,9 +1,11 @@
 import os
 import re
 import pandas as pd
-import xlsxwriter
 import argparse
 import yaml
+import socket
+import psutil
+import signal
 
 # workloadlist = ['redis', 'openvino', 'tensorflow', 'tensorflow_encrypted', 'tensorflow_serving']
 
@@ -12,6 +14,19 @@ unwamted_cols = ['NATIVE', 'GRAMINE-SGX', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLES
 
 dashboard_excl_file = "gramine_perf_data.xlsx"
 
+def is_port_in_use(port: int):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex((socket.gethostname(), port)) == 0
+    
+def stop_dashboard_execution():
+    if is_port_in_use(8050):
+        print("stop the dashboard")
+        for proc in psutil.process_iter():
+            for conns in proc.connections(kind='inet'):
+                if conns.laddr.port == 8050:
+                    if proc.pid > 0:
+                        print("stop the process : " + str(proc.pid))
+                        proc.send_signal(signal.SIGTERM)
 
 def read_yaml_config():
     with open('config/workloads.yaml', 'r') as yaml_file:
@@ -36,11 +51,14 @@ def get_redis_data(df_redis):
     rename_latency_columns = {'Unnamed: 10': 'Unnamed: 0',
                               'NATIVE-AVG.1': 'NATIVE-AVG', 'SGX-SINGLE-THREAD-AVG.1': 'SGX-SINGLE-THREAD-AVG',
                               'DIRECT-AVG.1': 'DIRECT-AVG', 'SGX-SINGLE-THREAD-DEG.1': 'SGX-SINGLE-THREAD-DEG', 'DIRECT-DEG.1': 'DIRECT-DEG'}
+    rename_redis_columns = {
+        'SGX-SINGLE-THREAD-AVG': 'SGX-AVG', 'SGX-SINGLE-THREAD-DEG': 'SGX-DEG'}
 
     df_latency = df_redis[latency_columns]
     df_latency.rename(columns=rename_latency_columns, inplace=True)
     df_redis = df_redis.drop(columns=latency_columns)
     df_redis = pd.concat([df_redis, df_latency], ignore_index=True)
+    df_redis.rename(columns=rename_redis_columns, inplace=True)
     return df_redis
 
 
@@ -109,8 +127,7 @@ def write_excel(path, perf_df_from_excl):
                     writer, sheet_name=workload, index=False)
     drop_duplicates(path)
 
-
-def update_dashboard_input_file(input_dir, output_dir):
+def update_dashboard_input_file(input_dir, output_dir, replace):
     workloadlist = read_yaml_config()['workloads']
     with os.scandir(input_dir) as entries:
         owd = os.getcwd()
@@ -121,7 +138,18 @@ def update_dashboard_input_file(input_dir, output_dir):
             read_excel(entry.name, perf_df_from_excl, workloadlist)
         os.chdir(owd)
     path = output_dir + '/' + dashboard_excl_file
+
+    # kill dashboard
+    stop_dashboard_execution()
+
+    if replace:
+        if os.path.isfile(output_dir + '/' + dashboard_excl_file):
+            os.remove(output_dir + '/' + dashboard_excl_file)
+
     write_excel(path, perf_df_from_excl)
+    #start dashboard
+    import gramerf_perf_dash
+    gramerf_perf_dash.start_execution()
 
 
 if __name__ == '__main__':
@@ -147,8 +175,4 @@ if __name__ == '__main__':
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
 
-    if args.replace:
-        if os.path.isfile(output_dir + '/' + dashboard_excl_file):
-            os.remove(output_dir + '/' + dashboard_excl_file)
-
-    update_dashboard_input_file(input_dir, output_dir)
+    update_dashboard_input_file(input_dir, output_dir, args.replace)

@@ -1,3 +1,65 @@
+properties([
+    parameters([
+        [$class: 'ChoiceParameter', 
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Select Gramine installation mode (applicable for bare-metal performance benchmarking)', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'build_gramine', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        "return['error']"
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        "return['package', 'source:selected']"
+                ]
+            ]
+        ],
+        [$class: 'DynamicReferenceParameter', 
+            choiceType: 'ET_FORMATTED_HTML', 
+            description: 'Provide Prashanth Gramine repo source commit id to checkout. By default, latest commit from master branch shall be cloned.(Applicable for Gramine source installation mode only)',
+            name: 'gramine_repo_commit_id', 
+            referencedParameters: 'build_gramine', 
+            script: 
+                [$class: 'GroovyScript', 
+                fallbackScript: [
+                        classpath: [], 
+                        sandbox: false, 
+                        script: "return['error']"
+                        ], 
+                script: [
+                        classpath: [], 
+                        sandbox: false, 
+                        script: '''
+                        if (build_gramine.contains('source')){
+                            return """
+        <input name="value" id="build_gramine"  value="">
+        <img src="force/failed/load/image" style="display: none;" onerror=\'document.getElementById("build_gramine").closest(".form-group").style.display=""\'>
+                            """
+                        } else {
+                            return """
+        <input name="value" id="build_gramine"  value="">
+        <img src="force/failed/load/image" style="display: none;" onerror=\'document.getElementById("build_gramine").closest(".form-group").style.display="none"\'>
+                            """
+
+                        }
+                        '''
+                    ] 
+            ],
+        omitValueField: true
+        ],
+        string(defaultValue: '10', name: 'iterations'),
+        string(defaultValue: 'master', description: 'Enter gramine commit id. By default, pulls latest commit from the master branch.  (Applicable for container workload performance benchmarking)', name: 'curation_commit')
+    ])
+])
+
 pipeline{
     agent none
     stages {

@@ -13,7 +13,11 @@ class Workload(object):
                  test_config_dict):
         self.name = test_config_dict['workload_name']
         self.command = None
-        workload_script = test_config_dict['workload_name'] + "Workload"
+        if "MySql" in test_config_dict['workload_name'] or "MariaDB" in test_config_dict['workload_name']:
+            workload_script = "InMemoryDBWorkload"
+        else:
+            workload_script = test_config_dict['workload_name'] + "Workload"
+        
         if os.environ["perf_config"] == "container":
             self.workload_class = getattr(globals()["container_workloads"], workload_script)
         else:

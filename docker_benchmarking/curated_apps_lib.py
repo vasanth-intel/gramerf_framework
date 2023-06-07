@@ -8,7 +8,7 @@ from common.config_files.constants import *
 
 def curated_setup():
     print("Cleaning old contrib repo")
-    rm_cmd = "rm -rf {}".format(ORIG_CURATED_PATH)
+    rm_cmd = "sudo rm -rf {}".format(ORIG_CURATED_PATH)
     utils.exec_shell_cmd(rm_cmd)
     print("Cloning and checking out Contrib Git Repo")
     utils.exec_shell_cmd(CONTRIB_GIT_CMD)
@@ -24,7 +24,7 @@ def curated_setup():
 
 def copy_repo():
     copy_cmd = "cp -rf {} {}".format(ORIG_CURATED_PATH, REPO_PATH)
-    utils.exec_shell_cmd("rm -rf contrib_repo")
+    utils.exec_shell_cmd("sudo rm -rf contrib_repo")
     utils.exec_shell_cmd(copy_cmd)
 
 
@@ -89,7 +89,9 @@ def get_workload_result(test_config_dict):
     elif "tensorflow-serving" in test_config_dict["docker_image"]:
         workload_result = "Running gRPC ModelServer at 0.0.0.0:8500"
     elif "mysql" in test_config_dict["docker_image"]:
-        workload_result = "/usr/sbin/mysqld: ready for connections"
+        workload_result = MYSQL_TESTDB_VERIFY
+    elif "mariadb" in test_config_dict["docker_image"]:
+        workload_result = MARIADB_TESTDB_VERIFY
     return workload_result
 
 

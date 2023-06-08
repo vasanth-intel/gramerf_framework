@@ -54,6 +54,10 @@ pipeline {
                         args = args + " --encryption=1"
                     }
 
+                    if (tmpfs) {
+                        args = args + " --tmpfs=1"
+                    }
+
                     if (!run_specific_perf_test?.trim()){
                         echo " selected marker $run will be executed"
                         exec_cmd = "python3 -m pytest -s -v -m $run $args"

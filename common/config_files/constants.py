@@ -86,6 +86,7 @@ REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
 ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
 CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
 MARIADB_CONTRIB_GIT_CMD = "git clone -b sahason/mariadb https://github.com/sahason/contrib.git orig_contrib_repo"
+OVMS_CONTRIB_GIT_CMD  = "git clone -b sahason/ovms https://github.com/sahason/contrib.git orig_contrib_repo"
 CURATED_PATH          = "Intel-Confidential-Compute-for-X"
 CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)
 VERIFIER_TEMPLATE      = "verifier.dockerfile.template"
@@ -110,6 +111,7 @@ MYSQL_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db --user
 STOP_TEST_DB_CMD      = f"docker stop init_test_db"
 MYSQL_TEST_ENCRYPTION_KEY    = f"dd if=/dev/urandom bs=16 count=1 > workloads/mysql/base_image_helper/encryption_key"
 CLEANUP_ENCRYPTED_DB_TMPFS   = f"sudo rm -rf /var/run/test_db_encrypted"
+CLEANUP_ENCRYPTED_MODEL      = f"sudo rm -rf /var/run/test_model_encrypted"
 ENCRYPTED_DB_REGFS_PATH      = f"/home/intel/test_db_encrypted"
 ENCRYPTED_DB_TMPFS_PATH      = f"/var/run/test_db_encrypted"
 PLAIN_DB_REGFS_PATH          = f"/home/intel/test_db"
@@ -139,3 +141,10 @@ MARIADB_ENCRYPT_DB_REGFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workload
 MARIADB_CHMOD         = f"sudo chown -R $USER:$USER {CURATED_APPS_PATH}/workloads/mariadb/test_db"
 MYSQL_TESTDB_VERIFY   = f"/usr/sbin/mysqld: ready for connections"
 MARIADB_TESTDB_VERIFY = f"mariadbd: ready for connections"
+OVMS_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/openvino-model-server/test_model")
+OVMS_CREATE_TESTDB_CMD = f"mkdir -p {OVMS_TESTDB_PATH}"
+OVMS_INIT_DB_CMD      = f"curl -L --create-dir https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/2/resnet50-binary-0001/FP32-INT1/resnet50-binary-0001.bin -o workloads/openvino-model-server/test_model/1/model.bin \
+                        https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/2/resnet50-binary-0001/FP32-INT1/resnet50-binary-0001.xml -o workloads/openvino-model-server/test_model/1/model.xml"
+OVMS_TEST_ENCRYPTION_KEY = f"dd if=/dev/urandom bs=16 count=1 > workloads/openvino-model-server/base_image_helper/encryption_key"
+OVMS_ENCRYPT_DB_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/openvino-model-server/base_image_helper/encryption_key \
+                        -i workloads/openvino-model-server/test_model -o /var/run/model_encrypted"

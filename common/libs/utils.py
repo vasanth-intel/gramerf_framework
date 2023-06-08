@@ -326,7 +326,7 @@ def write_to_report(workload_name, test_results):
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
     elif workload_name == 'Sklearnex':
         cols = ['data_type', 'dataset_name', 'rows', 'columns', 'classes', 'time', 'gramine-sgx', 'gramine-direct', 'gramine-sgx-deg', 'gramine-direct-deg']
-    elif workload_name == 'TensorflowServing' or workload_name == 'MySql':
+    elif workload_name == 'TensorflowServing' or workload_name == 'MySql' or workload_name == 'OpenVinoModelServer':
         cols = ['native', 'gramine-sgx', 'native-avg', 'sgx-avg', 'sgx-deg']
     else:
         cols = ['native', 'gramine-sgx', 'gramine-direct', 'native-avg', 'sgx-avg', 'direct-avg', 'sgx-deg', 'direct-deg']

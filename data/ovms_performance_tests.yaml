@@ -1,0 +1,6 @@
+Default:
+  docker_image: openvino-model-server openvino/model_server
+  workload_name: "OpenVinoModelServer"
+  
+test_ovms_perf_resnet_throughput:
+  docker_arguments: --model_name=resnet --model_base_path=/var/run/model_encrypted --port 9000 --layout NCHW

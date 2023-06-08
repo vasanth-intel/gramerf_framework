@@ -18,23 +18,35 @@ def init_db(workload_name):
         print(f"Initializing {workload_name.upper()} DB")
         while True:
             if process.poll() is not None and output == '':
-                break
+                if "ovms" in workload_name:
+                    time.sleep(30)
+                    if os.path.exists(os.path.join(CURATED_APPS_PATH, \
+                        "workloads/openvino-model-server/test_model/1/model.bin")) and \
+                        os.path.exists(os.path.join(CURATED_APPS_PATH, \
+                        "workloads/openvino-model-server/test_model/1/model.xml")):
+                        print(f"{workload_name.upper()} DB is initialized\n")
+                        init_result = True
+                        break
+                else:
+                    break
             output = process.stderr.readline()
             print(output)
             if output:
                 docker_output += output
-                if (docker_output.count(eval(workload_name.upper()+"_TESTDB_VERIFY")) == 2):
-                    print(f"{workload_name.upper()} DB is initialized\n")
-                    init_result = True
-                    break
-                elif time.time() > timeout:
-                    break
+                if "mysql" in workload_name or "mariadb" in workload_name:
+                    if (docker_output.count(eval(workload_name.upper()+"_TESTDB_VERIFY")) == 2):
+                        print(f"{workload_name.upper()} DB is initialized\n")
+                        init_result = True
+                        break
+                    elif time.time() > timeout:
+                        break
     finally:
         process.stdout.close()
         process.stderr.close()
         utils.kill(process.pid)
     if init_result:
-        utils.exec_shell_cmd(STOP_TEST_DB_CMD)
+        if "mysql" in workload_name or "mariadb" in workload_name:
+            utils.exec_shell_cmd(STOP_TEST_DB_CMD)
         if "mariadb" in workload_name:
             utils.exec_shell_cmd(MARIADB_CHMOD)
     return init_result

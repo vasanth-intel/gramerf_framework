@@ -92,6 +92,8 @@ def get_workload_result(test_config_dict):
         workload_result = MYSQL_TESTDB_VERIFY
     elif "mariadb" in test_config_dict["docker_image"]:
         workload_result = MARIADB_TESTDB_VERIFY
+    elif "openvino-model-server" in test_config_dict["docker_image"]:
+        workload_result = "ServableManagerModule started"
     return workload_result
 
 
@@ -101,6 +103,7 @@ def verify_process(test_config_dict, process=None, timeout=0):
     debug_log = None
     output = None
     workload_result = get_workload_result(test_config_dict)
+    print(workload_result)
 
     # Redirecting the debug mode logs to file instead of console because
     # it consumes whole lot of console and makes difficult to debug

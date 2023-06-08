@@ -1,11 +1,8 @@
 import os
 import pytest
-import time
-import subprocess
 import sys
 from common.config_files.constants import *
 from common.libs.gramerf_wrapper import run_test
-from common.libs import utils
 from docker_benchmarking.workloads.db_workloads_utils import *
 
 yaml_file_name = "mysql_performance_tests.yaml"

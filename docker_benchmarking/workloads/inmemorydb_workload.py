@@ -121,10 +121,10 @@ class InMemoryDBWorkload:
         if e_mode == 'native':
             if os.environ["tmpfs"] == "1":
                 init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
-                                    -it {workload_docker_image_name} --datadir {PLAIN_DB_TMPFS_PATH}"
+                                    -t {workload_docker_image_name} --datadir {PLAIN_DB_TMPFS_PATH}"
             else:
                 init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
-                                    -it {workload_docker_image_name} --datadir {PLAIN_DB_REGFS_PATH}"
+                                    -t {workload_docker_image_name} --datadir {PLAIN_DB_REGFS_PATH}"
             
         elif e_mode == 'gramine-sgx':
             if os.environ['encryption'] == '1' and os.environ["tmpfs"] == "1":
@@ -134,17 +134,17 @@ class InMemoryDBWorkload:
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] == "1":
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_TMPFS_PATH}"
             elif os.environ['encryption'] == '1' and os.environ["tmpfs"] != "1":
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {ENCRYPTED_DB_REGFS_PATH}:{ENCRYPTED_DB_REGFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {ENCRYPTED_DB_REGFS_PATH}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] != "1":
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_REGFS_PATH}"
         return init_db_cmd
 
@@ -222,7 +222,6 @@ class InMemoryDBWorkload:
         output = utils.exec_shell_cmd(f"docker stop {container_name}")
         print(output)
         rm_output = utils.exec_shell_cmd(f"docker rm -f {container_name}")
-        print(rm_output)
         
     def process_results(self, tcd):
         log_test_res_folder = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])

@@ -85,6 +85,7 @@ LOG_LEVEL = "error"
 REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
 ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
 CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
+MARIADB_CONTRIB_GIT_CMD = "git clone -b sahason/mariadb https://github.com/sahason/contrib.git orig_contrib_repo"
 CURATED_PATH          = "Intel-Confidential-Compute-for-X"
 CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)
 VERIFIER_TEMPLATE      = "verifier.dockerfile.template"
@@ -135,6 +136,6 @@ MARIADB_ENCRYPT_DB_TMPFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workload
                                 -i workloads/mariadb/test_db -o /var/run/test_db_encrypted"
 MARIADB_ENCRYPT_DB_REGFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/mariadb/base_image_helper/encryption_key \
                                 -i workloads/mariadb/test_db -o workloads/mariadb/test_db_encrypted"
-MARIADB_CHMOD         = f"sudo chown -R $USER:$USER $PWD/workloads/mariadb/test_db"
+MARIADB_CHMOD         = f"sudo chown -R $USER:$USER {CURATED_APPS_PATH}/workloads/mariadb/test_db"
 MYSQL_TESTDB_VERIFY   = f"/usr/sbin/mysqld: ready for connections"
 MARIADB_TESTDB_VERIFY = f"mariadbd: ready for connections"

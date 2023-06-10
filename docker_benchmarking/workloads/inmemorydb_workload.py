@@ -1,18 +1,14 @@
 import time
-import subprocess
 import glob
-import sys
 import statistics
 from common.config_files.constants import *
 from docker_benchmarking import curated_apps_lib
 from common.libs import utils
-from common.perf_benchmarks import memtier_benchmark
 from conftest import trd
-import re
 
-class MySqlWorkload:
+class InMemoryDBWorkload:
     def __init__(self, test_config_dict):
-        # MySql home dir => "~/gramerf_framework/contrib_repo/Intel-Confidential-Compute-for-X/"
+        # Workloads home dir => "~/gramerf_framework/contrib_repo/Intel-Confidential-Compute-for-X/"
         # Ideally, changing to home dir is required for bare-metal case as we build
         # the workload by downloading its source.
         # But, we are setting the workload home dir to CURATED_APPS_PATH in this
@@ -25,7 +21,7 @@ class MySqlWorkload:
     def pull_workload_default_image(self, test_config_dict):
         workload_docker_image_name = utils.get_workload_name(test_config_dict['docker_image'])
         workload_docker_pull_cmd = f"docker pull {workload_docker_image_name}"
-        print(f"\n-- Pulling MySql docker image from docker hub..\n", workload_docker_pull_cmd)
+        print(f"\n-- Pulling Workload docker image from docker hub..\n", workload_docker_pull_cmd)
         utils.exec_shell_cmd(workload_docker_pull_cmd, None)
 
     def check_sgx_dirs(self, test_config_dict):
@@ -43,26 +39,73 @@ class MySqlWorkload:
         utils.exec_shell_cmd("sudo cp -rf /dev/sgx_provision /dev/sgx/provision", None)
         utils.exec_shell_cmd("sudo chmod 777 /dev/sgx/enclave /dev/sgx/provision", None)
 
+    def copy_initialized_db(self, test_config_dict):
+        workload_name = utils.get_workload_name(test_config_dict["docker_image"])
+        if "mariadb" in workload_name:
+            COPY_DB_PATH = MARIADB_TESTDB_PATH
+        else:
+            COPY_DB_PATH = MYSQL_TESTDB_PATH
+
+        if "native" in test_config_dict["exec_mode"] or \
+            (os.environ["encryption"] != "1" and os.environ["tmpfs"] == "1"):
+            print(f"Removing old DB {PLAIN_DB_TMPFS_PATH}")
+            utils.exec_shell_cmd(f"sudo rm -rf {PLAIN_DB_TMPFS_PATH} && \
+                        sudo mkdir -p {PLAIN_DB_TMPFS_PATH}")
+            print(f"Copying Test DB to {PLAIN_DB_TMPFS_PATH}")
+            utils.exec_shell_cmd(f"sudo cp -rf {COPY_DB_PATH}/* {PLAIN_DB_TMPFS_PATH}")
+        elif os.environ["encryption"] != "1" and os.environ["tmpfs"] != "1":
+            print(f"Removing old DB {PLAIN_DB_REGFS_PATH}")
+            utils.exec_shell_cmd(f"sudo rm -rf {PLAIN_DB_REGFS_PATH} && \
+                        sudo mkdir -p {PLAIN_DB_REGFS_PATH}")
+            print(f"Copying Test DB to {PLAIN_DB_REGFS_PATH}")
+            utils.exec_shell_cmd(f"sudo cp -rf {COPY_DB_PATH}/* {PLAIN_DB_REGFS_PATH}")
+        elif os.environ["encryption"] == "1" and os.environ["tmpfs"] != "1":
+            print(f"Removing old DB {ENCRYPTED_DB_REGFS_PATH}")
+            utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_REGFS_PATH} && \
+                        sudo mkdir -p {ENCRYPTED_DB_REGFS_PATH}")
+        elif os.environ["encryption"] == "1" and os.environ["tmpfs"] == "1":
+            print(f"Removing old DB {ENCRYPTED_DB_TMPFS_PATH}")
+            utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_TMPFS_PATH} && \
+                        sudo mkdir -p {ENCRYPTED_DB_TMPFS_PATH}")
+
+    def encrypt_db(self, test_config_dict):
+        workload_name = test_config_dict["docker_image"].split(" ")[0]
+        output = utils.popen_subprocess(eval(workload_name.upper()+"_TEST_ENCRYPTION_KEY"), CURATED_APPS_PATH)
+        if os.environ["encryption"] == "1":
+            if os.environ["tmpfs"] == "1":
+                output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_TMPFS, CURATED_APPS_PATH)
+                encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_TMPFS_CMD"), CURATED_APPS_PATH)
+            else:
+                output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_REGFS, CURATED_APPS_PATH)
+                encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_REGFS_CMD"), CURATED_APPS_PATH)
+
+
     def pre_actions(self, test_config_dict):
         os.chdir(self.get_workload_home_dir())
         utils.set_threads_cnt_env_var()
         utils.set_cpu_freq_scaling_governor()
         self.check_sgx_dirs(test_config_dict)
+        self.copy_initialized_db(test_config_dict)
 
     def setup_workload(self, test_config_dict):
         # Pull default workload image for native run.
         self.pull_workload_default_image(test_config_dict)
+        if "mysql" in test_config_dict["docker_image"]:
+            manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/mysql/mysql.manifest.template")
+        else:
+            manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/mariadb/mariadb.manifest.template")
 
-        manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/mysql/mysql.manifest.template")
         with open(manifest_file) as f:
-            if not '2G' in f.read():
-                enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size = \"4G\"/sgx.enclave_size = \"2G\"/' {manifest_file}"
-                utils.exec_shell_cmd(enc_size_sed_cmd, None)
+            enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size =.*/sgx.enclave_size = \"2G\"/' {manifest_file}"
+            utils.exec_shell_cmd(enc_size_sed_cmd, None)
+            if "mariadb" in test_config_dict["docker_image"]:
+                utils.exec_shell_cmd(f"sed -i 's/sgx.max_threads =.*/sgx.max_threads = 256/' {manifest_file}", None)
         with open(manifest_file) as f:
             if not 'MALLOC_ARENA_MAX' in f.read():
                 arena_sed_cmd = f"sed -i '/sys.enable_extra_runtime_domain_names_conf = true/a loader.env.MALLOC_ARENA_MAX = \"1\"' {manifest_file}"
                 utils.exec_shell_cmd(arena_sed_cmd, None)
-
+    
+    def generate_curated_image(self, test_config_dict):
         # Create graminized image for gramine direct and sgx runs.
         if os.environ["exec_mode"] != "native":
             print(f"\n-- Creating graminized image for SGX runs..")
@@ -73,37 +116,37 @@ class MySqlWorkload:
                 raise Exception("\n-- Failed to create the curated image!!")
             print(f"\n-- Successfully created graminized image..")
 
-    def get_mysql_server_exec_cmd(self, tcd, e_mode, container_name):
+    def get_server_exec_cmd(self, tcd, e_mode, container_name):
         workload_docker_image_name = utils.get_workload_name(tcd['docker_image'])
         if e_mode == 'native':
             if os.environ["tmpfs"] == "1":
-                mysql_init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
-                                    -it mysql:8.0.32-debian --datadir {PLAIN_DB_TMPFS_PATH}"
+                init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
+                                    -t {workload_docker_image_name} --datadir {PLAIN_DB_TMPFS_PATH}"
             else:
-                mysql_init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
-                                    -it mysql:8.0.32-debian --datadir {PLAIN_DB_REGFS_PATH}"
+                init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
+                                    -t {workload_docker_image_name} --datadir {PLAIN_DB_REGFS_PATH}"
             
         elif e_mode == 'gramine-sgx':
             if os.environ['encryption'] == '1' and os.environ["tmpfs"] == "1":
-                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {ENCRYPTED_DB_TMPFS_PATH}:{ENCRYPTED_DB_TMPFS_PATH} \
                                         -t gsc-{workload_docker_image_name} --datadir {ENCRYPTED_DB_TMPFS_PATH}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] == "1":
-                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_TMPFS_PATH}"
             elif os.environ['encryption'] == '1' and os.environ["tmpfs"] != "1":
-                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {ENCRYPTED_DB_REGFS_PATH}:{ENCRYPTED_DB_REGFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {ENCRYPTED_DB_REGFS_PATH}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] != "1":
-                mysql_init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_REGFS_PATH}"
-        return mysql_init_db_cmd
+        return init_db_cmd
 
     def get_container_name(self, e_mode):
         if e_mode == 'native':
@@ -116,18 +159,18 @@ class MySqlWorkload:
         else:
             raise Exception("\n-- Invalid execution mode!!")
 
-    def construct_sysbench_operation(self, tcd, mysql_cmd, e_mode='native', iteration=1):
+    def construct_sysbench_operation(self, tcd, sysbench_cmd, e_mode='native', iteration=1):
         operation_cmd = ''
-        if mysql_cmd == 'prepare' or mysql_cmd == 'cleanup':
+        if sysbench_cmd == 'prepare' or sysbench_cmd == 'cleanup':
             operation_cmd = f"sysbench --db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=3306 --mysql-user=root --mysql-db=test_db \
                                 --time=40 --report-interval=5 {tcd['operation']} --tables=16 --table_size=100000 \
-                                --threads={os.environ['CORES_COUNT']} {mysql_cmd}"
-        elif mysql_cmd == 'run':
+                                --threads={os.environ['CORES_COUNT']} {sysbench_cmd}"
+        elif sysbench_cmd == 'run':
             results_dir = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])
             output_file_name = results_dir + "/" + tcd['test_name'] + '_' + e_mode + '_' + str(iteration) + '.log'
             operation_cmd = f"sysbench --db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=3306 --mysql-user=root --mysql-db=test_db \
                                 --time=40 --report-interval=5 {tcd['operation']} --tables=16 --table_size=100000 \
-                                --threads={tcd['threads']} {mysql_cmd} | tee {output_file_name}"
+                                --threads={tcd['threads']} {sysbench_cmd} | tee {output_file_name}"
         else:
             raise Exception("\n-- Invalid MySql operation command requested!!")
         
@@ -138,20 +181,24 @@ class MySqlWorkload:
         print("\n##### In execute_workload #####\n")
         print(f"\n-- Executing {test_config_dict['test_name']} in {e_mode} mode")
 
+        if e_mode != "native":
+            self.encrypt_db(test_config_dict)
+            self.generate_curated_image(test_config_dict)
+
         results_dir = os.path.join(PERF_RESULTS_DIR, test_config_dict['workload_name'], test_config_dict['test_name'])
         os.makedirs(results_dir, exist_ok=True)
 
-        workload_docker_image_name = utils.get_workload_name(test_config_dict['docker_image'])
+        workload_name = test_config_dict['docker_image'].split(" ")[0]
         container_name = self.get_container_name(e_mode)
-        mysql_init_db_cmd = self.get_mysql_server_exec_cmd(test_config_dict, e_mode, container_name)
-        print(f"\n-- Launching MySql server in {e_mode} mode..\n", mysql_init_db_cmd)
+        init_db_cmd = self.get_server_exec_cmd(test_config_dict, e_mode, container_name)
+        print(f"\n-- Launching {workload_name} server in {e_mode} mode..\n", init_db_cmd)
 
         print("\n\n", os.getcwd())
         
-        process = utils.popen_subprocess(mysql_init_db_cmd)
+        process = utils.popen_subprocess(init_db_cmd)
         time.sleep(5)
         if curated_apps_lib.verify_process(test_config_dict, process, 60*10) == False:
-            raise Exception(f"\n-- Failure - Couldn't launch MySql server in {e_mode} mode!!")
+            raise Exception(f"\n-- Failure - Couldn't launch {workload_name} server in {e_mode} mode!!")
 
         # 'Prepare' and 'Cleanup' commands need to be performed only once per test.
         # Hence, not calling these commands in loop.
@@ -171,11 +218,10 @@ class MySqlWorkload:
 
         # workload cleanup
         utils.exec_shell_cmd("docker ps", None)
-        print(f"\n\n-- Stopping MySql Server DB running in {e_mode} mode..\n")
+        print(f"\n\n-- Stopping {workload_name} Server DB running in {e_mode} mode..\n")
         output = utils.exec_shell_cmd(f"docker stop {container_name}")
         print(output)
         rm_output = utils.exec_shell_cmd(f"docker rm -f {container_name}")
-        print(rm_output)
         
     def process_results(self, tcd):
         log_test_res_folder = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])

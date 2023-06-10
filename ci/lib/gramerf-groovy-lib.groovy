@@ -47,6 +47,9 @@ def getNodeName(){
     } else if (run_specific_perf_test.contains("memcached") || run.contains("memcached")){
         echo "memcached workload is selected ..."
         return 'graphene_perf_redis_taken_out_for_vasanth'
+    } else if (run_specific_perf_test.contains("mysql") || run.contains("mysql")){
+        echo "mysql workload is selected ..."
+        return 'graphene_sklearn'
     }
 
 }
@@ -69,6 +72,10 @@ def preActions(){
     if(curation_commit.endsWith(","))
     {
         curation_commit = curation_commit.substring(0,curation_commit.length() - 1);
+    }
+    if(tmpfs.endsWith(","))
+    {
+        tmpfs = tmpfs.substring(0,tmpfs.length() - 1).toBoolean();
     }
 
 }

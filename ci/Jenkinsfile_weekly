@@ -1,0 +1,133 @@
+properties([
+    parameters([
+        [$class: 'ChoiceParameter', 
+            choiceType: 'PT_SINGLE_SELECT', 
+            description: 'Select Gramine installation mode (applicable for bare-metal performance benchmarking)', 
+            filterLength: 1, 
+            filterable: false, 
+            name: 'build_gramine', 
+            script: [
+                $class: 'GroovyScript', 
+                fallbackScript: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        "return['error']"
+                ], 
+                script: [
+                    classpath: [], 
+                    sandbox: false, 
+                    script: 
+                        "return['package', 'source:selected']"
+                ]
+            ]
+        ],
+        [$class: 'DynamicReferenceParameter', 
+            choiceType: 'ET_FORMATTED_HTML', 
+            description: 'Provide Prashanth Gramine repo source commit id to checkout. By default, latest commit from master branch shall be cloned.(Applicable for Gramine source installation mode only)',
+            name: 'gramine_repo_commit_id', 
+            referencedParameters: 'build_gramine', 
+            script: 
+                [$class: 'GroovyScript', 
+                fallbackScript: [
+                        classpath: [], 
+                        sandbox: false, 
+                        script: "return['error']"
+                        ], 
+                script: [
+                        classpath: [], 
+                        sandbox: false, 
+                        script: '''
+                        if (build_gramine.contains('source')){
+                            return """
+        <input name="value" id="build_gramine"  value="">
+        <img src="force/failed/load/image" style="display: none;" onerror=\'document.getElementById("build_gramine").closest(".form-group").style.display=""\'>
+                            """
+                        } else {
+                            return """
+        <input name="value" id="build_gramine"  value="">
+        <img src="force/failed/load/image" style="display: none;" onerror=\'document.getElementById("build_gramine").closest(".form-group").style.display="none"\'>
+                            """
+
+                        }
+                        '''
+                    ] 
+            ],
+        omitValueField: true
+        ],
+        string(defaultValue: '10', name: 'iterations'),
+        string(defaultValue: 'master', description: 'Enter gramine commit id. By default, pulls latest commit from the master branch.  (Applicable for container workload performance benchmarking)', name: 'curation_commit')
+    ])
+])
+
+pipeline{
+    agent none
+    stages {
+        stage("") {
+            parallel {
+                stage("") {
+                    stages{
+                        stage("Run redis baremetal perf") {
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'redis_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx-single-thread-non-exitless'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                        stage("Run redis container perf") {
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'container'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'curation_commit', value: curation_commit), string(name: 'run', value: 'redis_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-sgx-single-thread-non-exitless'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                        stage("Run tf_serving perf") {
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'container'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'curation_commit', value: curation_commit), string(name: 'run', value: 'tf_serving_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-sgx'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                        stage("Run memcached perf") {
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'memcached_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx-single-thread-non-exitless'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                    }
+                }
+                stage(" ") {
+                    stages{
+                        stage("Run openvino Latency perf"){
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'ov_perf_latency'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                        stage("Run Tensorflow perf") {
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'tf_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                        stage("Run openvino throughput perf"){
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'ov_perf_throughput'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                        stage("Run Tensorflow encryption perf") {
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'tf_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations), string(name: 'encryption', value: 'true')]
+                            }
+                        }
+                    }
+                }
+                stage("  ") {
+                    stages{
+                        stage('sklearn_perf'){
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'sklearnex_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                        stage('mysql_perf'){
+                            steps{
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'container'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'curation_commit', value: curation_commit), string(name: 'run', value: 'mysql_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-sgx'), string(name: 'iterations', value: iterations)]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -167,11 +167,12 @@ def gramine_package_install():
         exec_shell_cmd("sudo dnf -y install gramine")
         return
 
+    linux_release = exec_shell_cmd("lsb_release -sc")
     exec_shell_cmd("sudo curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg")
-    exec_shell_cmd("echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ $(lsb_release -sc) main' | sudo tee /etc/apt/sources.list.d/gramine.list")
+    exec_shell_cmd(f"echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ {linux_release} main' | sudo tee /etc/apt/sources.list.d/gramine.list")
 
     exec_shell_cmd("sudo curl -fsSLo /usr/share/keyrings/intel-sgx-deb.asc https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key")
-    exec_shell_cmd("echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx-deb.asc] https://download.01.org/intel-sgx/sgx_repo/ubuntu $(lsb_release -sc) main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list")
+    exec_shell_cmd(f"echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx-deb.asc] https://download.01.org/intel-sgx/sgx_repo/ubuntu {linux_release} main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list")
 
     exec_shell_cmd(APT_UPDATE_CMD)
     exec_shell_cmd("sudo apt-get -y install gramine")

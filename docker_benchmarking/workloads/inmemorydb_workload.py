@@ -78,7 +78,7 @@ class InMemoryDBWorkload:
             else:
                 output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_REGFS, CURATED_APPS_PATH)
                 encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_REGFS_CMD"), CURATED_APPS_PATH)
-            print(f"\n-- Encryption command output..\n", encryption_output.stdout)
+            print(f"\n-- Encryption command output..\n", encryption_output.stdout.read())
 
     def pre_actions(self, test_config_dict):
         os.chdir(self.get_workload_home_dir())

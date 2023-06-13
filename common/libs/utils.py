@@ -75,6 +75,11 @@ def clean_up_system():
     dentries, inodes and apt cache.
     :return:
     """
+    # Cleanup existing gramine binaries (if any) before starting a fresh build.
+    # Passing prefix path as argument, so that user installed (if any) gramine
+    # binaries are also removed.
+    cleanup_gramine_binaries(BUILD_PREFIX)
+
     try:
         print("\n-- Removing unnecessary packages and dependencies..")
         exec_shell_cmd("sudo apt-get -y autoremove", None)
@@ -148,6 +153,28 @@ def cleanup_gramine_binaries(build_prefix):
 
     print("\n-- Removing user installed gramine binaries..\n", gramine_user_installed_bin_rm_cmd)
     os.system(gramine_user_installed_bin_rm_cmd)
+
+
+def gramine_package_install():
+    if os.path.exists("/usr/bin/gramine-sgx"):
+        print("\n-- Gramine already installed.. Returning without installation..\n")
+        return
+
+    print("\n--Installing latest Gramine package\n")
+    distro, distro_version = get_distro_and_version()
+    if distro == 'rhel':
+        exec_shell_cmd("sudo curl -fsSLo /etc/yum.repos.d/gramine.repo https://packages.gramineproject.io/rpm/gramine.repo")
+        exec_shell_cmd("sudo dnf -y install gramine")
+        return
+
+    exec_shell_cmd("sudo curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg")
+    exec_shell_cmd("echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ $(lsb_release -sc) main' | sudo tee /etc/apt/sources.list.d/gramine.list")
+
+    exec_shell_cmd("sudo curl -fsSLo /usr/share/keyrings/intel-sgx-deb.asc https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key")
+    exec_shell_cmd("echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx-deb.asc] https://download.01.org/intel-sgx/sgx_repo/ubuntu $(lsb_release -sc) main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list")
+
+    exec_shell_cmd(APT_UPDATE_CMD)
+    exec_shell_cmd("sudo apt-get -y install gramine")
 
 
 def update_env_variables(build_prefix):

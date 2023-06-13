@@ -55,35 +55,6 @@ def setup_gramine_environment():
     utils.exec_shell_cmd(GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
 
 
-def gramine_package_install():
-    print("Installing latest Gramine package\n")
-
-    distro, distro_version = utils.get_distro_and_version()
-    if distro == 'rhel':
-        utils.exec_shell_cmd("sudo curl -fsSLo /etc/yum.repos.d/gramine.repo https://packages.gramineproject.io/rpm/gramine.repo")
-        utils.exec_shell_cmd("sudo dnf -y install gramine")
-        return
-
-    if distro == 'ubuntu' and distro_version in ["18.04", "20.04", "22.04"]:
-        if distro_version == '18.04':
-            gramine_dist = sgx_dist = 'bionic'
-        elif distro_version == '20.04':
-            gramine_dist = sgx_dist = 'focal'
-        else: # 22.04
-            gramine_dist, sgx_dist = 'stable', 'focal'
-    else:
-        raise Exception("\n-- Failure: Unsupported distro for Gramine installation!!")
-
-    utils.exec_shell_cmd("sudo curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg")
-    utils.exec_shell_cmd(f"echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ {gramine_dist} main' | sudo tee /etc/apt/sources.list.d/gramine.list")
-
-    utils.exec_shell_cmd("curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | sudo apt-key add -")
-    utils.exec_shell_cmd(f"echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu {sgx_dist} main' | sudo tee /etc/apt/sources.list.d/intel-sgx.list")
-
-    utils.exec_shell_cmd(APT_UPDATE_CMD)
-    utils.exec_shell_cmd("sudo apt-get -y install gramine")
-
-
 def install_gramine_dependencies():
     print("\n###### In install_gramine_dependencies #####\n")
 
@@ -158,15 +129,10 @@ def build_and_install_gramine():
 
 
 def install_gramine_binaries():
-    # Cleanup existing gramine binaries (if any) before starting a fresh build.
-    # Passing prefix path as argument, so that user installed (if any) gramine
-    # binaries are also removed.
-    utils.cleanup_gramine_binaries(BUILD_PREFIX)
-
     fresh_gramine_checkout()
     
     if os.environ["build_gramine"] == "package":
-        gramine_package_install()
+        utils.gramine_package_install()
     else:
         # Install Gramine dependencies
         install_gramine_dependencies()

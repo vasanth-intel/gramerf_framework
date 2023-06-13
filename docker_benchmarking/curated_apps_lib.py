@@ -7,6 +7,7 @@ from common.config_files.constants import *
 
 
 def curated_setup():
+    utils.gramine_package_install()
     print("Cleaning old contrib repo")
     rm_cmd = "sudo rm -rf {}".format(ORIG_CURATED_PATH)
     utils.exec_shell_cmd(rm_cmd)

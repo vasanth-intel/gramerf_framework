@@ -4,6 +4,9 @@ env.isSklearn = false
 
 pipeline {
     agent none
+    options {
+        copyArtifactPermission('/bprashan_azure_gramerf_performance_benchmarking');
+    }
     stages {
         stage('setup') {
             agent {

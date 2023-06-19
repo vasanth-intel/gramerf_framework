@@ -122,7 +122,7 @@ pipeline{
                         }
                         stage('mysql_perf'){
                             steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'container'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'curation_commit', value: curation_commit), string(name: 'run', value: 'mysql_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-sgx'), string(name: 'iterations', value: iterations)]
+                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'container'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'curation_commit', value: curation_commit), string(name: 'run', value: 'mysql_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-sgx'), string(name: 'iterations', value: iterations), string(name: 'encryption', value: 'true'), string(name: 'tmpfs', value: 'true')]
                             }
                         }
                     }

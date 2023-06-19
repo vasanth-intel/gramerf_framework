@@ -58,7 +58,9 @@ fs.mounts = [
   { path = "/bin", uri = "file:/bin"},
   { path = "{{ python.stdlib }}", uri = "file:{{ python.stdlib }}"},
   { path = "{{ python.distlib }}", uri = "file:{{ python.distlib }}"},
-  { path = "/usr/local/lib/python3.6/dist-packages", uri = "file:/usr/local/lib/python3.6/dist-packages"},
+{% for path in python.get_sys_path(entrypoint) %}
+  { path = "{{ path }}", uri = "file:{{ path }}" },
+{% endfor %}
   { path = "{{ pythondistpath }}", uri = "file:{{ pythondistpath }}"},
   { path = "/tmp", uri = "file:/tmp"},
   { path = "/etc", uri = "file:/etc"},
@@ -83,7 +85,9 @@ sgx.trusted_files = [
   "file:{{ python.stdlib }}/",
   "file:{{ python.distlib }}/",
   "file:{{ pythondistpath }}/",
-  "file:/usr/local/lib/python3.6/dist-packages/",
+{% for path in python.get_sys_path(entrypoint) %}
+  "file:{{ path }}{{ '/' if path.is_dir() else '' }}",
+{% endfor %}
   "file:/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4",
   "file:/usr/lib/x86_64-linux-gnu/libunwind.so.8",
 ]

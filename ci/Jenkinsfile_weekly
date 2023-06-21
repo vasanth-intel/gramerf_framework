@@ -24,7 +24,7 @@ properties([
         ],
         [$class: 'DynamicReferenceParameter', 
             choiceType: 'ET_FORMATTED_HTML', 
-            description: 'Provide Prashanth Gramine repo source commit id to checkout. By default, latest commit from master branch shall be cloned.(Applicable for Gramine source installation mode only)',
+            description: 'Provide Gramine repo source commit id to checkout. By default, latest commit from master branch shall be cloned.(Applicable for Gramine source installation mode only)',
             name: 'gramine_repo_commit_id', 
             referencedParameters: 'build_gramine', 
             script: 

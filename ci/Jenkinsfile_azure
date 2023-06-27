@@ -1,15 +1,6 @@
 properties([
 	parameters([
 		extendedChoice(
-			defaultValue: 'tf_perf, ov_perf_latency, ov_perf_throughput, sklearnex_perf', 
-			multiSelectDelimiter: ',',
-			name: 'baremetal_perf_runs',
-			quoteValue: false,
-			saveJSONParameterToFile: false,
-			type: 'PT_CHECKBOX',
-			value: 'tf_perf, ov_perf_latency, ov_perf_throughput, sklearnex_perf',
-			visibleItemCount: 5),
-		extendedChoice(
 			defaultValue: 'tf_serving_perf, mysql_perf', 
 			multiSelectDelimiter: ',',
 			name: 'container_perf_runs',
@@ -17,6 +8,15 @@ properties([
 			saveJSONParameterToFile: false,
 			type: 'PT_CHECKBOX',
 			value: 'tf_serving_perf, mysql_perf',
+			visibleItemCount: 5),
+		extendedChoice(
+			defaultValue: 'tf_perf, ov_perf_latency, ov_perf_throughput, sklearnex_perf', 
+			multiSelectDelimiter: ',',
+			name: 'baremetal_perf_runs',
+			quoteValue: false,
+			saveJSONParameterToFile: false,
+			type: 'PT_CHECKBOX',
+			value: 'tf_perf, ov_perf_latency, ov_perf_throughput, sklearnex_perf',
 			visibleItemCount: 5),
 		[$class: 'ChoiceParameter', 
 			choiceType: 'PT_SINGLE_SELECT', 
@@ -74,7 +74,7 @@ properties([
 		],
 		string(defaultValue: '10', name: 'iterations'),
 		string(defaultValue: 'master', description: 'Enter gramine commit id. By default, pulls latest commit from the master branch.  (Applicable for container workload performance benchmarking)', name: 'curation_commit'),
-		string(defaultValue: 'gramine_azure_perf', name: 'node_name', trim: true)
+		string(defaultValue: 'gramine_azure_perf_01', name: 'node_name', trim: true)
 	])
 ])
 

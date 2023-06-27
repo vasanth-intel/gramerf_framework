@@ -12,7 +12,7 @@ properties([
                     classpath: [], 
                     sandbox: false, 
                     script: 
-                        "return['error']"
+                        "return['']"
                 ], 
                 script: [
                     classpath: [], 
@@ -32,7 +32,7 @@ properties([
                 fallbackScript: [
                         classpath: [], 
                         sandbox: false, 
-                        script: "return['error']"
+                        script: "return['']"
                         ], 
                 script: [
                         classpath: [], 

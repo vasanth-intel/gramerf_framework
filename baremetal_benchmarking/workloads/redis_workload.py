@@ -122,11 +122,11 @@ class RedisWorkload:
         tmp_exec_cmd = f"{exec_bin_str} --port {test_config_dict['baremetal_server_port']} --maxmemory {server_size} --maxmemory-policy allkeys-lru --appendonly no --protected-mode no --save '' &"
         
         if exec_mode == 'native':
-            redis_exec_cmd = tmp_exec_cmd
+            redis_exec_cmd = "numactl -C 1 " + tmp_exec_cmd
         elif exec_mode == 'gramine-direct':
-            redis_exec_cmd = "gramine-direct " + tmp_exec_cmd
+            redis_exec_cmd = "numactl -C 1 gramine-direct " + tmp_exec_cmd
         elif exec_mode == 'gramine-sgx-single-thread-non-exitless':
-            redis_exec_cmd = "gramine-sgx " + tmp_exec_cmd
+            redis_exec_cmd = "numactl -C 1 gramine-sgx " + tmp_exec_cmd
         elif exec_mode == 'gramine-sgx-diff-core-exitless':
             redis_exec_cmd = "numactl -C 1,2 gramine-sgx " + tmp_exec_cmd
         else:

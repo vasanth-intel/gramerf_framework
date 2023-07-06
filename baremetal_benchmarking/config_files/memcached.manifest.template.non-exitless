@@ -18,6 +18,7 @@ loader.uid = 1000
 loader.gid = 1000
 
 sys.enable_sigterm_injection = true
+sys.experimental__enable_flock = true
 
 fs.mounts = [
   { path = "/memcached", uri = "file:memcached" },

@@ -69,6 +69,8 @@ fs.mounts = [
 
 # encrypted insecure__keys
 
+sys.experimental__enable_flock = true
+
 sgx.enclave_size = "32G"
 sgx.max_threads = 300
 sgx.preheat_enclave = true

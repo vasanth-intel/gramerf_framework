@@ -19,6 +19,8 @@ loader.gid = {{ env_user_gid }}
 sys.stack.size = "8M"
 sys.enable_extra_runtime_domain_names_conf = true
 
+sys.experimental__enable_flock = true
+
 fs.mounts = [
   { path = "{{ entrypoint }}", uri = "file:{{ entrypoint }}" },
   { path = "/lib", uri = "file:{{ gramine.runtimedir() }}" },

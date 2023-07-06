@@ -3,4 +3,13 @@ Default:
   workload_name: "OpenVinoModelServer"
   
 test_ovms_perf_resnet_throughput:
-  docker_arguments: --model_name=resnet --model_base_path=/var/run/model_encrypted --port 9000 --layout NCHW
+  docker_arguments: --model_name resnet50-binary-0001 --port 9001 --layout NCHW
+  model_name: resnet50-binary-0001
+
+test_ovms_perf_face_detection_throughput:
+  docker_arguments: --model_name face-detection-retail-0005 --port 9001 --layout NCHW
+  model_name: face-detection-retail-0005
+
+test_ovms_perf_faster_rcnn_resnet_throughput:
+  docker_arguments: --model_name faster-rcnn-resnet101-coco-sparse-60-0001 --port 9001
+  model_name: faster-rcnn-resnet101-coco-sparse-60-0001

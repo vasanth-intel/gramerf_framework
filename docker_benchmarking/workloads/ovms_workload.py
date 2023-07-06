@@ -1,5 +1,5 @@
-import subprocess
 import statistics
+import shutil
 import time
 from common.config_files.constants import *
 from docker_benchmarking import curated_apps_lib
@@ -25,16 +25,41 @@ class OpenVinoModelServerWorkload:
         if "openvino-model-server" in workload_name:
             workload_name = "ovms"
         output = utils.popen_subprocess(eval(workload_name.upper()+"_TEST_ENCRYPTION_KEY"), CURATED_APPS_PATH)
-        output = utils.popen_subprocess(f"sudo rm -rf /var/run/model_encrypted", CURATED_APPS_PATH)
-        encryption_output = utils.popen_subprocess(OVMS_ENCRYPT_DB_CMD, CURATED_APPS_PATH)
-        print(encryption_output)
+        if os.environ["encryption"] == "1":
+            print(f"\n-- Encrypting model/s..")
+            output = utils.popen_subprocess(f"sudo rm -rf /var/run/model_encrypted", CURATED_APPS_PATH)
+            encryption_output = utils.popen_subprocess(OVMS_ENCRYPT_DB_CMD, CURATED_APPS_PATH)
+            print(encryption_output)
 
     def pre_actions(self, test_config_dict):
         utils.set_cpu_freq_scaling_governor()
 
+    # Function to copy the respective model file from downloaded path to actual test folder.
+    def copy_model_files(self, test_config_dict):
+        workload_name = test_config_dict["docker_image"].split(" ")[0]
+        if "openvino-model-server" in workload_name:
+            workload_name = "ovms"
+
+        # Deleting old models from previous runs.
+        model_bin_file = os.path.join(eval(workload_name.upper()+"_TESTDB_PATH"), 'model.bin')
+        model_xml_file = os.path.join(eval(workload_name.upper()+"_TESTDB_PATH"), 'model.xml')
+        if os.path.exists(model_bin_file):
+            os.remove(model_bin_file)
+        if os.path.exists(model_xml_file):
+            os.remove(model_xml_file)
+
+        src_file = os.path.join(eval(workload_name.upper()+"_MODEL_FILES_PATH"), test_config_dict['model_name']+'.bin')
+        print(f"\n Copying {src_file} to {model_bin_file}") 
+        shutil.copy2(src_file, model_bin_file)
+
+        src_file = os.path.join(eval(workload_name.upper()+"_MODEL_FILES_PATH"), test_config_dict['model_name']+'.xml')
+        print(f"\n Copying {src_file} to {model_xml_file}")
+        shutil.copy2(src_file, model_xml_file)
+
     def setup_workload(self, test_config_dict):
         # Pull default workload image for native run.
         self.pull_workload_default_image(test_config_dict)
+        self.copy_model_files(test_config_dict)
     
     def generate_curated_image(self, test_config_dict):
         # Create graminized image for gramine direct and sgx runs.
@@ -51,11 +76,16 @@ class OpenVinoModelServerWorkload:
         workload_docker_image_name = utils.get_workload_name(tcd['docker_image'])
         if e_mode == 'native':
             init_db_cmd = f"docker run --net=host --name {container_name} -u $(id -u):$(id -g) -v $(pwd)/workloads/openvino-model-server/test_model:/model \
-                            -p 9001:9001 openvino/model_server:latest --model_path /model --model_name resnet --port 9001 --layout NCHW"
+                            -p 9001:9001 openvino/model_server:latest --model_path /model {tcd['docker_arguments']}"
         elif e_mode == 'gramine-sgx':
-            init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx/enclave \
-                            -v /var/run/model_encrypted:/var/run/model_encrypted \
-                            -t gsc-{workload_docker_image_name} --model_path /var/run/model_encrypted --port 9001 --model_name resnet  --layout NCHW" 
+            if os.environ['encryption'] == '1':
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx/enclave \
+                                -v /var/run/model_encrypted:/var/run/model_encrypted \
+                                -t gsc-{workload_docker_image_name} --model_path /var/run/model_encrypted {tcd['docker_arguments']}"
+            else:
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx/enclave \
+                                -v $(pwd)/workloads/openvino-model-server/test_model:$(pwd)/workloads/openvino-model-server/test_model \
+                                -t gsc-{workload_docker_image_name} --model_path $(pwd)/workloads/openvino-model-server/test_model {tcd['docker_arguments']}"
         return init_db_cmd
     
     def get_container_name(self, e_mode):
@@ -69,23 +99,23 @@ class OpenVinoModelServerWorkload:
         else:
             raise Exception("\n-- Invalid execution mode!!")
 
-    def benchmark_execution(self):
+    def benchmark_execution(self, tcd):
         print("Inside benchmark execution")
         os.chdir(CURATED_APPS_PATH)
         if not os.path.exists("model_server"):
-            clone_output = utils.exec_shell_cmd("git clone https://github.com/openvinotoolkit/model_server.git")
-            print(clone_output)
-        os.chdir(os.path.join(CURATED_APPS_PATH, "model_server/demos/benchmark/cpp"))
-        make_output = utils.exec_shell_cmd("make")
-        print(make_output)
-        client_output = utils.exec_shell_cmd('docker run --rm --network host -e "no_proxy=localhost" ovms_cpp_benchmark \
-                             ./synthetic_client_async_benchmark --grpc_port=9001 --iterations=2000 \
-                             --max_parallel_requests=100 --consumers=8 --producers=1')
+            utils.exec_shell_cmd("git clone https://github.com/openvinotoolkit/model_server.git", None)
+            os.chdir(os.path.join(CURATED_APPS_PATH, "model_server/demos/benchmark/cpp"))
+            utils.exec_shell_cmd("make", None)
+        benchmark_exec_cmd = f'docker run --rm --network host -e "no_proxy=localhost" ovms_cpp_benchmark \
+                             ./synthetic_client_async_benchmark --model_name={tcd["model_name"]} --grpc_port=9001 --iterations=2000 \
+                             --max_parallel_requests=100 --consumers=8 --producers=1'
+        print("\n Executing below benchmark command..\n", benchmark_exec_cmd)
+        client_output = utils.exec_shell_cmd(benchmark_exec_cmd)
         return client_output
     
     def exec_workload_perf_cmd(self, test_config_dict, test_dict, exec_mode = 'native'):
         for i in range(test_config_dict['iterations']):
-            run_cmd_output = self.benchmark_execution()
+            run_cmd_output = self.benchmark_execution(test_config_dict)
             print(run_cmd_output)
             time.sleep(TEST_SLEEP_TIME_BW_ITERATIONS)
             print(re.findall(r'Avg FPS:* \d+.\d+', run_cmd_output))
@@ -104,8 +134,6 @@ class OpenVinoModelServerWorkload:
         workload_name = test_config_dict['docker_image'].split(" ")[0]
         container_name = self.get_container_name(e_mode)
 
-        workload_name = test_config_dict['docker_image'].split(" ")[0]
-        container_name = self.get_container_name(e_mode)
         print(f"Kill any existing containers with {container_name} name")
         utils.popen_subprocess(f"docker rm -f {container_name}")
         init_db_cmd = self.get_server_exec_cmd(test_config_dict, e_mode, container_name)

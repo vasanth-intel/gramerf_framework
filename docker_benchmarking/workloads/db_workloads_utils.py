@@ -1,10 +1,7 @@
 import os
-import pytest
 import time
 import subprocess
-import sys
 from common.config_files.constants import *
-from common.libs.gramerf_wrapper import run_test
 from common.libs import utils
 
 def init_db(workload_name):
@@ -20,10 +17,11 @@ def init_db(workload_name):
             if process.poll() is not None and output == '':
                 if "ovms" in workload_name:
                     time.sleep(30)
-                    if os.path.exists(os.path.join(CURATED_APPS_PATH, \
-                        "workloads/openvino-model-server/test_model/1/model.bin")) and \
-                        os.path.exists(os.path.join(CURATED_APPS_PATH, \
-                        "workloads/openvino-model-server/test_model/1/model.xml")):
+                    expected_file_list = ['resnet50-binary-0001.bin', 'resnet50-binary-0001.xml', 'face-detection-retail-0005.bin', 
+                                          'face-detection-retail-0005.xml', 'faster-rcnn-resnet101-coco-sparse-60-0001.bin',
+                                          'faster-rcnn-resnet101-coco-sparse-60-0001.xml']
+                    present_file_list = [f for f in expected_file_list if os.path.isfile(os.path.join(OVMS_MODEL_FILES_PATH,f))]
+                    if len(present_file_list) == len(expected_file_list):
                         print(f"{workload_name.upper()} DB is initialized\n")
                         init_result = True
                         break

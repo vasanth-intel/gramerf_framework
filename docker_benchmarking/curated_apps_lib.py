@@ -31,10 +31,12 @@ def copy_repo():
 
 def update_gramine_branch(commit):
     commit_str = f" && cd gramine && git checkout {commit} && cd .."
+    gsc_checkout_str = f" && cd gsc && git checkout {commit} && cd .."
     copy_cmd = "cp config.yaml.template config.yaml"
     if not "v1" in commit:
         utils.exec_shell_cmd(f"cp -rf helper-files/{VERIFIER_TEMPLATE} {VERIFIER_DOCKERFILE}", None)
     utils.update_file_contents(copy_cmd, copy_cmd + "\nsed -i 's|Branch:.*master|Branch: \"{}|' config.yaml".format(commit), CURATION_SCRIPT)
+    utils.update_file_contents(GSC_CLONE, GSC_CLONE.replace(GSC_DEPTH_STR, "") + gsc_checkout_str, CURATION_SCRIPT)
     utils.update_file_contents(GRAMINE_1_4_CLONE, GRAMINE_1_4_CLONE.replace(DEPTH_STR, "") + commit_str,
             VERIFIER_DOCKERFILE)
     utils.update_file_contents(GRAMINE_1_4_CLONE, GRAMINE_1_4_CLONE.replace(DEPTH_STR, "") + commit_str,

@@ -19,7 +19,8 @@ GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
 
 GRAMINE_1_4_CLONE = "RUN git clone --depth 1 --branch v1.4 https://github.com/gramineproject/gramine.git"
 DEPTH_STR = "--depth 1 --branch v1.4 "
-
+GSC_CLONE          = "git clone --depth 1 --branch v1.4-for-curated-apps https://github.com/gramineproject/gsc.git"
+GSC_DEPTH_STR      = "--depth 1 --branch v1.4-for-curated-apps "
 EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.git"
 
 MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"
@@ -84,7 +85,7 @@ LOG_LEVEL = "error"
 
 REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
 ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
-CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
+CONTRIB_GIT_CMD       = "git clone -b jkr0103/default_distro https://github.com/jkr0103/contrib.git orig_contrib_repo"
 MARIADB_CONTRIB_GIT_CMD = "git clone -b sahason/mariadb https://github.com/sahason/contrib.git orig_contrib_repo"
 CURATED_PATH          = "Intel-Confidential-Compute-for-X"
 CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)

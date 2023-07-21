@@ -13,8 +13,8 @@ class RedisWorkload:
     def __init__(self, test_config_dict):
         # Redis home dir => "~/gramerf_framework/gramine/CI-Examples/redis"
         self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
-        # Redis build dir => "~/gramerf_framework/gramine/CI-Examples/redis/redis-6.0.5"
-        self.workload_bld_dir = os.path.join(self.workload_home_dir, "redis-6.0.5")
+        # Redis build dir => "~/gramerf_framework/gramine/CI-Examples/redis/redis-7.0.0"
+        self.workload_bld_dir = os.path.join(self.workload_home_dir, "redis-7.0.0")
         self.server_ip_addr = utils.determine_host_ip_addr()
         self.command = None
 

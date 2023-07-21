@@ -25,7 +25,7 @@ EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.
 
 MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"
 
-REDIS_DOWNLOAD_CMD = "wget https://github.com/antirez/redis/archive/6.0.5.tar.gz"
+REDIS_DOWNLOAD_CMD = "wget https://github.com/antirez/redis/archive/7.0.0.tar.gz"
 
 MEMCACHED_DOWNLOAD_CMD = "wget https://memcached.org/files/memcached-1.5.21.tar.gz"
 

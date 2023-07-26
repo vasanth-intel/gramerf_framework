@@ -17,10 +17,10 @@ BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 # Commands constants
 GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
 
-GRAMINE_1_4_CLONE = "RUN git clone --depth 1 --branch v1.4 https://github.com/gramineproject/gramine.git"
-DEPTH_STR = "--depth 1 --branch v1.4 "
-GSC_CLONE          = "git clone --depth 1 --branch v1.4-for-curated-apps https://github.com/gramineproject/gsc.git"
-GSC_DEPTH_STR      = "--depth 1 --branch v1.4-for-curated-apps "
+GRAMINE_CLONE = "RUN git clone --depth 1 --branch v1.5 https://github.com/gramineproject/gramine.git"
+DEPTH_STR = "--depth 1 --branch v1.5 "
+GSC_CLONE          = "git clone --depth 1 --branch v1.5 https://github.com/gramineproject/gsc.git"
+GSC_DEPTH_STR      = "--depth 1 --branch v1.5 "
 EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.git"
 
 MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"

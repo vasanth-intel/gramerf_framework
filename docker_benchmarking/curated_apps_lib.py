@@ -37,9 +37,9 @@ def update_gramine_branch(commit):
         utils.exec_shell_cmd(f"cp -rf helper-files/{VERIFIER_TEMPLATE} {VERIFIER_DOCKERFILE}", None)
     utils.update_file_contents(copy_cmd, copy_cmd + "\nsed -i 's|Branch:.*master|Branch: \"{}|' config.yaml".format(commit), CURATION_SCRIPT)
     utils.update_file_contents(GSC_CLONE, GSC_CLONE.replace(GSC_DEPTH_STR, "") + gsc_checkout_str, CURATION_SCRIPT)
-    utils.update_file_contents(GRAMINE_1_4_CLONE, GRAMINE_1_4_CLONE.replace(DEPTH_STR, "") + commit_str,
+    utils.update_file_contents(GRAMINE_CLONE, GRAMINE_CLONE.replace(DEPTH_STR, "") + commit_str,
             VERIFIER_DOCKERFILE)
-    utils.update_file_contents(GRAMINE_1_4_CLONE, GRAMINE_1_4_CLONE.replace(DEPTH_STR, "") + commit_str,
+    utils.update_file_contents(GRAMINE_CLONE, GRAMINE_CLONE.replace(DEPTH_STR, "") + commit_str,
         os.path.join(ORIG_BASE_PATH, "verifier", "helper.sh"))
 
 

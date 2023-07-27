@@ -21,6 +21,11 @@ def curated_setup():
             git_commit_cmd = "git ls-remote https://github.com/gramineproject/gramine master"
             master_commit = utils.exec_shell_cmd(git_commit_cmd)
             os.environ["curation_commit"] = master_commit.split()[0][:7]
+            gsc_commit_cmd = "git ls-remote https://github.com/gramineproject/gsc.git master"
+            gsc_commit = utils.exec_shell_cmd(gsc_commit_cmd)
+            os.environ['gsc_commit'] = gsc_commit.split()[0][:7]
+    print("\n -- Gramine Commit: ", os.environ.get("curation_commit", ""))
+    print("\n -- GSC Commit: ", os.environ.get("gsc_commit", ""))
 
 
 def copy_repo():

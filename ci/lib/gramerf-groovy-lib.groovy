@@ -89,4 +89,9 @@ def run_sklearn_perf(exec_cmd){
     }
 }
 
+def get_sklearn_mean_report(){
+    sh "generating sklearn mean report"
+    sh "python3 helper-files/sklearn_utility.py -i ./sklearn_reports/results -o ./sklearn_reports/mean"
+}
+
 return this

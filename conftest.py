@@ -79,7 +79,8 @@ def pytest_addoption(parser):
     parser.addoption("--encryption", action="store", type=str, default='0', help="Enable encryption for model/s before workload command execution.")
     parser.addoption("--tmpfs", action="store", type=str, default='0', help="Use tmpfs path for DB.")
     # Following option is applicable only for curated workloads, to use the right gramine binaries for executing the workload.
-    # If the following option is not provided at command line, we use the default gramine binaries installed on the system.
+    # If the following option is not provided at command line, we use binaries after building from latest tagged gramine
+    # and contrib versions (like v1.4, v1.5 etc).
     # If any gramine specific commit-id is provided, we use the binaries after building from the specified commit-id.
     # If 'master' is provided as value to below option in command line, we use the binaires after building from the latest Gramine commit.
     parser.addoption("--curation_commit", action="store", type=str, default="", help="Any specific commit/master to be checked out for curated workloads.")

@@ -304,9 +304,19 @@ class InMemoryDBWorkload:
                 test_95_pcnt_lat_dict['sgx-deg'] = utils.percent_degradation(tcd, test_95_pcnt_lat_dict['native-avg'], test_95_pcnt_lat_dict['sgx-avg'])
 
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_read': test_read_tpt_dict})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_write': test_write_tpt_dict})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_avg': test_avg_lat_dict})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_95th_percentile': test_95_pcnt_lat_dict})
+        if 'read_only' in tcd['test_name']:
+            trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_read_tpt_dict})
+        elif 'write_only' in tcd['test_name']:
+            trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_write_tpt_dict})
+        elif 'read_write' in tcd['test_name']:
+            # In this case we can read from either read or write dictionaries, as the corresponding
+            # values for both read and write are same. Hence, currently reading from read dict.
+            trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_read_tpt_dict})
+        else:
+            raise Exception(f"\n-- Test name does not contain right DB actions ('read_only'/'write_only'/'read_write') to be performed.\n")
+        # Not displaying below latency and 95th percentile data within the final report, 
+        # due to inconsistent perf numbers.
+        #trd[tcd['workload_name']].update({tcd['test_name']+'_avg': test_avg_lat_dict})
+        #trd[tcd['workload_name']].update({tcd['test_name']+'_95th_percentile': test_95_pcnt_lat_dict})
 
         os.chdir(self.workload_home_dir)

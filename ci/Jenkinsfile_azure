@@ -1,0 +1,137 @@
+properties([
+	parameters([
+		extendedChoice(
+			defaultValue: 'tf_serving_perf, mysql_perf', 
+			multiSelectDelimiter: ',',
+			name: 'container_perf_runs',
+			quoteValue: false,
+			saveJSONParameterToFile: false,
+			type: 'PT_CHECKBOX',
+			value: 'tf_serving_perf, mysql_perf',
+			visibleItemCount: 5),
+		extendedChoice(
+			defaultValue: 'tf_perf, ov_perf_latency, ov_perf_throughput, sklearnex_perf', 
+			multiSelectDelimiter: ',',
+			name: 'baremetal_perf_runs',
+			quoteValue: false,
+			saveJSONParameterToFile: false,
+			type: 'PT_CHECKBOX',
+			value: 'tf_perf, ov_perf_latency, ov_perf_throughput, sklearnex_perf',
+			visibleItemCount: 5),
+		[$class: 'ChoiceParameter', 
+			choiceType: 'PT_SINGLE_SELECT', 
+			description: 'Select Gramine installation mode (applicable for bare-metal performance benchmarking)', 
+			filterLength: 1, 
+			filterable: false, 
+			name: 'build_gramine', 
+			script: [
+				$class: 'GroovyScript', 
+				fallbackScript: [
+					classpath: [], 
+					sandbox: false, 
+					script: 
+						"return['error']"
+				], 
+				script: [
+					classpath: [], 
+					sandbox: false, 
+					script: 
+						"return['package', 'source:selected']"
+				]
+			]
+		],
+		[$class: 'DynamicReferenceParameter', 
+			choiceType: 'ET_FORMATTED_HTML', 
+			description: 'Provide Gramine repo source commit id to checkout. By default, latest commit from master branch shall be cloned.(Applicable for Gramine source installation mode only)',
+			name: 'gramine_repo_commit_id', 
+			referencedParameters: 'build_gramine', 
+			script: 
+				[$class: 'GroovyScript', 
+				fallbackScript: [
+						classpath: [], 
+						sandbox: false, 
+						script: "return['error']"
+						], 
+				script: [
+						classpath: [], 
+						sandbox: false, 
+						script: '''
+						if (build_gramine.contains('source')){
+							return """
+		<input name="value" id="build_gramine"  value="">
+		<img src="force/failed/load/image" style="display: none;" onerror=\'document.getElementById("build_gramine").closest(".form-group").style.display=""\'>
+							"""
+						} else {
+							return """
+		<input name="value" id="build_gramine"  value="">
+		<img src="force/failed/load/image" style="display: none;" onerror=\'document.getElementById("build_gramine").closest(".form-group").style.display="none"\'>
+							"""
+						}
+						'''
+					]
+			],
+		omitValueField: true
+		],
+		string(defaultValue: '10', name: 'iterations'),
+		string(defaultValue: 'master', description: 'Enter gramine commit id. By default, pulls latest commit from the master branch.  (Applicable for container workload performance benchmarking)', name: 'curation_commit'),
+		string(defaultValue: 'gramine_azure_perf_01', name: 'node_name', trim: true)
+	])
+])
+
+pipeline{
+    agent {
+        label 'JK_POOL_MASTER'
+    }
+	stages {
+		stage(""){
+			steps{
+				script{
+					if(!baremetal_perf_runs.isEmpty()) {
+						for(def workload : baremetal_perf_runs.split(',')){
+							build_perf_job(workload, 'baremetal', [string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx')]).call()
+							// to trigger tf_perf build with encryption enabled
+							if (workload.contains('tf_perf')) {
+								print 'Encryption block'
+								build_perf_job(workload, 'baremetal', [string(name: 'encryption', value: 'true'), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx')]).call()
+							}
+						}
+					}
+					if(!container_perf_runs.isEmpty()) {
+						for(def workload : container_perf_runs.split(',')){
+							container_params = [string(name: 'curation_commit', value: curation_commit), string(name: 'exec_mode', value: 'native,gramine-sgx')]
+							if (workload.contains('mysql_perf')){
+								container_params += [string(name: 'encryption', value: 'true'), string(name: 'tmpfs', value: 'true')]
+								build_perf_job(workload, 'container', container_params).call()
+							} else {
+								build_perf_job(workload, 'container', container_params).call()
+							}
+						}
+					}
+				}
+			}
+			post {
+				success {
+					archiveArtifacts artifacts: 'artifacts/**', followSymlinks: false
+					cleanWs()
+				}
+			}
+		}
+	}
+}
+
+def build_perf_job(workload, perf_config, params=null) {
+	default_params = [string(name: 'perf_config', value: perf_config), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: workload), string(name: 'run_specific_perf_test', value: ''), string(name: 'iterations', value: iterations), string(name: 'node_name', value: node_name)]
+
+	if (params) {
+		default_params = default_params + params
+	}
+
+	return {
+		stage("Build ${workload}") {
+			def job = build propagate: false, job: 'gramerf_performance_benchmarking', parameters: default_params
+			dir ('artifacts'){
+				copyArtifacts projectName: 'gramerf_performance_benchmarking', selector: specific("${job.number}")
+			}
+		}
+	}
+}

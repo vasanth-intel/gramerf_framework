@@ -4,6 +4,9 @@ env.isSklearn = false
 
 pipeline {
     agent none
+    options {
+        copyArtifactPermission('/gramine_azure_runs');
+    }
     stages {
         stage('setup') {
             agent {

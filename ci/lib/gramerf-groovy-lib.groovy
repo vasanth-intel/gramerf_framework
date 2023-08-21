@@ -27,31 +27,34 @@ def restartNode(node_label){
 }
 
 def getNodeName(){
-
-    if (run_specific_perf_test.contains("ov") || run.contains("ov")){
-        echo "open vino workload is selected ..."
-        return 'graphene_wcity_02'
-    } else if (run_specific_perf_test.contains("redis") || run.contains("redis")){
-        echo "redis workload is selected ..."
-        return 'graphene_perf_redis_taken_out_for_vasanth'
-    } else if (run_specific_perf_test.contains("tf_serving") || run.contains("tf_serving")){
-        echo "tf_serving workload is selected ..."
-        return 'graphene_perf_redis_taken_out_for_vasanth'
-    } else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
-        echo "tensorflow workload is selected ..."
-        return 'graphene_wcity_02'
-    } else if (run_specific_perf_test.contains("sklearnex") || run.contains("sklearnex")){
-        echo "sklearn workload is selected ..."
-        env.isSklearn = true
-        return 'graphene_sklearn'
-    } else if (run_specific_perf_test.contains("memcached") || run.contains("memcached")){
-        echo "memcached workload is selected ..."
-        return 'graphene_perf_redis_taken_out_for_vasanth'
-    } else if (run_specific_perf_test.contains("mysql") || run.contains("mysql")){
-        echo "mysql workload is selected ..."
-        return 'graphene_sklearn'
+    if ( node_name.isEmpty() ) {
+        if (run_specific_perf_test.contains("ov") || run.contains("ov")){
+            echo "open vino workload is selected ..."
+            return 'graphene_wcity_02'
+        } else if (run_specific_perf_test.contains("redis") || run.contains("redis")){
+            echo "redis workload is selected ..."
+            return 'graphene_perf_redis_taken_out_for_vasanth'
+        } else if (run_specific_perf_test.contains("tf_serving") || run.contains("tf_serving")){
+            echo "tf_serving workload is selected ..."
+            return 'graphene_perf_redis_taken_out_for_vasanth'
+        } else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
+            echo "tensorflow workload is selected ..."
+            return 'graphene_wcity_02'
+        } else if (run_specific_perf_test.contains("sklearnex") || run.contains("sklearnex")){
+            echo "sklearn workload is selected ..."
+            env.isSklearn = true
+            return 'graphene_sklearn'
+        } else if (run_specific_perf_test.contains("memcached") || run.contains("memcached")){
+            echo "memcached workload is selected ..."
+            return 'graphene_perf_redis_taken_out_for_vasanth'
+        } else if (run_specific_perf_test.contains("mysql") || run.contains("mysql")){
+            echo "mysql workload is selected ..."
+            return 'graphene_sklearn'
+        }
     }
-
+    else {
+        return node_name
+    }
 }
 
 def preActions(){

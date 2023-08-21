@@ -85,8 +85,7 @@ LOG_LEVEL = "error"
 
 REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
 ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
-CONTRIB_GIT_CMD       = "git clone -b jkr0103/default_distro https://github.com/jkr0103/contrib.git orig_contrib_repo"
-MARIADB_CONTRIB_GIT_CMD = "git clone -b sahason/mariadb https://github.com/sahason/contrib.git orig_contrib_repo"
+CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
 CURATED_PATH          = "Intel-Confidential-Compute-for-X"
 CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)
 VERIFIER_TEMPLATE      = "verifier.dockerfile.template"
@@ -103,40 +102,40 @@ TFSERVING_RESNET_PERF_CMD = "python3 serving/tensorflow_serving/example/resnet_c
 CURATION_SCRIPT        = os.path.join(ORIG_BASE_PATH, "util", "curation_script.sh")
 MYSQL_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/mysql/test_db")
 MYSQL_INIT_FOLDER_PATH = os.path.join(MYSQL_TESTDB_PATH, "mysql")
-MYSQL_CREATE_TESTDB_CMD = f"mkdir -p {MYSQL_TESTDB_PATH}"
 MYSQL_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db --user $(id -u):$(id -g) \
                             -v $PWD/workloads/mysql/test_db:/test_db \
                             -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_DATABASE=test_db mysql:8.0.32-debian \
                             --datadir /test_db"
 STOP_TEST_DB_CMD      = f"docker stop init_test_db"
 MYSQL_TEST_ENCRYPTION_KEY    = f"dd if=/dev/urandom bs=16 count=1 > workloads/mysql/base_image_helper/encryption_key"
-CLEANUP_ENCRYPTED_DB_TMPFS   = f"sudo rm -rf /var/run/test_db_encrypted"
+MYSQL_CLEANUP_ENCRYPTED_DB_TMPFS = f"sudo rm -rf /var/run/test_db_encrypted"
 ENCRYPTED_DB_REGFS_PATH      = f"/home/intel/test_db_encrypted"
-ENCRYPTED_DB_TMPFS_PATH      = f"/var/run/test_db_encrypted"
+MYSQL_ENCRYPTED_DB_TMPFS_PATH  = f"/var/run/test_db_encrypted"
 PLAIN_DB_REGFS_PATH          = f"/home/intel/test_db"
 PLAIN_DB_TMPFS_PATH          = f"/var/run/test_db_plain"
 CLEANUP_ENCRYPTED_DB_REGFS   = f"sudo rm -rf {ENCRYPTED_DB_REGFS_PATH}"
 COPY_MYSQL_TESTDB            = f"sudo cp -rf {MYSQL_TESTDB_PATH}/* /var/run/test_db_plain"
 MYSQL_ENCRYPT_DB_TMPFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/mysql/base_image_helper/encryption_key \
-                                -i workloads/mysql/test_db -o {ENCRYPTED_DB_TMPFS_PATH}"
+                                -i workloads/mysql/test_db -o {MYSQL_ENCRYPTED_DB_TMPFS_PATH}"
 MYSQL_ENCRYPT_DB_REGFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/mysql/base_image_helper/encryption_key \
                                 -i workloads/mysql/test_db -o {ENCRYPTED_DB_REGFS_PATH}"
 MYSQL_CLIENT_INSTALL_CMD = f"sudo apt-get -y install mysql-client"
 MYSQL_CLIENT_CMD       = f"printf 'SELECT User FROM mysql.user;\nexit' > input.txt | mysql -h 127.0.0.1 -uroot < input.txt"
 
+MARIADB_CLEANUP_ENCRYPTED_DB_TMPFS = f"sudo rm -rf /mnt/tmpfs/test_db_encrypted"
 MARIADB_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/mariadb/test_db")
 COPY_MARIADB_TESTDB      = f"sudo cp -rf {MARIADB_TESTDB_PATH}/* /var/run/test_db_plain"
 MARIADB_INIT_FOLDER_PATH = os.path.join(MARIADB_TESTDB_PATH, "mariadb")
-MARIADB_CREATE_TESTDB_CMD = f"mkdir -p {MARIADB_TESTDB_PATH}"
 MARIADB_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db \
                             -v $PWD/workloads/mariadb/test_db:/test_db \
                             -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true -e MARIADB_DATABASE=test_db mariadb:10.7 \
                             --datadir /test_db "
+MARIADB_ENCRYPTED_DB_TMPFS_PATH = f"/mnt/tmpfs/test_db_encrypted"
 MARIADB_TEST_ENCRYPTION_KEY    = f"dd if=/dev/urandom bs=16 count=1 > workloads/mariadb/base_image_helper/encryption_key"
 MARIADB_ENCRYPT_DB_TMPFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/mariadb/base_image_helper/encryption_key \
-                                -i workloads/mariadb/test_db -o /var/run/test_db_encrypted"
+                                -i workloads/mariadb/test_db -o {MARIADB_ENCRYPTED_DB_TMPFS_PATH}"
 MARIADB_ENCRYPT_DB_REGFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/mariadb/base_image_helper/encryption_key \
-                                -i workloads/mariadb/test_db -o workloads/mariadb/test_db_encrypted"
+                                -i workloads/mariadb/test_db -o {ENCRYPTED_DB_REGFS_PATH}"
 MARIADB_CHMOD         = f"sudo chown -R $USER:$USER {CURATED_APPS_PATH}/workloads/mariadb/test_db"
 MYSQL_TESTDB_VERIFY   = f"/usr/sbin/mysqld: ready for connections"
 MARIADB_TESTDB_VERIFY = f"mariadbd: ready for connections"

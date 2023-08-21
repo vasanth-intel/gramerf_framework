@@ -56,6 +56,5 @@ sgx.trusted_files = [
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",
   "file:/usr/",
-  "file:/etc/",
 
 ]

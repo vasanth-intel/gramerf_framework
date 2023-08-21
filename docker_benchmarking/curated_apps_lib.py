@@ -7,6 +7,7 @@ from common.config_files.constants import *
 
 
 def curated_setup():
+    utils.gramine_package_install()
     print("Cleaning old contrib repo")
     rm_cmd = "sudo rm -rf {}".format(ORIG_CURATED_PATH)
     utils.exec_shell_cmd(rm_cmd)
@@ -20,6 +21,11 @@ def curated_setup():
             git_commit_cmd = "git ls-remote https://github.com/gramineproject/gramine master"
             master_commit = utils.exec_shell_cmd(git_commit_cmd)
             os.environ["curation_commit"] = master_commit.split()[0][:7]
+            gsc_commit_cmd = "git ls-remote https://github.com/gramineproject/gsc.git master"
+            gsc_commit = utils.exec_shell_cmd(gsc_commit_cmd)
+            os.environ['gsc_commit'] = gsc_commit.split()[0][:7]
+    print("\n -- Gramine Commit: ", os.environ.get("curation_commit", ""))
+    print("\n -- GSC Commit: ", os.environ.get("gsc_commit", ""))
 
 
 def copy_repo():
@@ -30,13 +36,15 @@ def copy_repo():
 
 def update_gramine_branch(commit):
     commit_str = f" && cd gramine && git checkout {commit} && cd .."
+    gsc_checkout_str = f" && cd gsc && git checkout {commit} && cd .."
     copy_cmd = "cp config.yaml.template config.yaml"
     if not "v1" in commit:
         utils.exec_shell_cmd(f"cp -rf helper-files/{VERIFIER_TEMPLATE} {VERIFIER_DOCKERFILE}", None)
     utils.update_file_contents(copy_cmd, copy_cmd + "\nsed -i 's|Branch:.*master|Branch: \"{}|' config.yaml".format(commit), CURATION_SCRIPT)
-    utils.update_file_contents(GRAMINE_1_4_CLONE, GRAMINE_1_4_CLONE.replace(DEPTH_STR, "") + commit_str,
+    utils.update_file_contents(GSC_CLONE, GSC_CLONE.replace(GSC_DEPTH_STR, "") + gsc_checkout_str, CURATION_SCRIPT)
+    utils.update_file_contents(GRAMINE_CLONE, GRAMINE_CLONE.replace(DEPTH_STR, "") + commit_str,
             VERIFIER_DOCKERFILE)
-    utils.update_file_contents(GRAMINE_1_4_CLONE, GRAMINE_1_4_CLONE.replace(DEPTH_STR, "") + commit_str,
+    utils.update_file_contents(GRAMINE_CLONE, GRAMINE_CLONE.replace(DEPTH_STR, "") + commit_str,
         os.path.join(ORIG_BASE_PATH, "verifier", "helper.sh"))
 
 

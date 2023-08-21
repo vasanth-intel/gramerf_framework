@@ -27,7 +27,8 @@ class OpenVinoModelServerWorkload:
         output = utils.popen_subprocess(eval(workload_name.upper()+"_TEST_ENCRYPTION_KEY"), CURATED_APPS_PATH)
         if os.environ["encryption"] == "1":
             print(f"\n-- Encrypting model/s..")
-            output = utils.popen_subprocess(f"sudo rm -rf /var/run/model_encrypted", CURATED_APPS_PATH)
+            output = utils.popen_subprocess(f"sudo rm -rf {OVMS_ENCRYPTED_DB_PATH}", CURATED_APPS_PATH)
+            utils.exec_shell_cmd(f"sudo mkdir -p /mnt/tmpfs && sudo mount -t tmpfs tmpfs /mnt/tmpfs && mkdir -p {OVMS_ENCRYPTED_DB_PATH}")
             encryption_output = utils.popen_subprocess(OVMS_ENCRYPT_DB_CMD, CURATED_APPS_PATH)
             print(encryption_output)
 
@@ -80,8 +81,8 @@ class OpenVinoModelServerWorkload:
         elif e_mode == 'gramine-sgx':
             if os.environ['encryption'] == '1':
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx/enclave \
-                                -v /var/run/model_encrypted:/var/run/model_encrypted \
-                                -t gsc-{workload_docker_image_name} --model_path /var/run/model_encrypted {tcd['docker_arguments']}"
+                                -v {OVMS_ENCRYPTED_DB_PATH}:{OVMS_ENCRYPTED_DB_PATH} \
+                                -t gsc-{workload_docker_image_name} --model_path {OVMS_ENCRYPTED_DB_PATH} {tcd['docker_arguments']}"
             else:
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx/enclave \
                                 -v $(pwd)/workloads/openvino-model-server/test_model:$(pwd)/workloads/openvino-model-server/test_model \

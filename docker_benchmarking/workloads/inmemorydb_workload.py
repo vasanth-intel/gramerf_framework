@@ -59,26 +59,32 @@ class InMemoryDBWorkload:
                         sudo mkdir -p {PLAIN_DB_REGFS_PATH}")
             print(f"Copying Test DB to {PLAIN_DB_REGFS_PATH}")
             utils.exec_shell_cmd(f"sudo cp -rf {COPY_DB_PATH}/* {PLAIN_DB_REGFS_PATH}")
-        elif os.environ["encryption"] == "1" and os.environ["tmpfs"] != "1":
-            print(f"Removing old DB {ENCRYPTED_DB_REGFS_PATH}")
-            utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_REGFS_PATH} && \
-                        sudo mkdir -p {ENCRYPTED_DB_REGFS_PATH}")
-        elif os.environ["encryption"] == "1" and os.environ["tmpfs"] == "1":
-            print(f"Removing old DB {ENCRYPTED_DB_TMPFS_PATH}")
-            utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_TMPFS_PATH} && \
-                        sudo mkdir -p {ENCRYPTED_DB_TMPFS_PATH}")
 
     def encrypt_db(self, test_config_dict):
         workload_name = test_config_dict["docker_image"].split(" ")[0]
+        
+        if os.environ["tmpfs"] != "1":
+            print(f"Removing old DB {ENCRYPTED_DB_REGFS_PATH}")
+            utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_REGFS_PATH} && \
+                        sudo mkdir -p {ENCRYPTED_DB_REGFS_PATH}")
+        elif os.environ["tmpfs"] == "1":
+            enc_db_tmpfs_path = eval(workload_name.upper()+"_ENCRYPTED_DB_TMPFS_PATH")
+            print(f"Removing old DB {enc_db_tmpfs_path}")
+            utils.exec_shell_cmd(f"sudo rm -rf {enc_db_tmpfs_path}")
+            if workload_name.upper() == "MYSQL":
+                utils.exec_shell_cmd(f"sudo mkdir -p {enc_db_tmpfs_path}")
+            elif workload_name.upper() == "MARIADB":
+                utils.exec_shell_cmd(f"sudo mkdir -p /mnt/tmpfs && sudo mount -t tmpfs tmpfs /mnt/tmpfs && mkdir -p {enc_db_tmpfs_path}")
+
         output = utils.popen_subprocess(eval(workload_name.upper()+"_TEST_ENCRYPTION_KEY"), CURATED_APPS_PATH)
         if os.environ["encryption"] == "1":
             if os.environ["tmpfs"] == "1":
-                output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_TMPFS, CURATED_APPS_PATH)
+                output = utils.popen_subprocess(eval(workload_name.upper()+"_CLEANUP_ENCRYPTED_DB_TMPFS"), CURATED_APPS_PATH)
                 encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_TMPFS_CMD"), CURATED_APPS_PATH)
             else:
                 output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_REGFS, CURATED_APPS_PATH)
                 encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_REGFS_CMD"), CURATED_APPS_PATH)
-
+            print(f"\n-- Encryption command output..\n", encryption_output.stdout.read())
 
     def pre_actions(self, test_config_dict):
         os.chdir(self.get_workload_home_dir())
@@ -121,30 +127,32 @@ class InMemoryDBWorkload:
         if e_mode == 'native':
             if os.environ["tmpfs"] == "1":
                 init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
-                                    -it {workload_docker_image_name} --datadir {PLAIN_DB_TMPFS_PATH}"
+                                    -t {workload_docker_image_name} --datadir {PLAIN_DB_TMPFS_PATH}"
             else:
                 init_db_cmd = f"docker run --net=host --name {container_name} -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
-                                    -it {workload_docker_image_name} --datadir {PLAIN_DB_REGFS_PATH}"
+                                    -t {workload_docker_image_name} --datadir {PLAIN_DB_REGFS_PATH}"
             
         elif e_mode == 'gramine-sgx':
             if os.environ['encryption'] == '1' and os.environ["tmpfs"] == "1":
+                workload_name = tcd["docker_image"].split(" ")[0]
+                enc_db_tmpfs_path = eval(workload_name.upper()+"_ENCRYPTED_DB_TMPFS_PATH")
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
-                                        -v {ENCRYPTED_DB_TMPFS_PATH}:{ENCRYPTED_DB_TMPFS_PATH} \
-                                        -t gsc-{workload_docker_image_name} --datadir {ENCRYPTED_DB_TMPFS_PATH}"
+                                        -v {enc_db_tmpfs_path}:{enc_db_tmpfs_path} \
+                                        -t gsc-{workload_docker_image_name} --datadir {enc_db_tmpfs_path}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] == "1":
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_TMPFS_PATH}"
             elif os.environ['encryption'] == '1' and os.environ["tmpfs"] != "1":
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {ENCRYPTED_DB_REGFS_PATH}:{ENCRYPTED_DB_REGFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {ENCRYPTED_DB_REGFS_PATH}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] != "1":
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
-                                        gsc-{workload_docker_image_name} \
+                                        -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_REGFS_PATH}"
         return init_db_cmd
 
@@ -222,7 +230,6 @@ class InMemoryDBWorkload:
         output = utils.exec_shell_cmd(f"docker stop {container_name}")
         print(output)
         rm_output = utils.exec_shell_cmd(f"docker rm -f {container_name}")
-        print(rm_output)
         
     def process_results(self, tcd):
         log_test_res_folder = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])
@@ -305,9 +312,19 @@ class InMemoryDBWorkload:
                 test_95_pcnt_lat_dict['sgx-deg'] = utils.percent_degradation(tcd, test_95_pcnt_lat_dict['native-avg'], test_95_pcnt_lat_dict['sgx-avg'])
 
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_read': test_read_tpt_dict})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_write': test_write_tpt_dict})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_avg': test_avg_lat_dict})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_95th_percentile': test_95_pcnt_lat_dict})
+        if 'read_only' in tcd['test_name']:
+            trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_read_tpt_dict})
+        elif 'write_only' in tcd['test_name']:
+            trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_write_tpt_dict})
+        elif 'read_write' in tcd['test_name']:
+            # In this case we can read from either read or write dictionaries, as the corresponding
+            # values for both read and write are same. Hence, currently reading from read dict.
+            trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_read_tpt_dict})
+        else:
+            raise Exception(f"\n-- Test name does not contain right DB actions ('read_only'/'write_only'/'read_write') to be performed.\n")
+        # Not displaying below latency and 95th percentile data within the final report, 
+        # due to inconsistent perf numbers.
+        #trd[tcd['workload_name']].update({tcd['test_name']+'_avg': test_avg_lat_dict})
+        #trd[tcd['workload_name']].update({tcd['test_name']+'_95th_percentile': test_95_pcnt_lat_dict})
 
         os.chdir(self.workload_home_dir)

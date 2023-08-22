@@ -139,3 +139,15 @@ MARIADB_ENCRYPT_DB_REGFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workload
 MARIADB_CHMOD         = f"sudo chown -R $USER:$USER {CURATED_APPS_PATH}/workloads/mariadb/test_db"
 MYSQL_TESTDB_VERIFY   = f"/usr/sbin/mysqld: ready for connections"
 MARIADB_TESTDB_VERIFY = f"mariadbd: ready for connections"
+OVMS_MODEL_FILES_PATH = os.path.join(CURATED_APPS_PATH, "workloads/openvino-model-server/model_files")
+OVMS_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/openvino-model-server/test_model/1")
+OVMS_INIT_DB_CMD      = f"curl -L --create-dir https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/2/resnet50-binary-0001/FP32-INT1/resnet50-binary-0001.bin -o {OVMS_MODEL_FILES_PATH}/resnet50-binary-0001.bin \
+                        https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/2/resnet50-binary-0001/FP32-INT1/resnet50-binary-0001.xml -o {OVMS_MODEL_FILES_PATH}/resnet50-binary-0001.xml \
+                        https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/2/face-detection-retail-0005/FP32/face-detection-retail-0005.bin -o {OVMS_MODEL_FILES_PATH}/face-detection-retail-0005.bin \
+                        https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/2/face-detection-retail-0005/FP32/face-detection-retail-0005.xml -o {OVMS_MODEL_FILES_PATH}/face-detection-retail-0005.xml \
+                        https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/2/faster-rcnn-resnet101-coco-sparse-60-0001/FP32/faster-rcnn-resnet101-coco-sparse-60-0001.bin -o {OVMS_MODEL_FILES_PATH}/faster-rcnn-resnet101-coco-sparse-60-0001.bin \
+                        https://storage.openvinotoolkit.org/repositories/open_model_zoo/2022.1/models_bin/2/faster-rcnn-resnet101-coco-sparse-60-0001/FP32/faster-rcnn-resnet101-coco-sparse-60-0001.xml -o {OVMS_MODEL_FILES_PATH}/faster-rcnn-resnet101-coco-sparse-60-0001.xml"
+OVMS_TEST_ENCRYPTION_KEY = f"dd if=/dev/urandom bs=16 count=1 > workloads/openvino-model-server/base_image_helper/encryption_key"
+OVMS_ENCRYPTED_DB_PATH = "/mnt/tmpfs/model_encrypted"
+OVMS_ENCRYPT_DB_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/openvino-model-server/base_image_helper/encryption_key \
+                        -i workloads/openvino-model-server/test_model -o {OVMS_ENCRYPTED_DB_PATH}"

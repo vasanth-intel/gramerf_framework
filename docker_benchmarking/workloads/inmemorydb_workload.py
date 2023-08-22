@@ -59,21 +59,27 @@ class InMemoryDBWorkload:
                         sudo mkdir -p {PLAIN_DB_REGFS_PATH}")
             print(f"Copying Test DB to {PLAIN_DB_REGFS_PATH}")
             utils.exec_shell_cmd(f"sudo cp -rf {COPY_DB_PATH}/* {PLAIN_DB_REGFS_PATH}")
-        elif os.environ["encryption"] == "1" and os.environ["tmpfs"] != "1":
-            print(f"Removing old DB {ENCRYPTED_DB_REGFS_PATH}")
-            utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_REGFS_PATH} && \
-                        sudo mkdir -p {ENCRYPTED_DB_REGFS_PATH}")
-        elif os.environ["encryption"] == "1" and os.environ["tmpfs"] == "1":
-            print(f"Removing old DB {ENCRYPTED_DB_TMPFS_PATH}")
-            utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_TMPFS_PATH} && \
-                        sudo mkdir -p {ENCRYPTED_DB_TMPFS_PATH}")
 
     def encrypt_db(self, test_config_dict):
         workload_name = test_config_dict["docker_image"].split(" ")[0]
+        
+        if os.environ["tmpfs"] != "1":
+            print(f"Removing old DB {ENCRYPTED_DB_REGFS_PATH}")
+            utils.exec_shell_cmd(f"sudo rm -rf {ENCRYPTED_DB_REGFS_PATH} && \
+                        sudo mkdir -p {ENCRYPTED_DB_REGFS_PATH}")
+        elif os.environ["tmpfs"] == "1":
+            enc_db_tmpfs_path = eval(workload_name.upper()+"_ENCRYPTED_DB_TMPFS_PATH")
+            print(f"Removing old DB {enc_db_tmpfs_path}")
+            utils.exec_shell_cmd(f"sudo rm -rf {enc_db_tmpfs_path}")
+            if workload_name.upper() == "MYSQL":
+                utils.exec_shell_cmd(f"sudo mkdir -p {enc_db_tmpfs_path}")
+            elif workload_name.upper() == "MARIADB":
+                utils.exec_shell_cmd(f"sudo mkdir -p /mnt/tmpfs && sudo mount -t tmpfs tmpfs /mnt/tmpfs && mkdir -p {enc_db_tmpfs_path}")
+
         output = utils.popen_subprocess(eval(workload_name.upper()+"_TEST_ENCRYPTION_KEY"), CURATED_APPS_PATH)
         if os.environ["encryption"] == "1":
             if os.environ["tmpfs"] == "1":
-                output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_TMPFS, CURATED_APPS_PATH)
+                output = utils.popen_subprocess(eval(workload_name.upper()+"_CLEANUP_ENCRYPTED_DB_TMPFS"), CURATED_APPS_PATH)
                 encryption_output = utils.popen_subprocess(eval(workload_name.upper()+"_ENCRYPT_DB_TMPFS_CMD"), CURATED_APPS_PATH)
             else:
                 output = utils.popen_subprocess(CLEANUP_ENCRYPTED_DB_REGFS, CURATED_APPS_PATH)
@@ -128,9 +134,11 @@ class InMemoryDBWorkload:
             
         elif e_mode == 'gramine-sgx':
             if os.environ['encryption'] == '1' and os.environ["tmpfs"] == "1":
+                workload_name = tcd["docker_image"].split(" ")[0]
+                enc_db_tmpfs_path = eval(workload_name.upper()+"_ENCRYPTED_DB_TMPFS_PATH")
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
-                                        -v {ENCRYPTED_DB_TMPFS_PATH}:{ENCRYPTED_DB_TMPFS_PATH} \
-                                        -t gsc-{workload_docker_image_name} --datadir {ENCRYPTED_DB_TMPFS_PATH}"
+                                        -v {enc_db_tmpfs_path}:{enc_db_tmpfs_path} \
+                                        -t gsc-{workload_docker_image_name} --datadir {enc_db_tmpfs_path}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] == "1":
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
                                         -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \

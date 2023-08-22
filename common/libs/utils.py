@@ -341,7 +341,7 @@ def write_to_report(workload_name, test_results):
         commit_id = os.environ["commit_id"]
     else:
         commit_id = os.environ["curation_commit"]
-    report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + now + "_" + commit_id[:7] + ".xlsx")
+    report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + commit_id[:7] + ".xlsx")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')

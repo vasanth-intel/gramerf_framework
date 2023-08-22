@@ -29,6 +29,7 @@ def read_command_line_args(config):
     os.environ["encryption"] = config.option.encryption
     os.environ["curation_commit"] = config.option.curation_commit
     os.environ["tmpfs"] = config.option.tmpfs
+    os.environ["jenkins_build_num"] = config.option.jenkins_build_num
 
 
 @pytest.fixture(scope="session")
@@ -84,3 +85,6 @@ def pytest_addoption(parser):
     # If any gramine specific commit-id is provided, we use the binaries after building from the specified commit-id.
     # If 'master' is provided as value to below option in command line, we use the binaires after building from the latest Gramine commit.
     parser.addoption("--curation_commit", action="store", type=str, default="", help="Any specific commit/master to be checked out for curated workloads.")
+    # Following option is the build number of the 'gramerf_performance_banehmarking' Jenkins job.
+    # This number is used within the filename of the final report generated for the workload.
+    parser.addoption("--jenkins_build_num", action="store", type=str, default="", help="Build number of Jenkins CI perf job")

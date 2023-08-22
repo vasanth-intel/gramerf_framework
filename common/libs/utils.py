@@ -353,7 +353,7 @@ def write_to_report(workload_name, test_results):
         commit_id = os.environ["commit_id"]
     else:
         commit_id = os.environ["curation_commit"]
-    report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + now + "_" + commit_id[:7] + ".xlsx")
+    report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + commit_id[:7] + ".xlsx")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
@@ -366,7 +366,7 @@ def write_to_report(workload_name, test_results):
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
     elif workload_name == 'Sklearnex':
         cols = ['data_type', 'dataset_name', 'rows', 'columns', 'classes', 'time', 'gramine-sgx', 'gramine-direct', 'gramine-sgx-deg', 'gramine-direct-deg']
-    elif workload_name == 'TensorflowServing' or workload_name == 'MySql':
+    elif workload_name == 'TensorflowServing' or workload_name == 'MySql' or workload_name == 'OpenVinoModelServer':
         cols = ['native', 'gramine-sgx', 'native-avg', 'sgx-avg', 'sgx-deg']
     elif workload_name == 'Pytorch':
         cols = ['native_s0', 'native_s1', 'gramine-direct_s0', 'gramine-direct_s1', 'gramine-sgx_s0', 'gramine-sgx_s1', \

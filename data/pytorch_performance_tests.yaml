@@ -1,0 +1,67 @@
+Default:
+  workload_name: "Pytorch"
+  native_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_native:2022_ww40"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_gramine-direct_2023_ww29:2022_ww40"
+  model_name: "resnet50"
+  metric: "throughput"
+  env_file: "pytorch_rn50_docker_env_variables.env"
+
+test_pytorch_perf_resnet50_avx_int8_throughput:
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_sgx_srf_2023_ww28:2022_ww40"
+
+test_pytorch_perf_resnet50_amx_int8_throughput:
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_sgx_srf_2023_ww28:2022_ww40"
+
+test_pytorch_perf_resnet50_avx_fp32_throughput:
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_sgx_srf_2023_ww28:2022_ww40"
+
+test_pytorch_perf_resnet50_amx_bfloat16_throughput:
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_sgx_srf_2023_ww28:2022_ww40"
+
+test_pytorch_perf_resnet50_avx_int8_latency:
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_sgx_withjitenderoptimization_srf:2022_ww40_v1.4"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_gramine-direct_lat:2022_ww40"
+  metric: "latency"
+
+test_pytorch_perf_resnet50_amx_int8_latency:
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_sgx_withjitenderoptimization_srf:2022_ww40_v1.4"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_gramine-direct_lat:2022_ww40"
+  metric: "latency"
+
+test_pytorch_perf_resnet50_avx_fp32_latency:
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_sgx_withjitenderoptimization_srf:2022_ww40_v1.4"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_gramine-direct_lat:2022_ww40"
+  metric: "latency"
+
+test_pytorch_perf_resnet50_amx_bfloat16_latency:
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_sgx_withjitenderoptimization_srf:2022_ww40_v1.4"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_rn50_gramine-direct_lat:2022_ww40"
+  metric: "latency"
+
+test_pytorch_perf_dlrm_avx_int8_throughput:
+  native_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_native:2022_ww40_new"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_gramine-direct_with_edmm_2023_ww30:2022_ww40_new"
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_sgx_with_edmm_enabled:2022_ww40_new"
+  model_name: "dlrm"
+  env_file: "pytorch_dlrm_docker_env_variables.env"
+
+test_pytorch_perf_dlrm_amx_int8_throughput:
+  native_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_native:2022_ww40_new"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_gramine-direct_with_edmm_2023_ww30:2022_ww40_new"
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_sgx_with_edmm_enabled:2022_ww40_new"
+  model_name: "dlrm"
+  env_file: "pytorch_dlrm_docker_env_variables.env"
+
+test_pytorch_perf_dlrm_avx_fp32_throughput:
+  native_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_native:2022_ww40_new"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_gramine-direct_with_edmm_2023_ww30:2022_ww40_new"
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_sgx_with_edmm_enabled:2022_ww40_new"
+  model_name: "dlrm"
+  env_file: "pytorch_dlrm_docker_env_variables.env"
+
+test_pytorch_perf_dlrm_amx_bfloat16_throughput:
+  native_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_native:2022_ww40_new"
+  gramine-direct_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_gramine-direct_with_edmm_2023_ww30:2022_ww40_new"
+  gramine-sgx_docker_image: "dcsorepo.jf.intel.com/sgx/pytorch_dlrm_sgx_with_edmm_enabled:2022_ww40_new"
+  model_name: "dlrm"
+  env_file: "pytorch_dlrm_docker_env_variables.env"

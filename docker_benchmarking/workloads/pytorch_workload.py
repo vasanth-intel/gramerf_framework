@@ -62,13 +62,13 @@ class PytorchWorkload:
         env_file = os.path.join(FRAMEWORK_HOME_DIR, "docker_benchmarking/config_files", tcd['env_file'])
 
         if tcd['model_name'] == "resnet50":
-            container_launch_cmd = f"docker run -dit --rm --privileged --network host -w {container_exec_path} --env-file {env_file} --name {container_name} \
+            container_launch_cmd = f"docker run -td --rm --privileged --network host -w {container_exec_path} --env-file {env_file} --name {container_name} \
                                     {gramine_args} -v {results_dir}:/home/logs --entrypoint /bin/bash {tcd[e_mode + '_docker_image']}"
         
         elif tcd['model_name'] == "dlrm":
             # Before executing DLRM tests, DLRM models need to be copied and extracted at "~/Do_not_delete_gramerf_dependencies/pytorch".
             dlrm_model_path = os.path.join(Path.home(),"Do_not_delete_gramerf_dependencies/pytorch")
-            container_launch_cmd = f"docker run --rm -itd --privileged --net host --shm-size 4g -w {container_exec_path} --env-file {env_file} --name {container_name} \
+            container_launch_cmd = f"docker run --rm -td --privileged --net host --shm-size 4g -w {container_exec_path} --env-file {env_file} --name {container_name} \
                                     {gramine_args} -v {dlrm_model_path}:/home/dataset/pytorch -v {results_dir}:/home/logs \
                                     --entrypoint /bin/bash {tcd[e_mode + '_docker_image']}"
         else:
@@ -168,11 +168,11 @@ class PytorchWorkload:
 
         res_filename = f"/home/logs/{tcd['test_name']}_{e_mode}"
         if os.environ['SOCKETS'] == "2":
-            print(f"\nCommand is - docker exec {env_vars_str} -it {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd1}\" \"{cmd2}\" {res_filename}'\n")
-            utils.exec_shell_cmd(f"docker exec {env_vars_str} -it {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd1}\" \"{cmd2}\" {res_filename}'", None)
+            print(f"\nCommand is - docker exec {env_vars_str} -t {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd1}\" \"{cmd2}\" {res_filename}'\n")
+            utils.exec_shell_cmd(f"docker exec {env_vars_str} -t {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd1}\" \"{cmd2}\" {res_filename}'", None)
         else:
-            print(f"\nCommand is\n docker exec {env_vars_str} -it {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd1}\" {res_filename}'\n\n")
-            utils.exec_shell_cmd(f"docker exec {env_vars_str} -it {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd1}\" {res_filename}'", None)
+            print(f"\nCommand is\n docker exec {env_vars_str} -t {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd1}\" {res_filename}'\n\n")
+            utils.exec_shell_cmd(f"docker exec {env_vars_str} -t {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd1}\" {res_filename}'", None)
 
     def get_dlrm_throughput_common_cmd(self, tcd, e_mode):
         common_cmd = ""
@@ -216,7 +216,7 @@ class PytorchWorkload:
         container_shell_script_path = "/home/workspace/benchmark/pytorch_cmds.sh"
 
         res_filename = f"/home/logs/{tcd['test_name']}_{e_mode}"
-        utils.exec_shell_cmd(f"docker exec -it {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd}\" {res_filename}'", None)
+        utils.exec_shell_cmd(f"docker exec -t {container_name} bash -c '{container_shell_script_path} {tcd['iterations']} \"{cmd}\" {res_filename}'", None)
         
     # Build the workload execution command based on execution params and execute it.
     def execute_workload(self, tcd, e_mode, test_dict=None):

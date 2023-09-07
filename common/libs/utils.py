@@ -385,11 +385,14 @@ def write_to_report(workload_name, test_results):
         throughput_df.to_excel(writer, sheet_name=workload_name)
 
     if len(latency_dict) > 0:
-        latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols).dropna(axis=1)
+        if workload_name == 'Pytorch':
+            latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols)
+        else:
+            latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols).dropna(axis=1)
         latency_df.columns = latency_df.columns.str.upper()
         if len(throughput_dict) > 0:
             if workload_name == 'Pytorch':
-                latency_df.to_excel(writer, sheet_name=workload_name, startrow=throughput_df.shape[0]+2)
+                latency_df.to_excel(writer, sheet_name=workload_name, header=None, startrow=throughput_df.shape[0]+1)
             else:
                 latency_df.to_excel(writer, sheet_name=workload_name, startcol=throughput_df.shape[1]+2)
         else:

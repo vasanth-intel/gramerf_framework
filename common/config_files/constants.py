@@ -15,7 +15,8 @@ BUILD_TYPE = "release"
 BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 
 # Commands constants
-GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
+#GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
+GRAMINE_CLONE_CMD = "git clone https://github.com/kailun-qin/gramine.git"
 
 GRAMINE_CLONE = "RUN git clone --depth 1 --branch v1.5 https://github.com/gramineproject/gramine.git"
 DEPTH_STR = "--depth 1 --branch v1.5 "

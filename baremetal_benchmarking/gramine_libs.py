@@ -21,20 +21,27 @@ def fresh_gramine_checkout():
     if os.path.exists(GRAMINE_HOME_DIR):
         shutil.rmtree(GRAMINE_HOME_DIR)
     
-    print("\n-- Cloning Gramine git repo..\n", GRAMINE_CLONE_CMD)
-    utils.exec_shell_cmd(GRAMINE_CLONE_CMD)
+    gramine_repo = os.environ['gramine_repo']
+    print(f"\n-- Cloning Gramine git repo: {gramine_repo}\n")
+    if gramine_repo != '':
+        utils.exec_shell_cmd(f"git clone {gramine_repo}", None)
+    else:
+        utils.exec_shell_cmd(GRAMINE_CLONE_CMD, None)
         
     # Git clone the examples repo too for workloads download.
     os.chdir(GRAMINE_HOME_DIR)
 
-    commit_id = os.environ["commit_id"]
-    if commit_id != '':
-        utils.exec_shell_cmd(f"git checkout {commit_id}")
+    gramine_commit = os.environ["gramine_commit"]
+    # If 'gramine_commit' is passed, corresponding gramine commit will be checked out
+    # to build gramine from source. If 'gramine_commit' is not specified, latest
+    # master will be used to build gramine.
+    if gramine_commit != '':
+        utils.exec_shell_cmd(f"git checkout {gramine_commit}", None)
     else:
-        commit_id = utils.exec_shell_cmd("git rev-parse HEAD")
-        os.environ["commit_id"] = commit_id
+        gramine_commit = utils.exec_shell_cmd("git rev-parse HEAD")
+        os.environ["gramine_commit"] = gramine_commit
 
-    print("\n-- Checked out following Gramine commit: ", commit_id)
+    print("\n-- Checked out following Gramine commit: ", gramine_commit)
 
     print("\n-- Cloning Gramine examples git repo..\n", EXAMPLES_REPO_CLONE_CMD)
     utils.exec_shell_cmd(EXAMPLES_REPO_CLONE_CMD)

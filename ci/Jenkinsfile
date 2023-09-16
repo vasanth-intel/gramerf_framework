@@ -58,7 +58,7 @@ pipeline {
                         args = args + " --tmpfs=1"
                     }
 
-                    if (enable_edmm) {
+                    if (edmm) {
                         args = args + " --edmm=1"
                     }
 

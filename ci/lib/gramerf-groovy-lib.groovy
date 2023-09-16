@@ -80,6 +80,10 @@ def preActions(){
     {
         tmpfs = tmpfs.substring(0,tmpfs.length() - 1).toBoolean();
     }
+    if(edmm.endsWith(","))
+    {
+        edmm = edmm.substring(0,edmm.length() - 1).toBoolean();
+    }
 
 }
 

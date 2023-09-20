@@ -29,6 +29,14 @@ def percent_degradation(tcd, baseline, testapp, throughput = False):
         return '{:0.3f}'.format(100 * (float(testapp) - float(baseline)) / float(baseline))
 
 
+def run_to_run_variation(tpt_lat_list):
+    max_val = max(tpt_lat_list)
+    min_val = min(tpt_lat_list)
+    if min_val == 0:
+        return 0
+    return round(((max_val/min_val) - 1) * 100)
+
+
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
     try:
         cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
@@ -273,7 +281,7 @@ def set_threads_cnt_env_var():
     """
     lscpu_output = exec_shell_cmd('lscpu')
     lines = lscpu_output.splitlines()
-    cores_count, core_per_socket, threads_per_core = 0, 0, 0
+    cores_count, core_per_socket, threads_per_core, sockets = 0, 0, 0, 0
     for line in lines:
         if 'CPU(s):' in line:
             cores_count = int(line.split(':')[-1].strip())
@@ -281,16 +289,20 @@ def set_threads_cnt_env_var():
             core_per_socket = int(line.split(':')[-1].strip())
         if 'Thread(s) per core:' in line:
             threads_per_core = int(line.split(':')[-1].strip())
-        if cores_count and core_per_socket and threads_per_core:
+        if 'Socket(s):' in line:
+            sockets = int(line.split(':')[-1].strip())
+        if cores_count and core_per_socket and threads_per_core and sockets:
             break
     
     os.environ['CORES_COUNT'] = str(cores_count)
     os.environ['THREADS_CNT'] = str(core_per_socket * threads_per_core)
     os.environ['CORES_PER_SOCKET'] = str(core_per_socket)
+    os.environ['SOCKETS'] = str(sockets)
 
     print("\n-- Setting the CORES_COUNT env variable to ", os.environ['CORES_COUNT'])
     print("\n-- Setting the THREADS_CNT env variable to ", os.environ['THREADS_CNT'])
     print("\n-- Setting the CORES_PER_SOCKET env variable to ", os.environ['CORES_PER_SOCKET'])
+    print("\n-- Setting the SOCKETS env variable to ", os.environ['SOCKETS'])
 
 
 def determine_host_ip_addr():
@@ -341,7 +353,7 @@ def write_to_report(workload_name, test_results):
         commit_id = os.environ["commit_id"]
     else:
         commit_id = os.environ["curation_commit"]
-    report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + now + "_" + commit_id[:7] + ".xlsx")
+    report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + commit_id[:7] + ".xlsx")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
@@ -354,21 +366,35 @@ def write_to_report(workload_name, test_results):
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
     elif workload_name == 'Sklearnex':
         cols = ['data_type', 'dataset_name', 'rows', 'columns', 'classes', 'time', 'gramine-sgx', 'gramine-direct', 'gramine-sgx-deg', 'gramine-direct-deg']
-    elif workload_name == 'TensorflowServing' or workload_name == 'MySql':
+    elif workload_name == 'TensorflowServing' or workload_name == 'MySql' or workload_name == 'OpenVinoModelServer':
         cols = ['native', 'gramine-sgx', 'native-avg', 'sgx-avg', 'sgx-deg']
+    elif workload_name == 'Pytorch':
+        cols = ['native_s0', 'native_s1', 'gramine-direct_s0', 'gramine-direct_s1', 'gramine-sgx_s0', 'gramine-sgx_s1', \
+                'native_s0_avg', 'native_s1_avg', 'gramine-direct_s0_avg', 'gramine-direct_s1_avg', 'gramine-sgx_s0_avg', 'gramine-sgx_s1_avg', \
+                'native_s0_r2r_var', 'native_s1_r2r_var', 'gramine-direct_s0_r2r_var', 'gramine-direct_s1_r2r_var', 'gramine-sgx_s0_r2r_var', 'gramine-sgx_s1_r2r_var', \
+                'gramine-direct_s0_Deg', 'gramine-direct_s1_Deg', 'gramine-sgx_s0_Deg', 'gramine-sgx_s1_Deg']
     else:
         cols = ['native', 'gramine-sgx', 'gramine-direct', 'native-avg', 'sgx-avg', 'direct-avg', 'sgx-deg', 'direct-deg']
 
     if len(throughput_dict) > 0:
-        throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols).dropna(axis=1)
+        if workload_name == 'Pytorch':
+            throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols)
+        else:
+            throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols).dropna(axis=1)
         throughput_df.columns = throughput_df.columns.str.upper()
         throughput_df.to_excel(writer, sheet_name=workload_name)
 
     if len(latency_dict) > 0:
-        latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols).dropna(axis=1)
+        if workload_name == 'Pytorch':
+            latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols)
+        else:
+            latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols).dropna(axis=1)
         latency_df.columns = latency_df.columns.str.upper()
         if len(throughput_dict) > 0:
-            latency_df.to_excel(writer, sheet_name=workload_name, startcol=throughput_df.shape[1]+2)
+            if workload_name == 'Pytorch':
+                latency_df.to_excel(writer, sheet_name=workload_name, header=None, startrow=throughput_df.shape[0]+1)
+            else:
+                latency_df.to_excel(writer, sheet_name=workload_name, startcol=throughput_df.shape[1]+2)
         else:
             latency_df.to_excel(writer, sheet_name=workload_name)
     

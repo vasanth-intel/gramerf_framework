@@ -16,13 +16,6 @@ Default:
   rw_ratio: "1:1"
   docker_image: memcached memcached
   
-test_memcached_perf_48_data_size_1_1_rw_ratio:
-  data_size: 48
-
-test_memcached_perf_48_data_size_1_9_rw_ratio:
-  data_size: 48
-  rw_ratio: "1:9"
-
 test_memcached_perf_1024_data_size_1_1_rw_ratio:
   data_size: 1024
 
@@ -37,10 +30,16 @@ test_memcached_perf_4096_data_size_1_9_rw_ratio:
   data_size: 4096
   rw_ratio: "1:9"
 
-test_memcached_perf_77824_data_size_1_1_rw_ratio:
-  data_size: 77824
+test_memcached_perf_16384_data_size_1_1_rw_ratio:
+  data_size: 16384
 
-test_memcached_perf_77824_data_size_1_9_rw_ratio:
-  data_size: 77824
+test_memcached_perf_16384_data_size_1_9_rw_ratio:
+  data_size: 16384
   rw_ratio: "1:9"
-  
+
+test_memcached_perf_32768_data_size_1_1_rw_ratio:
+  data_size: 32768
+
+test_memcached_perf_32768_data_size_1_9_rw_ratio:
+  data_size: 32768
+  rw_ratio: "1:9"

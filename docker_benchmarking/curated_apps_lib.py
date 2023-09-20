@@ -45,7 +45,9 @@ def update_curation_verifier_scripts():
         update_gsc(os.environ["gsc_repo"], os.environ["gsc_commit"])
 
 
-def update_gramine_branch(gramine_repo=GRAMINE_DEFAULT_REPO, gramine_commit='v1.5'):
+def update_gramine_branch(gramine_repo='', gramine_commit=''):
+    if gramine_repo == '': gramine_repo = GRAMINE_DEFAULT_REPO
+    if gramine_commit == '': gramine_commit = 'v1.5'
     commit_str = f" && cd gramine && git checkout {gramine_commit} && cd .."
     copy_cmd = "cp config.yaml.template config.yaml"
     gramine_string = GRAMINE_DEPTH_STR + GRAMINE_DEFAULT_REPO

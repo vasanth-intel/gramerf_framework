@@ -514,3 +514,21 @@ def update_file_contents(old_contents, new_contents, filename, append=False):
     fd = open(filename, "w")
     fd.write(new_data)
     fd.close()
+
+def check_and_enable_edmm_in_manifest(manifest_file):
+    if os.environ["EDMM"] == "1":
+        add_edmm_enable = add_exinfo = False
+        with open(manifest_file) as f:
+            file_contents = f.read()
+            if not 'edmm_enable' in file_contents:
+                add_edmm_enable = True
+            if not 'require_exinfo' in file_contents:
+                add_exinfo = True
+        if add_edmm_enable:
+            edmm_string = '$ a sgx.edmm_enable = {{ "true" if env.get("EDMM", "0") == "1" else "false" }}'
+            edmm_sed_cmd = f"sed -i -e '{edmm_string}' {manifest_file}"
+            exec_shell_cmd(edmm_sed_cmd, None)
+        if add_exinfo:
+            exinfo_string = '$ a sgx.require_exinfo = {{ "true" if env.get("EDMM", "0") == "1" else "false" }}'
+            exinfo_sed_cmd = f"sed -i -e '{exinfo_string}' {manifest_file}"
+            exec_shell_cmd(exinfo_sed_cmd, None)

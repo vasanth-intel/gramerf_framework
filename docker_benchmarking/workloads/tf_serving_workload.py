@@ -63,6 +63,8 @@ class TensorflowServingWorkload:
         self.pull_workload_default_image()
         # clone the serving repo to get the latency values
         self.download_and_update_tfserving_repo()
+        manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/tensorflow-serving/tensorflow-serving.manifest.template")
+        utils.check_and_enable_edmm_in_manifest(manifest_file)
         # Create graminized image for gramine direct and sgx runs.
         curation_output = curated_apps_lib.generate_curated_image(test_config_dict)
         decode_curation_output = curation_output.decode('utf-8')

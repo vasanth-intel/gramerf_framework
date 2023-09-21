@@ -61,7 +61,9 @@ class OpenVinoModelServerWorkload:
         # Pull default workload image for native run.
         self.pull_workload_default_image(test_config_dict)
         self.copy_model_files(test_config_dict)
-    
+        manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/openvino-model-server/openvino-model-server.manifest.template")
+        utils.check_and_enable_edmm_in_manifest(manifest_file)
+
     def generate_curated_image(self, test_config_dict):
         # Create graminized image for gramine direct and sgx runs.
         if os.environ["exec_mode"] != "native":

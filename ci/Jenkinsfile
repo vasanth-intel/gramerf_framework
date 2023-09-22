@@ -41,7 +41,7 @@ pipeline {
                     cleanWs()
                     checkout scm
                     exec_cmd = ''
-                    def args = "--ignore=gramine --disable-warnings --perf_config=${perf_config} --iterations=${iterations} --exec_mode=${exec_mode} --gramine_commit=${gramine_commit}"
+                    def args = "--ignore=gramine --disable-warnings --perf_config=${perf_config} --iterations=${iterations} --exec_mode=${exec_mode} --gramine_commit=${gramine_commit} --jenkins_build_num=${BUILD_NUMBER}"
                     if (gramine_repo?.trim()){
                         args = args + " --gramine_repo=${gramine_repo}"
                     }

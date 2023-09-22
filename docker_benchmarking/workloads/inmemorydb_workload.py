@@ -101,15 +101,19 @@ class InMemoryDBWorkload:
         else:
             manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/mariadb/mariadb.manifest.template")
 
-        with open(manifest_file) as f:
-            enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size =.*/sgx.enclave_size = \"2G\"/' {manifest_file}"
-            utils.exec_shell_cmd(enc_size_sed_cmd, None)
-            if "mariadb" in test_config_dict["docker_image"]:
-                utils.exec_shell_cmd(f"sed -i 's/sgx.max_threads =.*/sgx.max_threads = 256/' {manifest_file}", None)
+        enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size =.*/sgx.enclave_size = \"2G\"/' {manifest_file}"
+        utils.exec_shell_cmd(enc_size_sed_cmd, None)
+        if "mariadb" in test_config_dict["docker_image"]:
+            utils.exec_shell_cmd(f"sed -i 's/sgx.max_threads =.*/sgx.max_threads = 256/' {manifest_file}", None)
+        add_malloc_arena_max = False
         with open(manifest_file) as f:
             if not 'MALLOC_ARENA_MAX' in f.read():
-                arena_sed_cmd = f"sed -i '/sys.enable_extra_runtime_domain_names_conf = true/a loader.env.MALLOC_ARENA_MAX = \"1\"' {manifest_file}"
-                utils.exec_shell_cmd(arena_sed_cmd, None)
+                add_malloc_arena_max = True
+        if add_malloc_arena_max:
+            arena_string = '$ a loader.env.MALLOC_ARENA_MAX = "1"'
+            arena_sed_cmd = f"sed -i -e '{arena_string}' {manifest_file}"
+            utils.exec_shell_cmd(arena_sed_cmd, None)
+        utils.check_and_enable_edmm_in_manifest(manifest_file)
     
     def generate_curated_image(self, test_config_dict):
         # Create graminized image for gramine direct and sgx runs.

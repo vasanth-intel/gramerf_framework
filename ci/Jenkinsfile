@@ -64,7 +64,7 @@ pipeline {
                         args = args + " --tmpfs=1"
                     }
 
-                    if (edmm) {
+                    if (edmm.toBoolean()) {
                         args = args + " --edmm=1"
                     }
 

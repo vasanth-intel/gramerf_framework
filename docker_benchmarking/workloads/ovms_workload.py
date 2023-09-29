@@ -117,6 +117,7 @@ class OpenVinoModelServerWorkload:
         return client_output
     
     def exec_workload_perf_cmd(self, test_config_dict, test_dict, exec_mode = 'native'):
+        utils.set_no_proxy()
         for i in range(test_config_dict['iterations']):
             run_cmd_output = self.benchmark_execution(test_config_dict)
             print(run_cmd_output)

@@ -3,4 +3,8 @@ workloads:
 - openvino
 - tensorflow
 - tensorflow_encrypted
-- tensorflow_serving
+- tensorflowserving
+- mariadb
+- openvinomodelserver
+- sklearnex
+- pytorch

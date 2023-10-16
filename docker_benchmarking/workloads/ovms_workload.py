@@ -62,6 +62,10 @@ class OpenVinoModelServerWorkload:
         self.pull_workload_default_image(test_config_dict)
         self.copy_model_files(test_config_dict)
         manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/openvino-model-server/openvino-model-server.manifest.template")
+        # Increasing the enclave size from 16G to 32G as the workload was giving
+        # 'bad_alloc' error for the model 'faster-rcnn-resnet101-coco-sparse'.
+        enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size =.*/sgx.enclave_size = \"32G\"/' {manifest_file}"
+        utils.exec_shell_cmd(enc_size_sed_cmd, None)
         utils.check_and_enable_edmm_in_manifest(manifest_file)
 
     def generate_curated_image(self, test_config_dict):
@@ -117,6 +121,7 @@ class OpenVinoModelServerWorkload:
         return client_output
     
     def exec_workload_perf_cmd(self, test_config_dict, test_dict, exec_mode = 'native'):
+        utils.set_no_proxy()
         for i in range(test_config_dict['iterations']):
             run_cmd_output = self.benchmark_execution(test_config_dict)
             print(run_cmd_output)

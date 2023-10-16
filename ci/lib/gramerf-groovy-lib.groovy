@@ -28,31 +28,36 @@ def restartNode(node_label){
 
 def getNodeName(){
 
-    if (run_specific_perf_test.contains("ov") || run.contains("ov") || run_specific_perf_test.contains("ovms_perf") || run.contains("ovms_perf")){
-        echo "open vino workload is selected ..."
-        return 'graphene_wcity_02'
-    } else if (run_specific_perf_test.contains("redis") || run.contains("redis")){
-        echo "redis workload is selected ..."
-        return 'graphene_perf_redis_taken_out_for_vasanth'
-    } else if (run_specific_perf_test.contains("tf_serving") || run.contains("tf_serving")){
-        echo "tf_serving workload is selected ..."
-        return 'graphene_perf_redis_taken_out_for_vasanth'
-    } else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
-        echo "tensorflow workload is selected ..."
-        return 'graphene_wcity_02'
-    } else if (run_specific_perf_test.contains("sklearnex") || run.contains("sklearnex")){
-        echo "sklearn workload is selected ..."
-        env.isSklearn = true
-        return 'graphene_sklearn'
-    } else if (run_specific_perf_test.contains("memcached") || run.contains("memcached")){
-        echo "memcached workload is selected ..."
-        return 'graphene_perf_redis_taken_out_for_vasanth'
-    } else if (run_specific_perf_test.contains("pytorch_perf") || run.contains("pytorch_perf")){
-        echo "pytorch workload is selected ..."
-        return 'graphene_perf_redis_taken_out_for_vasanth'
-    } else if (run_specific_perf_test.contains("mysql") || run.contains("mysql") || run_specific_perf_test.contains("mariadb_perf") || run.contains("mariadb_perf")){
-        echo "mysql/mariadb workload is selected ..."
-        return 'graphene_sklearn'
+    if ( node_name.isEmpty() ) {
+        if (run_specific_perf_test.contains("ov") || run.contains("ov") || run_specific_perf_test.contains("ovms_perf") || run.contains("ovms_perf")){
+            echo "open vino workload is selected ..."
+            return 'graphene_wcity_02'
+        } else if (run_specific_perf_test.contains("redis") || run.contains("redis")){
+            echo "redis workload is selected ..."
+            return 'graphene_perf_redis_taken_out_for_vasanth'
+        } else if (run_specific_perf_test.contains("tf_serving") || run.contains("tf_serving")){
+            echo "tf_serving workload is selected ..."
+            return 'graphene_perf_redis_taken_out_for_vasanth'
+        } else if (run_specific_perf_test.contains("tf") || run.contains("tf")){
+            echo "tensorflow workload is selected ..."
+            return 'graphene_wcity_02'
+        } else if (run_specific_perf_test.contains("sklearnex") || run.contains("sklearnex")){
+            echo "sklearn workload is selected ..."
+            env.isSklearn = true
+            return 'graphene_sklearn'
+        } else if (run_specific_perf_test.contains("memcached") || run.contains("memcached")){
+            echo "memcached workload is selected ..."
+            return 'graphene_perf_redis_taken_out_for_vasanth'
+        } else if (run_specific_perf_test.contains("pytorch_perf") || run.contains("pytorch_perf")){
+            echo "pytorch workload is selected ..."
+            return 'graphene_perf_redis_taken_out_for_vasanth'
+        } else if (run_specific_perf_test.contains("mysql") || run.contains("mysql") || run_specific_perf_test.contains("mariadb_perf") || run.contains("mariadb_perf")){
+            echo "mysql/mariadb workload is selected ..."
+            return 'graphene_sklearn'
+        }
+    } else {
+        echo "perf runs will be executed on $node_name"
+        return node_name
     }
 
 }
@@ -64,17 +69,9 @@ def preActions(){
     {
         build_gramine = build_gramine.substring(0,build_gramine.length() - 1);
     }
-    if(gramine_repo_commit_id.endsWith(","))
-    {
-        gramine_repo_commit_id = gramine_repo_commit_id.substring(0,gramine_repo_commit_id.length() - 1);
-    }
     if(encryption.endsWith(","))
     {
         encryption = encryption.substring(0,encryption.length() - 1).toBoolean();
-    }
-    if(curation_commit.endsWith(","))
-    {
-        curation_commit = curation_commit.substring(0,curation_commit.length() - 1);
     }
     if(tmpfs.endsWith(","))
     {

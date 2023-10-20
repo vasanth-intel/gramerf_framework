@@ -12,43 +12,49 @@ tests_yaml_path = os.path.join(os.getcwd(), 'data', yaml_file_name)
 class TestClass:
 
     @pytest.mark.nginx_perf
-    @pytest.mark.nginx_perf_1_threads
-    def test_nginx_perf_1_threads(self):
+    @pytest.mark.nginx_perf_10K
+    @pytest.mark.nginx_perf_10K_data_size_1_threads
+    def test_nginx_perf_10K_data_size_1_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.nginx_perf
-    @pytest.mark.nginx_perf_2_threads
-    def test_nginx_perf_2_threads(self):
+    @pytest.mark.nginx_perf_10K
+    @pytest.mark.nginx_perf_10K_data_size_8_threads
+    def test_nginx_perf_10K_data_size_8_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.nginx_perf
-    @pytest.mark.nginx_perf_4_threads
-    def test_nginx_perf_4_threads(self):
+    @pytest.mark.nginx_perf_10K
+    @pytest.mark.nginx_perf_10K_data_size_32_threads
+    def test_nginx_perf_10K_data_size_32_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.nginx_perf
-    @pytest.mark.nginx_perf_8_threads
-    def test_nginx_perf_8_threads(self):
+    @pytest.mark.nginx_perf_1M
+    @pytest.mark.nginx_perf_1M_data_size_1_threads
+    def test_nginx_perf_1M_data_size_1_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.nginx_perf
-    @pytest.mark.nginx_perf_16_threads
-    def test_nginx_perf_16_threads(self):
+    @pytest.mark.nginx_perf_1M
+    @pytest.mark.nginx_perf_1M_data_size_8_threads
+    def test_nginx_perf_1M_data_size_8_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.nginx_perf
-    @pytest.mark.nginx_perf_32_threads
-    def test_nginx_perf_32_threads(self):
+    @pytest.mark.nginx_perf_1M
+    @pytest.mark.nginx_perf_1M_data_size_32_threads
+    def test_nginx_perf_1M_data_size_32_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result

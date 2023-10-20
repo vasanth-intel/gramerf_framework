@@ -166,7 +166,8 @@ class NginxWorkload:
         results_dir = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])
         output_file_name = results_dir + "/" + e_mode + '_' + str(iteration) + '.log'
         benchmark_file = os.path.join(self.workload_home_dir, "wrk", "wrk")
-        wrk_http_req = f"{benchmark_file} -t{tcd['threads']} -c300 -d180s http://127.0.0.1:{tcd['server_port']}/random/{tcd['http_filename']} | tee {output_file_name}"
+        http_str = 'https' if tcd['server_port'] == 8444 else 'http'
+        wrk_http_req = f"{benchmark_file} -t{tcd['threads']} -c300 -d180s {http_str}://127.0.0.1:{tcd['server_port']}/random/{tcd['http_filename']} | tee {output_file_name}"
         
         return wrk_http_req
 

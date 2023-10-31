@@ -1,0 +1,33 @@
+---
+Default:
+  workload_home_dir: "gramine/CI-Examples/nginx/"
+  workload_name: "Nginx"
+  manifest_name: "nginx"
+  manifest_file: "nginx.manifest.template"
+  http_filename: "10K.1.html"
+  http_filesize: "10K"
+  server_port: 8444
+  
+test_nginx_perf_10K_data_size_1_threads:
+  threads: 1
+
+test_nginx_perf_10K_data_size_8_threads:
+  threads: 8
+
+test_nginx_perf_10K_data_size_32_threads:
+  threads: 32
+
+test_nginx_perf_1M_data_size_1_threads:
+  threads: 1
+  http_filename: "1M.1.html"
+  http_filesize: "1M"
+
+test_nginx_perf_1M_data_size_8_threads:
+  threads: 8
+  http_filename: "1M.1.html"
+  http_filesize: "1M"
+
+test_nginx_perf_1M_data_size_32_threads:
+  threads: 32
+  http_filename: "1M.1.html"
+  http_filesize: "1M"

@@ -81,9 +81,9 @@ def pytest_addoption(parser):
     # used as default for both commits.
     # If 'gramine_commit' is master/any other commit, 'gsc_commit' must be passed as master.
     parser.addoption("--gramine_repo", action="store", type=str, default="", help="Gramine repo to be used.")
-    parser.addoption("--gramine_commit", action="store", type=str, default="", help="Gramine commit/branch to be checked out.")
+    parser.addoption("--gramine_commit", action="store", type=str, default="master", help="Gramine commit/branch to be checked out.")
     parser.addoption("--gsc_repo", action="store", type=str, default="", help="Gramine GSC repo to be used.")
-    parser.addoption("--gsc_commit", action="store", type=str, default="", help="Gramine GSC commit/branch to be checked out.")
+    parser.addoption("--gsc_commit", action="store", type=str, default="master", help="Gramine GSC commit/branch to be checked out.")
     parser.addoption("--iterations", action="store", type=str, default='3', help="Number of times workload/benchmark app needs to be launched/executed.")
     # Following will be value of 'exec_mode' that would be expected by the framework.
     # For Redis workload: "native,gramine-direct,gramine-sgx-single-thread-non-exitless,gramine-sgx-diff-core-exitless"

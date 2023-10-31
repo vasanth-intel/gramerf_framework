@@ -135,6 +135,16 @@ pipeline{
                                 }
                             }
                         }
+                        stage('nginx_perf'){
+                            steps{
+                                script{
+                                    def job = build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_commit', value: 'nginx_validation'), string(name: 'gsc_commit', value: gsc_commit), string(name: 'run', value: 'nginx_perf'), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations), string(name: 'gramine_repo', value: 'https://github.com/TejaswineeL/gramine.git'), booleanParam(name: 'edmm', value: edmm)]
+                                    dir ('artifacts'){
+                                        copyArtifacts projectName: 'gramerf_performance_benchmarking', selector: specific("${job.number}")
+                                    }
+                                }
+                            }
+                        }
                         stage('mysql_perf'){
                             steps{
                                 script{

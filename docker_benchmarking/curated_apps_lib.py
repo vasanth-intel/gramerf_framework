@@ -88,7 +88,7 @@ def generate_curated_image(test_config_dict):
     cwd = os.getcwd()
     
     # The following ssh command is to mitigate the curses error faced while launching the command through Jenkins.
-    curation_cmd = f"ssh -tt {logged_in_user}@localhost 'cd {CURATED_APPS_PATH} && python3 curate.py {workload_image} test'"
+    curation_cmd = f"ssh -tt {logged_in_user}@localhost 'cd {CURATED_APPS_PATH} && python3 curate.py {workload_image} --test'"
 
     print("Curation cmd ", curation_cmd)
 

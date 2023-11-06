@@ -45,6 +45,8 @@ system_details['OpenVINO™ Model Server'] = html.P(['OS: Ubuntu 20.04.6 LTS', htm
                                     html.Br(), 'CPU(s): 144', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 36'])
 system_details['PyTorch'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
                                  html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
+system_details['NGINX'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
+                                     html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
 
 workload_details = {}
 workload_details['TensorFlow'] = html.P(['TensorFlow: v2.4.0', html.Br(), 'Enclave size: 32GB'])
@@ -58,6 +60,7 @@ workload_details['TensorFlow Encrypted'] = html.P(['TensorFlow : v2.4.0', html.B
 workload_details['MariaDB'] = html.P(['MariaDB', html.Br(), 'Enclave size: 2GB'])
 workload_details['OpenVINO™ Model Server'] = html.P(['OpenVINO™ Model Server', html.Br(), 'Enclave size: 16GB'])
 workload_details['PyTorch'] = html.P(['PyTorch', html.Br(), 'Enclave size: 4GB'])
+workload_details['NGINX'] = html.P(['NGINX', html.Br(), 'Enclave size: 512MB'])
 
 app.layout = html.Div([
     html.H1("Gramine Performance Dashboard",

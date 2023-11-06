@@ -22,6 +22,7 @@ workload_namelist['sklearnex'] = 'scikit-learn'
 workload_namelist['mariadb'] = 'MariaDB'
 workload_namelist['openvinomodelserver'] = 'OpenVINO™ Model Server'
 workload_namelist['pytorch'] = 'PyTorch'
+workload_namelist['nginx'] = 'NGINX'
 
 unwamted_cols = ['NATIVE', 'GRAMINE-SGX', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS', 'GRAMINE-DIRECT',
                  'Unnamed: 9', 'NATIVE.1', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS.1', 'GRAMINE-DIRECT.1', 'Unnamed: 1', 'ROWS', 'COLUMNS']
@@ -131,9 +132,9 @@ def write_excel(path, perf_df_from_excl):
                         [workload_merge_df, workload_perf_data], ignore_index=True)
                 if workload_merge_df.empty:
                     continue
-                if workload in writer.sheets:
+                if workload_namelist[workload] in writer.sheets:
                     workload_merge_df.to_excel(
-                        writer, sheet_name=workload_namelist[workload], startrow=writer.sheets[workload].max_row, index=False, header=False)
+                        writer, sheet_name=workload_namelist[workload], startrow=writer.sheets[workload_namelist[workload]].max_row, index=False, header=False)
                 else:
                     workload_merge_df.to_excel(
                         writer, sheet_name=workload_namelist[workload], index=False)

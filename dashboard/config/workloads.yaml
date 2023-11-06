@@ -8,3 +8,6 @@ workloads:
 - openvinomodelserver
 - sklearnex
 - pytorch
+- mysql
+- memcached
+- nginx

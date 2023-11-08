@@ -1,0 +1,5 @@
+Default:
+  workload_name: "SpecPower"
+  
+test_specpower_throughput:
+  iterations: 5

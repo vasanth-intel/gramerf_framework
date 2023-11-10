@@ -33,6 +33,8 @@ MEMCACHED_DOWNLOAD_CMD = "wget https://memcached.org/files/memcached-1.5.21.tar.
 NGINX_VERSION = "nginx-1.22.0"
 NGINX_DOWNLOAD_CMD = f"wget http://nginx.org/download/{NGINX_VERSION}.tar.gz"
 
+SPECPOWER_ROOT_DIR = "/home/intel/jenkins/SPECpower_ssj2008-v1.12/"
+
 MIMALLOC_INSTALL_PATH = "/usr/local/lib/libmimalloc.so.1.7"
 
 TCMALLOC_INSTALL_PATH = "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"

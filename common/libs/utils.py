@@ -532,3 +532,41 @@ def check_and_enable_edmm_in_manifest(manifest_file):
             exinfo_string = '$ a sgx.require_exinfo = true'
             exinfo_sed_cmd = f"sed -i -e '{exinfo_string}' {manifest_file}"
             exec_shell_cmd(exinfo_sed_cmd, None)
+
+def track_process(test_config_dict, process=None, success_str='', timeout=0):
+    result = False
+    final_output = ''
+    debug_log = None
+    output = None
+
+    # Redirecting the debug mode logs to file instead of console because
+    # it consumes whole lot of console and makes difficult to debug
+    if test_config_dict.get("debug_mode") == "y":
+        console_log_file = f"{LOGS_DIR}/{test_config_dict['test_name']}_console.log"
+        debug_log = open(console_log_file, "w+")
+
+    if timeout != 0:
+        timeout = time.time() + timeout
+    while True:
+        if process.poll() is not None and output == '':
+            break
+
+        output = process.stdout.readline()
+        
+        if debug_log:
+            if output: debug_log.write(output)
+        else:
+            if output: print(output.strip())
+
+        if output:
+            if output:
+                final_output += output
+            if final_output.count(success_str) > 0:
+                process.stdout.close()
+                result = True
+                break
+            elif timeout != 0 and time.time() > timeout:
+                break
+    
+    if debug_log: debug_log.close()
+    return result, final_output

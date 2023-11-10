@@ -57,6 +57,9 @@ def getNodeName(){
         } else if (run_specific_perf_test.contains("nginx_perf") || run.contains("nginx_perf")){
             echo "nginx_perf workload is selected ..."
             return 'graphene_sklearn'
+        } else if (run_specific_perf_test.contains("specpower_perf") || run.contains("specpower_perf")){
+            echo "specpower_perf workload is selected ..."
+            return 'graphene_spec'
         }
     } else {
         echo "perf runs will be executed on $node_name"

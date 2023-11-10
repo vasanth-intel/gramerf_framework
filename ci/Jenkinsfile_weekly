@@ -94,6 +94,19 @@ pipeline{
                                 }
                             }
                         }
+                        stage("Run openvino Latency perf edmm"){
+                            when { expression { params.edmm != true } }
+                            steps{
+                                script{
+                                    def job = build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_commit', value: gramine_commit), string(name: 'run', value: 'ov_perf_latency'), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations), booleanParam(name: 'edmm', value: true)]
+                                    if(job.getResult() == 'SUCCESS'){
+                                        dir ('artifacts/edmm'){
+                                            copyArtifacts projectName: 'gramerf_performance_benchmarking', selector: specific("${job.number}")
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         stage("Run Tensorflow perf") {
                             steps{
                                 script{
@@ -112,6 +125,19 @@ pipeline{
                                     def job = build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_commit', value: gramine_commit), string(name: 'run', value: 'ov_perf_throughput'), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations), booleanParam(name: 'edmm', value: edmm)]
                                     if(job.getResult() == 'SUCCESS'){
                                         dir ('artifacts'){
+                                            copyArtifacts projectName: 'gramerf_performance_benchmarking', selector: specific("${job.number}")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        stage("Run openvino throughput perf edmm"){
+                            when { expression { params.edmm != true } }
+                            steps{
+                                script{
+                                    def job = build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_commit', value: gramine_commit), string(name: 'run', value: 'ov_perf_throughput'), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations), booleanParam(name: 'edmm', value: true)]
+                                    if(job.getResult() == 'SUCCESS'){
+                                        dir ('artifacts/edmm'){
                                             copyArtifacts projectName: 'gramerf_performance_benchmarking', selector: specific("${job.number}")
                                         }
                                     }

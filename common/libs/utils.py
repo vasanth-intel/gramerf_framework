@@ -349,6 +349,8 @@ def write_to_report(workload_name, test_results):
     now = dt.isoformat(dt.now()).replace(":","-").split('.')[0]
     if workload_name == 'Tensorflow' and os.environ['encryption'] == '1':
         workload_name = 'tensorflow_encrypted'
+    if workload_name == 'Openvino' and os.environ['EDMM'] == '1':
+        workload_name = 'openvino_edmm'
     gramine_commit = os.environ["gramine_commit"]
     report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + gramine_commit[:7] + ".xlsx")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)

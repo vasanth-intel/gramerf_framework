@@ -351,6 +351,8 @@ def write_to_report(workload_name, test_results):
         workload_name = 'tensorflow_encrypted'
     if workload_name == 'Openvino' and os.environ['EDMM'] == '1':
         workload_name = 'openvino_edmm'
+    if workload_name == 'Redis' and os.environ['perf_config'] == 'container':
+        workload_name = 'redis_container'
     gramine_commit = os.environ["gramine_commit"]
     report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + gramine_commit[:7] + ".xlsx")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)

@@ -336,10 +336,13 @@ def write_to_csv(tcd, test_dict):
 def write_to_report(workload_name, test_results):
     throughput_dict = collections.defaultdict(dict)
     latency_dict = collections.defaultdict(dict)
+    time_dict = collections.defaultdict(dict)
     generic_dict = collections.defaultdict(dict)
 
     for k in test_results:
-        if 'throughput' in k:
+        if 'time' in k:
+            time_dict[k] = test_results[k]
+        elif 'throughput' in k:
             throughput_dict[k] = test_results[k]
         elif 'latency' in k:
             latency_dict[k] = test_results[k]
@@ -408,6 +411,12 @@ def write_to_report(workload_name, test_results):
             generic_df = pd.DataFrame.from_dict(generic_dict, orient='index', columns=cols).dropna(axis=1)
         generic_df.columns = generic_df.columns.str.upper()
         generic_df.to_excel(writer, sheet_name=workload_name)
+
+    if len(time_dict) > 0:
+        cols = os.environ['exec_mode'].split(",")
+        time_df = pd.DataFrame.from_dict(time_dict, orient='index', columns=cols).dropna(axis=1)
+        time_df.columns = time_df.columns.str.upper()
+        time_df.to_excel(writer, sheet_name=workload_name+"_Time")
 
     writer.save()
 

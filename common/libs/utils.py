@@ -357,6 +357,8 @@ def write_to_report(workload_name, test_results):
     if workload_name == 'Redis' and os.environ['perf_config'] == 'container':
         workload_name = 'redis_container'
     gramine_commit = os.environ["gramine_commit"]
+    if "/" in gramine_commit:
+        gramine_commit = os.path.basename(gramine_commit)
     report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + gramine_commit[:7] + ".xlsx")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):

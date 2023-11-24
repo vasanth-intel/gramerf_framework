@@ -356,14 +356,15 @@ def write_to_report(workload_name, test_results):
         workload_name = 'openvino_edmm'
     if workload_name == 'Redis' and os.environ['perf_config'] == 'container':
         workload_name = 'redis_container'
-    gramine_commit = os.environ["gramine_commit"]
+    if "/" in gramine_commit:
+        gramine_commit = os.path.basename(gramine_commit)
     report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + gramine_commit[:7] + ".xlsx")
+    print(f"\n-- Writing Gramine performance results to {report_name}\n")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
-    
     if workload_name == 'Redis' or workload_name == 'Memcached':
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \

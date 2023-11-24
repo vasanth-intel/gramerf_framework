@@ -360,6 +360,7 @@ def write_to_report(workload_name, test_results):
     if "/" in gramine_commit:
         gramine_commit = os.path.basename(gramine_commit)
     report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + gramine_commit[:7] + ".xlsx")
+    print(f"\n-- Writing Gramine performance results to {report_name}\n")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')

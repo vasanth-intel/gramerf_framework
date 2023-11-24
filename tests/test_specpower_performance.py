@@ -10,7 +10,7 @@ tests_yaml_path = os.path.join(os.getcwd(), 'data', yaml_file_name)
 class TestClass:
 
     @pytest.mark.specpower_perf
-    def test_specpower_throughput(self):
+    def test_specpower_perf_throughput(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result

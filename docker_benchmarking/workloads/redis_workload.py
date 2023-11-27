@@ -74,6 +74,9 @@ class RedisWorkload:
         manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/redis/redis.manifest.template")
         enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size =.*/sgx.enclave_size = \"4G\"/' {manifest_file}"
         utils.exec_shell_cmd(enc_size_sed_cmd, None)
+        if os.environ["EDMM"] == "1":
+            max_threads_str = "sgx.max_threads = {{ '1' if env.get('EDMM', '0') == '1' else '8' }}"
+            utils.exec_shell_cmd(f'sed -i "s/sgx.max_threads =.*/{max_threads_str}/" {manifest_file}', None)
         utils.check_and_enable_edmm_in_manifest(manifest_file)
 
         # Create graminized image for gramine direct and sgx runs.

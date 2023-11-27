@@ -64,6 +64,9 @@ class TensorflowServingWorkload:
         # clone the serving repo to get the latency values
         self.download_and_update_tfserving_repo()
         manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/tensorflow-serving/tensorflow-serving.manifest.template")
+        if os.environ["EDMM"] == "1":
+            max_threads_str = "sgx.max_threads = {{ '1' if env.get('EDMM', '0') == '1' else '1024' }}"
+            utils.exec_shell_cmd(f'sed -i "s/sgx.max_threads =.*/{max_threads_str}/" {manifest_file}', None)
         utils.check_and_enable_edmm_in_manifest(manifest_file)
         # Create graminized image for gramine direct and sgx runs.
         curation_output = curated_apps_lib.generate_curated_image(test_config_dict)

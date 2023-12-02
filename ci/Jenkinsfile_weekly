@@ -79,7 +79,7 @@ pipeline{
                                 build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                             }
                             build_perf_job('redis_perf', 'baremetal', get_exec_mode('redis_perf'), get_iterations('redis_perf'), edmm).call()
-                            build_perf_job('redis_perf', 'container', get_exec_mode('redis_perf'), get_iterations('redis_perf'), edmm).call()
+                            build_perf_job('redis_perf', 'container', 'native,gramine-sgx-single-thread-non-exitless', get_iterations('redis_perf'), edmm).call()
                         }
                     }
                 }

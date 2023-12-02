@@ -20,7 +20,7 @@ class NginxWorkload:
     def get_workload_home_dir(self):
         return self.workload_home_dir
 
-    def download_workload(self):
+    def download_workload(self, tcd):
         # We would not build if dir already exists.
         if os.path.exists(self.workload_bld_dir):
             print("\n-- Nginx already downloaded. Not fetching from source..")
@@ -31,6 +31,10 @@ class NginxWorkload:
         tar_file_name = os.path.basename(NGINX_DOWNLOAD_CMD.split()[1])
         untar_cmd = f"tar --touch -xzf {tar_file_name}"
         utils.exec_shell_cmd(untar_cmd)
+
+        print("\n-- Copying perf optimized nginx configuration file..")
+        conf_file = os.path.join(FRAMEWORK_HOME_DIR, "baremetal_benchmarking/config_files" , tcd['conf_file'])
+        shutil.copy2(conf_file, self.workload_home_dir)
 
     def build_and_install_workload(self, test_config_dict):
         print("\n###### In build_and_install_workload #####\n")
@@ -105,18 +109,6 @@ class NginxWorkload:
         utils.exec_shell_cmd("cp -f ssl/* ./install/conf/", None)
         utils.exec_shell_cmd("gramine-argv-serializer 'nginx' '-c' 'conf/nginx-gramine.conf' > nginx_args", None)
 
-    def copy_libs(self):
-        # The following libraries were given by dev team, which should be present in /usr/lib as per manifest.
-        # If the libs are not copied, it will lead to following warning in direct/sgx execution modes.
-        # "Emulating a raw system/supervisor call. This degrades performance,
-        #  consider patching your application to use Gramine syscall API."
-        tcmalloc_lib = os.path.join(Path.home(),"Do_not_delete_gramerf_dependencies/nginx/libtcmalloc.so")
-        iomp_lib = os.path.join(Path.home(),"Do_not_delete_gramerf_dependencies/nginx/libiomp5.so")
-        if not os.path.exists(tcmalloc_lib) and not os.path.exists(iomp_lib):
-            raise Exception(f"\n-- Either of pre-requisite libs not present!\n{tcmalloc_lib}\nOR\n{iomp_lib}")
-        utils.exec_shell_cmd(f"sudo cp -f {tcmalloc_lib} /usr/lib/", None)
-        utils.exec_shell_cmd(f"sudo cp -f {iomp_lib} /usr/lib/", None)
-
     def build_wrk_benchmark(self):
         wrk_filename = os.path.join(self.workload_home_dir, "wrk", "wrk")
         if not os.path.exists(wrk_filename):
@@ -135,8 +127,7 @@ class NginxWorkload:
         gramine_libs.update_manifest_file(test_config_dict)
 
     def setup_workload(self, test_config_dict):
-        self.copy_libs()
-        self.download_workload()
+        self.download_workload(test_config_dict)
         self.build_and_install_workload(test_config_dict)
         self.generate_manifest()
         self.generate_test_data(test_config_dict)

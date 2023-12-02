@@ -4,6 +4,7 @@ Default:
   workload_name: "Nginx"
   manifest_name: "nginx"
   manifest_file: "nginx.manifest.template"
+  conf_file: "nginx-gramine.conf.template"
   http_filename: "10K.1.html"
   http_filesize: "10K"
   server_port: 8444

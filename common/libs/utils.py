@@ -336,10 +336,13 @@ def write_to_csv(tcd, test_dict):
 def write_to_report(workload_name, test_results):
     throughput_dict = collections.defaultdict(dict)
     latency_dict = collections.defaultdict(dict)
+    time_dict = collections.defaultdict(dict)
     generic_dict = collections.defaultdict(dict)
 
     for k in test_results:
-        if 'throughput' in k:
+        if 'time' in k:
+            time_dict[k] = test_results[k]
+        elif 'throughput' in k:
             throughput_dict[k] = test_results[k]
         elif 'latency' in k:
             latency_dict[k] = test_results[k]
@@ -349,14 +352,20 @@ def write_to_report(workload_name, test_results):
     now = dt.isoformat(dt.now()).replace(":","-").split('.')[0]
     if workload_name == 'Tensorflow' and os.environ['encryption'] == '1':
         workload_name = 'tensorflow_encrypted'
+    if workload_name == 'Openvino' and os.environ['EDMM'] == '1':
+        workload_name = 'openvino_edmm'
+    if workload_name == 'Redis' and os.environ['perf_config'] == 'container':
+        workload_name = 'redis_container'
     gramine_commit = os.environ["gramine_commit"]
+    if "/" in gramine_commit:
+        gramine_commit = os.path.basename(gramine_commit)
     report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + gramine_commit[:7] + ".xlsx")
+    print(f"\n-- Writing Gramine performance results to {report_name}\n")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
-    
     if workload_name == 'Redis' or workload_name == 'Memcached':
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
@@ -404,6 +413,12 @@ def write_to_report(workload_name, test_results):
             generic_df = pd.DataFrame.from_dict(generic_dict, orient='index', columns=cols).dropna(axis=1)
         generic_df.columns = generic_df.columns.str.upper()
         generic_df.to_excel(writer, sheet_name=workload_name)
+
+    if len(time_dict) > 0:
+        cols = os.environ['exec_mode'].split(",")
+        time_df = pd.DataFrame.from_dict(time_dict, orient='index', columns=cols).dropna(axis=1)
+        time_df.columns = time_df.columns.str.upper()
+        time_df.to_excel(writer, sheet_name=workload_name+"_Time")
 
     writer.save()
 

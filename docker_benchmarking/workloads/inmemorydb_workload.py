@@ -105,12 +105,12 @@ class InMemoryDBWorkload:
         utils.exec_shell_cmd(enc_size_sed_cmd, None)
         if "mariadb" in test_config_dict["docker_image"]:
             if os.environ["EDMM"] == "1":
-                max_threads_str = "sgx.max_threads = '1'"
+                max_threads_str = "sgx.max_threads = 1"
                 utils.exec_shell_cmd(f'sed -i "s/sgx.max_threads =.*/{max_threads_str}/" {manifest_file}', None)
             else:
                 utils.exec_shell_cmd(f"sed -i 's/sgx.max_threads =.*/sgx.max_threads = 256/' {manifest_file}", None)
         if "mysql" in test_config_dict["docker_image"] and os.environ["EDMM"] == "1":
-            max_threads_str = "sgx.max_threads = '1'"
+            max_threads_str = "sgx.max_threads = 1"
             utils.exec_shell_cmd(f'sed -i "s/sgx.max_threads =.*/{max_threads_str}/" {manifest_file}', None)
         add_malloc_arena_max = False
         with open(manifest_file) as f:

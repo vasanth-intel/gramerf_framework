@@ -336,10 +336,13 @@ def write_to_csv(tcd, test_dict):
 def write_to_report(workload_name, test_results):
     throughput_dict = collections.defaultdict(dict)
     latency_dict = collections.defaultdict(dict)
+    time_dict = collections.defaultdict(dict)
     generic_dict = collections.defaultdict(dict)
 
     for k in test_results:
-        if 'throughput' in k:
+        if 'time' in k:
+            time_dict[k] = test_results[k]
+        elif 'throughput' in k:
             throughput_dict[k] = test_results[k]
         elif 'latency' in k:
             latency_dict[k] = test_results[k]
@@ -349,15 +352,21 @@ def write_to_report(workload_name, test_results):
     now = dt.isoformat(dt.now()).replace(":","-").split('.')[0]
     if workload_name == 'Tensorflow' and os.environ['encryption'] == '1':
         workload_name = 'tensorflow_encrypted'
+    if workload_name == 'Openvino' and os.environ['EDMM'] == '1':
+        workload_name = 'openvino_edmm'
+    if workload_name == 'Redis' and os.environ['perf_config'] == 'container':
+        workload_name = 'redis_container'
     gramine_commit = os.environ["gramine_commit"]
+    if "/" in gramine_commit:
+        gramine_commit = os.path.basename(gramine_commit)
     report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + gramine_commit[:7] + ".xlsx")
+    print(f"\n-- Writing Gramine performance results to {report_name}\n")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
-    
-    if workload_name == 'Redis' or workload_name == 'Memcached':
+    if 'redis' in workload_name.lower() or 'memcached' in workload_name.lower():
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
@@ -404,6 +413,12 @@ def write_to_report(workload_name, test_results):
             generic_df = pd.DataFrame.from_dict(generic_dict, orient='index', columns=cols).dropna(axis=1)
         generic_df.columns = generic_df.columns.str.upper()
         generic_df.to_excel(writer, sheet_name=workload_name)
+
+    if len(time_dict) > 0:
+        cols = os.environ['exec_mode'].split(",")
+        time_df = pd.DataFrame.from_dict(time_dict, orient='index', columns=cols).dropna(axis=1)
+        time_df.columns = time_df.columns.str.upper()
+        time_df.to_excel(writer, sheet_name=workload_name+"_Time")
 
     writer.save()
 
@@ -532,3 +547,41 @@ def check_and_enable_edmm_in_manifest(manifest_file):
             exinfo_string = '$ a sgx.require_exinfo = true'
             exinfo_sed_cmd = f"sed -i -e '{exinfo_string}' {manifest_file}"
             exec_shell_cmd(exinfo_sed_cmd, None)
+
+def track_process(test_config_dict, process=None, success_str='', timeout=0):
+    result = False
+    final_output = ''
+    debug_log = None
+    output = None
+
+    # Redirecting the debug mode logs to file instead of console because
+    # it consumes whole lot of console and makes difficult to debug
+    if test_config_dict.get("debug_mode") == "y":
+        console_log_file = f"{LOGS_DIR}/{test_config_dict['test_name']}_console.log"
+        debug_log = open(console_log_file, "w+")
+
+    if timeout != 0:
+        timeout = time.time() + timeout
+    while True:
+        if process.poll() is not None and output == '':
+            break
+
+        output = process.stdout.readline()
+        
+        if debug_log:
+            if output: debug_log.write(output)
+        else:
+            if output: print(output.strip())
+
+        if output:
+            if output:
+                final_output += output
+            if final_output.count(success_str) > 0:
+                process.stdout.close()
+                result = True
+                break
+            elif timeout != 0 and time.time() > timeout:
+                break
+    
+    if debug_log: debug_log.close()
+    return result, final_output

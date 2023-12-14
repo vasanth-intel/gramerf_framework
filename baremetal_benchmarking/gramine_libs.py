@@ -32,14 +32,14 @@ def fresh_gramine_checkout():
     os.chdir(GRAMINE_HOME_DIR)
 
     gramine_commit = os.environ["gramine_commit"]
-    # If 'gramine_commit' is passed, corresponding gramine commit will be checked out
-    # to build gramine from source. If 'gramine_commit' is not specified, latest
-    # master will be used to build gramine.
-    if gramine_commit != '':
-        utils.exec_shell_cmd(f"git checkout {gramine_commit}", None)
-    else:
+    # If 'gramine_commit' is master (default), latest gramine master will be used to build gramine.
+    # If 'gramine_commit' is not master, corresponding gramine commit will be checked out
+    # to build gramine from source. 
+    if gramine_commit == 'master':
         gramine_commit = utils.exec_shell_cmd("git rev-parse HEAD")
-        os.environ["gramine_commit"] = gramine_commit
+        os.environ["gramine_commit"] = gramine_commit        
+    else:
+        utils.exec_shell_cmd(f"git checkout {gramine_commit}", None)
 
     print("\n-- Checked out following Gramine commit: ", gramine_commit)
 

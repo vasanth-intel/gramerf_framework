@@ -29,6 +29,14 @@ def percent_degradation(tcd, baseline, testapp, throughput = False):
         return '{:0.3f}'.format(100 * (float(testapp) - float(baseline)) / float(baseline))
 
 
+def run_to_run_variation(tpt_lat_list):
+    max_val = max(tpt_lat_list)
+    min_val = min(tpt_lat_list)
+    if min_val == 0:
+        return 0
+    return round(((max_val/min_val) - 1) * 100)
+
+
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
     try:
         cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
@@ -273,7 +281,7 @@ def set_threads_cnt_env_var():
     """
     lscpu_output = exec_shell_cmd('lscpu')
     lines = lscpu_output.splitlines()
-    cores_count, core_per_socket, threads_per_core = 0, 0, 0
+    cores_count, core_per_socket, threads_per_core, sockets = 0, 0, 0, 0
     for line in lines:
         if 'CPU(s):' in line:
             cores_count = int(line.split(':')[-1].strip())
@@ -281,16 +289,20 @@ def set_threads_cnt_env_var():
             core_per_socket = int(line.split(':')[-1].strip())
         if 'Thread(s) per core:' in line:
             threads_per_core = int(line.split(':')[-1].strip())
-        if cores_count and core_per_socket and threads_per_core:
+        if 'Socket(s):' in line:
+            sockets = int(line.split(':')[-1].strip())
+        if cores_count and core_per_socket and threads_per_core and sockets:
             break
     
     os.environ['CORES_COUNT'] = str(cores_count)
     os.environ['THREADS_CNT'] = str(core_per_socket * threads_per_core)
     os.environ['CORES_PER_SOCKET'] = str(core_per_socket)
+    os.environ['SOCKETS'] = str(sockets)
 
     print("\n-- Setting the CORES_COUNT env variable to ", os.environ['CORES_COUNT'])
     print("\n-- Setting the THREADS_CNT env variable to ", os.environ['THREADS_CNT'])
     print("\n-- Setting the CORES_PER_SOCKET env variable to ", os.environ['CORES_PER_SOCKET'])
+    print("\n-- Setting the SOCKETS env variable to ", os.environ['SOCKETS'])
 
 
 def determine_host_ip_addr():
@@ -324,10 +336,13 @@ def write_to_csv(tcd, test_dict):
 def write_to_report(workload_name, test_results):
     throughput_dict = collections.defaultdict(dict)
     latency_dict = collections.defaultdict(dict)
+    time_dict = collections.defaultdict(dict)
     generic_dict = collections.defaultdict(dict)
 
     for k in test_results:
-        if 'throughput' in k:
+        if 'time' in k:
+            time_dict[k] = test_results[k]
+        elif 'throughput' in k:
             throughput_dict[k] = test_results[k]
         elif 'latency' in k:
             latency_dict[k] = test_results[k]
@@ -337,38 +352,55 @@ def write_to_report(workload_name, test_results):
     now = dt.isoformat(dt.now()).replace(":","-").split('.')[0]
     if workload_name == 'Tensorflow' and os.environ['encryption'] == '1':
         workload_name = 'tensorflow_encrypted'
-    if os.environ['perf_config'] == "baremetal":
-        commit_id = os.environ["commit_id"]
-    else:
-        commit_id = os.environ["curation_commit"]
-    report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + now + "_" + commit_id[:7] + ".xlsx")
+    if workload_name == 'Openvino' and os.environ['EDMM'] == '1':
+        workload_name = 'openvino_edmm'
+    if workload_name == 'Redis' and os.environ['perf_config'] == 'container':
+        workload_name = 'redis_container'
+    gramine_commit = os.environ["gramine_commit"]
+    if "/" in gramine_commit:
+        gramine_commit = os.path.basename(gramine_commit)
+    report_name = os.path.join(PERF_RESULTS_DIR, "gramine_" + workload_name.lower() + "_perf_data_" + os.environ["jenkins_build_num"] + "_" + now + "_" + gramine_commit[:7] + ".xlsx")
+    print(f"\n-- Writing Gramine performance results to {report_name}\n")
     if not os.path.exists(PERF_RESULTS_DIR): os.makedirs(PERF_RESULTS_DIR)
     if os.path.exists(report_name):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
-    
-    if workload_name == 'Redis' or workload_name == 'Memcached':
+    if 'redis' in workload_name.lower() or 'memcached' in workload_name.lower():
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
     elif workload_name == 'Sklearnex':
         cols = ['data_type', 'dataset_name', 'rows', 'columns', 'classes', 'time', 'gramine-sgx', 'gramine-direct', 'gramine-sgx-deg', 'gramine-direct-deg']
-    elif workload_name == 'TensorflowServing' or workload_name == 'MySql':
+    elif workload_name == 'TensorflowServing' or workload_name == 'MySql' or workload_name == 'OpenVinoModelServer':
         cols = ['native', 'gramine-sgx', 'native-avg', 'sgx-avg', 'sgx-deg']
+    elif workload_name == 'Pytorch':
+        cols = ['native_s0', 'native_s1', 'gramine-direct_s0', 'gramine-direct_s1', 'gramine-sgx_s0', 'gramine-sgx_s1', \
+                'native_s0_avg', 'native_s1_avg', 'gramine-direct_s0_avg', 'gramine-direct_s1_avg', 'gramine-sgx_s0_avg', 'gramine-sgx_s1_avg', \
+                'native_s0_r2r_var', 'native_s1_r2r_var', 'gramine-direct_s0_r2r_var', 'gramine-direct_s1_r2r_var', 'gramine-sgx_s0_r2r_var', 'gramine-sgx_s1_r2r_var', \
+                'gramine-direct_s0_Deg', 'gramine-direct_s1_Deg', 'gramine-sgx_s0_Deg', 'gramine-sgx_s1_Deg']
     else:
         cols = ['native', 'gramine-sgx', 'gramine-direct', 'native-avg', 'sgx-avg', 'direct-avg', 'sgx-deg', 'direct-deg']
 
     if len(throughput_dict) > 0:
-        throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols).dropna(axis=1)
+        if workload_name == 'Pytorch':
+            throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols)
+        else:
+            throughput_df = pd.DataFrame.from_dict(throughput_dict, orient='index', columns=cols).dropna(axis=1)
         throughput_df.columns = throughput_df.columns.str.upper()
         throughput_df.to_excel(writer, sheet_name=workload_name)
 
     if len(latency_dict) > 0:
-        latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols).dropna(axis=1)
+        if workload_name == 'Pytorch':
+            latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols)
+        else:
+            latency_df = pd.DataFrame.from_dict(latency_dict, orient='index', columns=cols).dropna(axis=1)
         latency_df.columns = latency_df.columns.str.upper()
         if len(throughput_dict) > 0:
-            latency_df.to_excel(writer, sheet_name=workload_name, startcol=throughput_df.shape[1]+2)
+            if workload_name == 'Pytorch':
+                latency_df.to_excel(writer, sheet_name=workload_name, header=None, startrow=throughput_df.shape[0]+1)
+            else:
+                latency_df.to_excel(writer, sheet_name=workload_name, startcol=throughput_df.shape[1]+2)
         else:
             latency_df.to_excel(writer, sheet_name=workload_name)
     
@@ -381,6 +413,12 @@ def write_to_report(workload_name, test_results):
             generic_df = pd.DataFrame.from_dict(generic_dict, orient='index', columns=cols).dropna(axis=1)
         generic_df.columns = generic_df.columns.str.upper()
         generic_df.to_excel(writer, sheet_name=workload_name)
+
+    if len(time_dict) > 0:
+        cols = os.environ['exec_mode'].split(",")
+        time_df = pd.DataFrame.from_dict(time_dict, orient='index', columns=cols).dropna(axis=1)
+        time_df.columns = time_df.columns.str.upper()
+        time_df.to_excel(writer, sheet_name=workload_name+"_Time")
 
     writer.save()
 
@@ -491,3 +529,59 @@ def update_file_contents(old_contents, new_contents, filename, append=False):
     fd = open(filename, "w")
     fd.write(new_data)
     fd.close()
+
+def check_and_enable_edmm_in_manifest(manifest_file):
+    if os.environ["EDMM"] == "1":
+        add_edmm_enable = add_exinfo = False
+        with open(manifest_file) as f:
+            file_contents = f.read()
+            if not 'edmm_enable' in file_contents:
+                add_edmm_enable = True
+            if not 'require_exinfo' in file_contents:
+                add_exinfo = True
+        if add_edmm_enable:
+            edmm_string = '$ a sgx.edmm_enable = true'
+            edmm_sed_cmd = f"sed -i -e '{edmm_string}' {manifest_file}"
+            exec_shell_cmd(edmm_sed_cmd, None)
+        if add_exinfo:
+            exinfo_string = '$ a sgx.require_exinfo = true'
+            exinfo_sed_cmd = f"sed -i -e '{exinfo_string}' {manifest_file}"
+            exec_shell_cmd(exinfo_sed_cmd, None)
+
+def track_process(test_config_dict, process=None, success_str='', timeout=0):
+    result = False
+    final_output = ''
+    debug_log = None
+    output = None
+
+    # Redirecting the debug mode logs to file instead of console because
+    # it consumes whole lot of console and makes difficult to debug
+    if test_config_dict.get("debug_mode") == "y":
+        console_log_file = f"{LOGS_DIR}/{test_config_dict['test_name']}_console.log"
+        debug_log = open(console_log_file, "w+")
+
+    if timeout != 0:
+        timeout = time.time() + timeout
+    while True:
+        if process.poll() is not None and output == '':
+            break
+
+        output = process.stdout.readline()
+        
+        if debug_log:
+            if output: debug_log.write(output)
+        else:
+            if output: print(output.strip())
+
+        if output:
+            if output:
+                final_output += output
+            if final_output.count(success_str) > 0:
+                process.stdout.close()
+                result = True
+                break
+            elif timeout != 0 and time.time() > timeout:
+                break
+    
+    if debug_log: debug_log.close()
+    return result, final_output

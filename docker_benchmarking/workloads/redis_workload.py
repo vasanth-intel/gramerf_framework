@@ -70,6 +70,12 @@ class RedisWorkload:
     def setup_workload(self, test_config_dict):
         # Pull default workload image for native run.
         self.pull_workload_default_image(test_config_dict)
+
+        manifest_file = os.path.join(CURATED_APPS_PATH, "workloads/redis/redis.manifest.template")
+        enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size =.*/sgx.enclave_size = \"4G\"/' {manifest_file}"
+        utils.exec_shell_cmd(enc_size_sed_cmd, None)
+        utils.check_and_enable_edmm_in_manifest(manifest_file)
+
         # Create graminized image for gramine direct and sgx runs.
         curation_output = curated_apps_lib.generate_curated_image(test_config_dict)
         decode_curation_output = curation_output.decode('utf-8')

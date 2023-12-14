@@ -41,13 +41,19 @@ pipeline {
                     cleanWs()
                     checkout scm
                     exec_cmd = ''
-                    def args = "--ignore=gramine --disable-warnings --perf_config=${perf_config} --iterations=${iterations} --exec_mode=${exec_mode}"
+                    def args = "--ignore=gramine --disable-warnings --perf_config=${perf_config} --iterations=${iterations} --exec_mode=${exec_mode} --gramine_commit=${gramine_commit} --jenkins_build_num=${BUILD_NUMBER}"
+                    if (gramine_repo?.trim()){
+                        args = args + " --gramine_repo=${gramine_repo}"
+                    }
                     echo "is encryption needed : $encryption"
                     
                     if (perf_config.equals("container")) {
-                        args = args + " --curation_commit=${curation_commit}"
+                        args = args + " --gsc_commit=${gsc_commit}"
+                        if (gsc_repo?.trim()){
+                            args = args + " --gsc_repo=${gsc_repo}"
+                        }
                     } else {
-                        args = args + " --build_gramine=${build_gramine} --commit_id=${gramine_repo_commit_id}"
+                        args = args + " --build_gramine=${build_gramine}"
                     }
                     
                     if (encryption) {
@@ -58,7 +64,17 @@ pipeline {
                         args = args + " --tmpfs=1"
                     }
 
+                    if (edmm.toBoolean()) {
+                        args = args + " --edmm=1"
+                    }
+
                     if (!run_specific_perf_test?.trim()){
+                        if (run.contains("pytorch_perf")){
+                            run = '"pytorch_perf and not pytorch_perf_amx"'
+                        }
+                        echo " selected marker $run will be executed"
+                        exec_cmd = "python3 -m pytest -s -v -m $run $args"
+
                         echo " selected marker $run will be executed"
                         exec_cmd = "python3 -m pytest -s -v -m $run $args"
                     } else {
@@ -77,6 +93,7 @@ pipeline {
                 always {
                     script {
                         if (isSklearn.toBoolean()){
+                            g_gramerf_lib.get_sklearn_mean_report()
                             archiveArtifacts artifacts: 'sklearn_reports/**/*'
                         } else {
                             archiveArtifacts artifacts: 'logs/*, results/*'

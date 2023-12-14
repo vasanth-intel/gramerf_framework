@@ -22,13 +22,16 @@ trd = defaultdict(dict)
 def read_command_line_args(config):
     os.environ["perf_config"] = config.option.perf_config
     os.environ["build_gramine"] = config.option.build_gramine
-    os.environ["commit_id"] = config.option.commit_id
+    os.environ["gramine_repo"] = config.option.gramine_repo
+    os.environ["gramine_commit"] = config.option.gramine_commit
+    os.environ["gsc_repo"] = config.option.gsc_repo
+    os.environ["gsc_commit"] = config.option.gsc_commit
     os.environ["iterations"] = config.option.iterations
     os.environ["exec_mode"] = config.option.exec_mode
     os.environ["EDMM"] = config.option.edmm
     os.environ["encryption"] = config.option.encryption
-    os.environ["curation_commit"] = config.option.curation_commit
     os.environ["tmpfs"] = config.option.tmpfs
+    os.environ["jenkins_build_num"] = config.option.jenkins_build_num
 
 
 @pytest.fixture(scope="session")
@@ -69,7 +72,18 @@ def pytest_addoption(parser):
     print("\n##### In pytest_addoption #####\n")
     parser.addoption("--perf_config", action="store", type=str, default="baremetal", help="Bare-metal or Docker based execution.")
     parser.addoption("--build_gramine", action="store", type=str, default="source", help="Package or source based installation of Gramine.")
-    parser.addoption("--commit_id", action="store", type=str, default="", help="Any specific commit-id for source based installation.")
+    # *********** For baremetal workloads **************
+    # If 'gramine_commit' is passed, corresponding gramine commit will be checked out
+    # to build gramine from source. If 'gramine_commit' is not specified, latest
+    # master will be used to build gramine.
+    # ************** For container workloads **************
+    # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.5 would be
+    # used as default for both commits.
+    # If 'gramine_commit' is master/any other commit, 'gsc_commit' must be passed as master.
+    parser.addoption("--gramine_repo", action="store", type=str, default="", help="Gramine repo to be used.")
+    parser.addoption("--gramine_commit", action="store", type=str, default="master", help="Gramine commit/branch to be checked out.")
+    parser.addoption("--gsc_repo", action="store", type=str, default="", help="Gramine GSC repo to be used.")
+    parser.addoption("--gsc_commit", action="store", type=str, default="master", help="Gramine GSC commit/branch to be checked out.")
     parser.addoption("--iterations", action="store", type=str, default='3', help="Number of times workload/benchmark app needs to be launched/executed.")
     # Following will be value of 'exec_mode' that would be expected by the framework.
     # For Redis workload: "native,gramine-direct,gramine-sgx-single-thread-non-exitless,gramine-sgx-diff-core-exitless"
@@ -78,8 +92,6 @@ def pytest_addoption(parser):
     parser.addoption("--edmm", action="store", type=str, default="0", help="EDMM mode")
     parser.addoption("--encryption", action="store", type=str, default='0', help="Enable encryption for model/s before workload command execution.")
     parser.addoption("--tmpfs", action="store", type=str, default='0', help="Use tmpfs path for DB.")
-    # Following option is applicable only for curated workloads, to use the right gramine binaries for executing the workload.
-    # If the following option is not provided at command line, we use the default gramine binaries installed on the system.
-    # If any gramine specific commit-id is provided, we use the binaries after building from the specified commit-id.
-    # If 'master' is provided as value to below option in command line, we use the binaires after building from the latest Gramine commit.
-    parser.addoption("--curation_commit", action="store", type=str, default="", help="Any specific commit/master to be checked out for curated workloads.")
+    # Following option is the build number of the 'gramerf_performance_banehmarking' Jenkins job.
+    # This number is used within the filename of the final report generated for the workload.
+    parser.addoption("--jenkins_build_num", action="store", type=str, default="", help="Build number of Jenkins CI perf job")

@@ -1,131 +1,135 @@
 properties([
     parameters([
-        [$class: 'ChoiceParameter', 
-            choiceType: 'PT_SINGLE_SELECT', 
-            description: 'Select Gramine installation mode (applicable for bare-metal performance benchmarking)', 
-            filterLength: 1, 
-            filterable: false, 
-            name: 'build_gramine', 
-            script: [
-                $class: 'GroovyScript', 
-                fallbackScript: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        "return['']"
-                ], 
-                script: [
-                    classpath: [], 
-                    sandbox: false, 
-                    script: 
-                        "return['package', 'source:selected']"
-                ]
-            ]
-        ],
-        [$class: 'DynamicReferenceParameter', 
-            choiceType: 'ET_FORMATTED_HTML', 
-            description: 'Provide Gramine repo source commit id to checkout. By default, latest commit from master branch shall be cloned.(Applicable for Gramine source installation mode only)',
-            name: 'gramine_repo_commit_id', 
-            referencedParameters: 'build_gramine', 
-            script: 
-                [$class: 'GroovyScript', 
-                fallbackScript: [
-                        classpath: [], 
-                        sandbox: false, 
-                        script: "return['']"
-                        ], 
-                script: [
-                        classpath: [], 
-                        sandbox: false, 
-                        script: '''
-                        if (build_gramine.contains('source')){
-                            return """
-        <input name="value" id="build_gramine"  value="">
-        <img src="force/failed/load/image" style="display: none;" onerror=\'document.getElementById("build_gramine").closest(".form-group").style.display=""\'>
-                            """
-                        } else {
-                            return """
-        <input name="value" id="build_gramine"  value="">
-        <img src="force/failed/load/image" style="display: none;" onerror=\'document.getElementById("build_gramine").closest(".form-group").style.display="none"\'>
-                            """
-
-                        }
-                        '''
-                    ] 
-            ],
-        omitValueField: true
-        ],
+        choice(choices: ['source', 'package'], name: 'build_gramine'),
+        string(defaultValue: 'master', name: 'gramine_commit'),
+        string(defaultValue: 'master', name: 'gsc_commit'),
         string(defaultValue: '10', name: 'iterations'),
-        string(defaultValue: 'master', description: 'Enter gramine commit id. By default, pulls latest commit from the master branch.  (Applicable for container workload performance benchmarking)', name: 'curation_commit')
+        booleanParam('edmm')
     ])
 ])
 
+def get_perf_config(workload) {
+    container_workloads = ["tf_serving_perf", "pytorch_perf", "ovms_perf", "mysql_perf", "mariadb_perf"]
+    if (workload in container_workloads){
+        return 'container'
+    }
+    else{
+        return 'baremetal'
+    }
+}
+
+def get_exec_mode(workload) {
+    if (workload in ['mariadb_perf', 'mysql_perf', 'ovms_perf', 'tf_serving_perf']){
+        return 'native,gramine-sgx'
+    } else if (workload in ["memcached_perf", "redis_perf"]){
+        return 'native,gramine-direct,gramine-sgx-single-thread-non-exitless'
+    } else{
+        return 'native,gramine-direct,gramine-sgx'
+    }
+}
+
+def get_iterations(workload) {
+    if (workload == 'ovms_perf'){
+        return '20'
+    } else if (workload == 'pytorch_perf'){
+        return '3'
+    } else if (workload == 'specpower_perf'){
+        return '5'
+    } else{
+        return iterations
+    }
+}
+
 pipeline{
-    agent none
-    stages {
-        stage("") {
-            parallel {
-                stage("") {
-                    stages{
-                        stage("Run redis baremetal perf") {
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'redis_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx-single-thread-non-exitless'), string(name: 'iterations', value: iterations)]
-                            }
+    agent {
+        label 'JK_POOL_MASTER'
+    }
+    stages{
+        stage(""){
+            parallel{
+                stage("Build specpower_perf"){
+                    steps{
+                        script{
+                            cleanWs()
+                            workload = 'specpower_perf'
+                            build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                         }
-                        stage("Run redis container perf") {
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'container'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'curation_commit', value: curation_commit), string(name: 'run', value: 'redis_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-sgx-single-thread-non-exitless'), string(name: 'iterations', value: iterations)]
-                            }
+                    }
+                }   
+                stage(""){
+                    steps{
+                        script{
+                            def sklearn_node_workloads = ['sklearnex_perf','nginx_perf', 'mysql_perf', 'mariadb_perf']
+                            sklearn_node_workloads.each { workload ->
+                                if (workload in ['mysql_perf', 'mariadb_perf']){
+                                    build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true'), string(name: 'tmpfs', value: 'true')]).call() 
+                                } else {
+                                    build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
+                                }                                
+                            }  
                         }
-                        stage("Run tf_serving perf") {
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'container'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'curation_commit', value: curation_commit), string(name: 'run', value: 'tf_serving_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-sgx'), string(name: 'iterations', value: iterations)]
+                    }
+                }
+                stage(" "){
+                    steps{
+                        script{
+                            def redis_node_workloads = ['tf_serving_perf','memcached_perf', 'pytorch_perf']
+                            redis_node_workloads.each { workload ->
+                            print(workload)
+                                build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                             }
+                            build_perf_job('redis_perf', 'baremetal', get_exec_mode('redis_perf'), get_iterations('redis_perf'), edmm).call()
+                            build_perf_job('redis_perf', 'container', 'native,gramine-sgx-single-thread-non-exitless', get_iterations('redis_perf'), edmm).call()
                         }
-                        stage("Run memcached perf") {
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'memcached_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx-single-thread-non-exitless'), string(name: 'iterations', value: iterations)]
+                    }
+                }
+                stage("  "){
+                    steps{
+                        script{
+                            def openvino_node_workloads = ['ov_perf_latency','ov_perf_throughput', 'tf_perf', 'ovms_perf']
+                            openvino_node_workloads.each { workload ->
+                                if (workload in ['ovms_perf']){
+                                    build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true')]).call()
+                                } else{
+                                    build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
+                                }                            
+                            }
+                            build_perf_job('tf_perf', get_perf_config('tf_perf'), get_exec_mode('tf_perf'), get_iterations('tf_perf'), edmm, [string(name: 'encryption', value: 'true')]).call() 
+                            if (!edmm.toBoolean()){
+                                build_perf_job('ov_perf_latency', get_perf_config('ov_perf_latency'), get_exec_mode('ov_perf_latency'), get_iterations('ov_perf_latency'), true).call()
+                                build_perf_job('ov_perf_throughput', get_perf_config('ov_perf_throughput'), get_exec_mode('ov_perf_throughput'), get_iterations('ov_perf_throughput'), true).call()
                             }
                         }
                     }
                 }
-                stage(" ") {
-                    stages{
-                        stage("Run openvino Latency perf"){
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'ov_perf_latency'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations)]
-                            }
-                        }
-                        stage("Run Tensorflow perf") {
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'tf_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations)]
-                            }
-                        }
-                        stage("Run openvino throughput perf"){
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'ov_perf_throughput'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations)]
-                            }
-                        }
-                        stage("Run Tensorflow encryption perf") {
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'tf_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations), string(name: 'encryption', value: 'true')]
-                            }
-                        }
-                    }
+            }
+            post {
+                always{
+                    archiveArtifacts artifacts: 'artifacts/**', followSymlinks: false
                 }
-                stage("  ") {
-                    stages{
-                        stage('sklearn_perf'){
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'baremetal'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'run', value: 'sklearnex_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-direct,gramine-sgx'), string(name: 'iterations', value: iterations)]
-                            }
-                        }
-                        stage('mysql_perf'){
-                            steps{
-                                build propagate: false, job: 'gramerf_performance_benchmarking', parameters: [string(name: 'perf_config', value: 'container'), string(name: 'build_gramine', value: build_gramine), string(name: 'gramine_repo_commit_id', value: gramine_repo_commit_id), string(name: 'curation_commit', value: curation_commit), string(name: 'run', value: 'mysql_perf'), string(name: 'run_specific_perf_test', value: ''), string(name: 'exec_mode', value: 'native,gramine-sgx'), string(name: 'iterations', value: iterations), string(name: 'encryption', value: 'true'), string(name: 'tmpfs', value: 'true')]
-                            }
-                        }
-                    }
+            }
+        }
+    }
+}
+
+def build_perf_job(workload, perf_config, exec_mode, iterations, is_edmm, extra_params=null) {
+    def params = [string(name: 'perf_config', value: perf_config), string(name: 'build_gramine', value: build_gramine), 
+    string(name: 'gramine_commit', value: gramine_commit), string(name: 'run', value: workload), 
+    string(name: 'gsc_commit', value: gsc_commit), string(name: 'exec_mode', value: exec_mode),
+    string(name: 'iterations', value: iterations)]
+    if (is_edmm){
+        params.add(booleanParam(name: 'edmm', value: is_edmm))
+    }
+    if (extra_params) {
+		params = params + extra_params
+	}
+    return {
+        stage("Build ${workload} with edmm enabled: ${is_edmm}") {
+            echo "$params"
+            def job = build propagate: false, job: 'gramerf_performance_benchmarking', parameters: params
+            if(job.getResult() == 'SUCCESS'){
+                dir ('artifacts'){
+                    copyArtifacts projectName: 'gramerf_performance_benchmarking', selector: specific("${job.number}")
                 }
             }
         }

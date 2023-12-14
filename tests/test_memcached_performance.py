@@ -47,22 +47,6 @@ def setup_memcached_server():
 class TestClass:
 
     @pytest.mark.memcached_perf
-    @pytest.mark.memcached_perf_48_data_size
-    @pytest.mark.memcached_perf_48_data_size_1_1_rw_ratio
-    def test_memcached_perf_48_data_size_1_1_rw_ratio(self):
-
-        test_result = run_test(self, tests_yaml_path)
-        assert test_result
-
-    @pytest.mark.memcached_perf
-    @pytest.mark.memcached_perf_48_data_size
-    @pytest.mark.memcached_perf_48_data_size_1_9_rw_ratio
-    def test_memcached_perf_48_data_size_1_9_rw_ratio(self):
-
-        test_result = run_test(self, tests_yaml_path)
-        assert test_result
-
-    @pytest.mark.memcached_perf
     @pytest.mark.memcached_perf_1024_data_size
     @pytest.mark.memcached_perf_1024_data_size_1_1_rw_ratio
     def test_memcached_perf_1024_data_size_1_1_rw_ratio(self):
@@ -95,17 +79,33 @@ class TestClass:
         assert test_result
 
     @pytest.mark.memcached_perf
-    @pytest.mark.memcached_perf_77824_data_size
-    @pytest.mark.memcached_perf_77824_data_size_1_1_rw_ratio
-    def test_memcached_perf_77824_data_size_1_1_rw_ratio(self):
+    @pytest.mark.memcached_perf_16384_data_size
+    @pytest.mark.memcached_perf_16384_data_size_1_1_rw_ratio
+    def test_memcached_perf_16384_data_size_1_1_rw_ratio(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.memcached_perf
-    @pytest.mark.memcached_perf_77824_data_size
-    @pytest.mark.memcached_perf_77824_data_size_1_9_rw_ratio
-    def test_memcached_perf_77824_data_size_1_9_rw_ratio(self):
+    @pytest.mark.memcached_perf_16384_data_size
+    @pytest.mark.memcached_perf_16384_data_size_1_9_rw_ratio
+    def test_memcached_perf_16384_data_size_1_9_rw_ratio(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.memcached_perf
+    @pytest.mark.memcached_perf_32768_data_size
+    @pytest.mark.memcached_perf_32768_data_size_1_1_rw_ratio
+    def test_memcached_perf_32768_data_size_1_1_rw_ratio(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.memcached_perf
+    @pytest.mark.memcached_perf_32768_data_size
+    @pytest.mark.memcached_perf_32768_data_size_1_9_rw_ratio
+    def test_memcached_perf_32768_data_size_1_9_rw_ratio(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result

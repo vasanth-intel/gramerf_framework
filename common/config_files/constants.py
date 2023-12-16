@@ -18,10 +18,10 @@ BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
 
 GRAMINE_DEFAULT_REPO = "https://github.com/gramineproject/gramine.git"
-GRAMINE_CLONE = "RUN git clone --depth 1 --branch v1.5 https://github.com/gramineproject/gramine.git"
-GRAMINE_DEPTH_STR  = "--depth 1 --branch v1.5 "
-GSC_CLONE          = "git clone --depth 1 --branch v1.5 https://github.com/gramineproject/gsc.git"
-GSC_DEPTH_STR      = "--depth 1 --branch v1.5 "
+GRAMINE_CLONE = "RUN git clone --depth 1 --branch v1.6 https://github.com/gramineproject/gramine.git"
+GRAMINE_DEPTH_STR  = "--depth 1 --branch v1.6 "
+GSC_CLONE          = "git clone --depth 1 --branch v1.6 https://github.com/gramineproject/gsc.git"
+GSC_DEPTH_STR      = "--depth 1 --branch v1.6 "
 EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.git"
 
 MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"
@@ -91,7 +91,8 @@ LOG_LEVEL = "error"
 
 REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
 ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
-CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
+#CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
+CONTRIB_GIT_CMD       = "git clone -b jkr0103/move-to-gramine_v1.6 https://github.com/jkr0103/contrib.git orig_contrib_repo"
 CURATED_PATH          = "Intel-Confidential-Compute-for-X"
 CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)
 VERIFIER_TEMPLATE      = "verifier.dockerfile.template"

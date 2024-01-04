@@ -93,6 +93,7 @@ pipeline {
                 always {
                     script {
                         if (isSklearn.toBoolean()){
+                            g_gramerf_lib.get_sklearn_mean_report()
                             archiveArtifacts artifacts: 'sklearn_reports/**/*'
                         } else {
                             archiveArtifacts artifacts: 'logs/*, results/*'

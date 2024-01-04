@@ -316,7 +316,7 @@ def determine_host_ip_addr():
         
     for ifaceName in ni.interfaces():
         if ni.ifaddresses(ifaceName).setdefault(ni.AF_INET) is not None and \
-                ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr'].startswith('192.168.0'):
+                ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr'].startswith('192.168.1'):
             host_IP = ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr']
             break
 

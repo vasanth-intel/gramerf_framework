@@ -77,7 +77,7 @@ def pytest_addoption(parser):
     # to build gramine from source. If 'gramine_commit' is not specified, latest
     # master will be used to build gramine.
     # ************** For container workloads **************
-    # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.5 would be
+    # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.6 would be
     # used as default for both commits.
     # If 'gramine_commit' is master/any other commit, 'gsc_commit' must be passed as master.
     parser.addoption("--gramine_repo", action="store", type=str, default="", help="Gramine repo to be used.")

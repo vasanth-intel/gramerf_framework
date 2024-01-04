@@ -105,7 +105,16 @@ pipeline{
             }
             post {
                 always{
-                    archiveArtifacts artifacts: 'artifacts/**', followSymlinks: false
+                    script{
+                        sh """
+                            mkdir -p ${BUILD_TAG}/sklearn_reports
+                            cp -r artifacts/results/*.xlsx ${BUILD_TAG}
+                            cp -r artifacts/sklearn_reports/results/*.xlsx ${BUILD_TAG}/sklearn_reports
+                        """
+                        def status = bat returnStatus: true, script: "robocopy ${BUILD_TAG} Z:/gramerf_biweekly_reports/${BUILD_TAG} /E"
+                        println "ROBOCOPY returned ${status}"
+                        archiveArtifacts artifacts: "${BUILD_TAG}/**", followSymlinks: false
+                    }
                 }
             }
         }

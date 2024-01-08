@@ -28,7 +28,14 @@ test_redis_perf_4096_data_size_1_1_rw_ratio:
 
 test_redis_perf_4096_data_size_1_9_rw_ratio:
   data_size: 4096
-  rw_ratio: "1:9"  
+  rw_ratio: "1:9"
+
+test_redis_perf_8192_data_size_1_1_rw_ratio:
+  data_size: 8192
+
+test_redis_perf_8192_data_size_1_9_rw_ratio:
+  data_size: 8192
+  rw_ratio: "1:9"
 
 test_redis_perf_16384_data_size_1_1_rw_ratio:
   data_size: 16384

@@ -11,3 +11,4 @@ workloads:
 - mysql
 - memcached
 - nginx
+- specpower

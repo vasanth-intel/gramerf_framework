@@ -14,6 +14,9 @@ from dash.dependencies import Input, Output, State
 def update_test_name(test_name):
     return re.findall('.*perf_(.*)_.*', test_name)[0]
 
+def update_sklearn_test_name(test_name):
+    return re.findall('.*perf_(.*)', test_name)[0]
+
 df = pd.ExcelFile("gramine_perf_data.xlsx")
 workload_sheet_name = sorted(df.sheet_names, key=str.lower)
 port = 8050
@@ -47,6 +50,8 @@ system_details['PyTorch'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel
                                  html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
 system_details['NGINX'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
                                      html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
+system_details['SPECpower'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
+                                     html.Br(), 'CPU(s): 128', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 32'])
 
 workload_details = {}
 workload_details['TensorFlow'] = html.P(['TensorFlow: v2.4.0', html.Br(), 'Enclave size: 32GB'])
@@ -61,6 +66,7 @@ workload_details['MariaDB'] = html.P(['MariaDB', html.Br(), 'Enclave size: 2GB']
 workload_details['OpenVINO™ Model Server'] = html.P(['OpenVINO™ Model Server', html.Br(), 'Enclave size: 16GB'])
 workload_details['PyTorch'] = html.P(['PyTorch', html.Br(), 'Enclave size: 4GB'])
 workload_details['NGINX'] = html.P(['NGINX', html.Br(), 'Enclave size: 512MB'])
+workload_details['SPECpower'] = html.P(['SPECpower : 2008-v1.12', html.Br(), 'Enclave size: 64GB'])
 
 app.layout = html.Div([
     html.H1("Gramine Performance Dashboard",
@@ -94,20 +100,22 @@ def make_graph(workload):
         str) + ' ' + df_workload["commit"].astype(str)
     # sort the table by ww
     df_workload.sort_values(by='Date', inplace=True)
+
     # df_workload["ww-commit"] = df_workload['commit'] + '-' +df_workload['ww'].astype(str)
     df_workload_throughput = df_workload[df_workload["model"].str.contains(
         "throughput")]
-
     df_workload_latency = df_workload[df_workload["model"].str.contains(
         "latency")]
 
-    df_workload_throughput.model = df_workload_throughput.model.apply(
-        update_test_name)
-    df_workload_latency.model = df_workload_latency.model.apply(update_test_name)
+    if workload == "SPECpower":
+        df_workload_throughput.model = df_workload_throughput.model.apply(update_sklearn_test_name)
+    else:
+        df_workload_throughput.model = df_workload_throughput.model.apply(update_test_name)
+        df_workload_latency.model = df_workload_latency.model.apply(update_test_name)
+
     skip_throughput_graph = False
     if df_workload_throughput.empty:
         skip_throughput_graph = True
-    
 
     if workload == "PyTorch":
         y_coordinate = ["GRAMINE-SGX_S0_DEG", "GRAMINE-SGX_S1_DEG"]
@@ -180,6 +188,7 @@ def make_graph(workload):
     graph_list.append(html.Hr())
 
     if workload == "scikit-learn":
+        df_workload.model = df_workload.model.apply(update_sklearn_test_name)
         fig_line_sklearn_latency_sgx_deg = px.line(df_workload, x="datecommit", y="SGX-DEG", color="model",
                                            labels={
                                                "SGX-DEG": "Degradation(%)"

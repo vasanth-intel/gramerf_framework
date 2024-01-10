@@ -23,6 +23,7 @@ workload_namelist['mariadb'] = 'MariaDB'
 workload_namelist['openvinomodelserver'] = 'OpenVINO™ Model Server'
 workload_namelist['pytorch'] = 'PyTorch'
 workload_namelist['nginx'] = 'NGINX'
+workload_namelist['specpower'] = 'SPECpower'
 
 unwamted_cols = ['NATIVE', 'GRAMINE-SGX', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS', 'GRAMINE-DIRECT',
                  'Unnamed: 9', 'NATIVE.1', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS.1', 'GRAMINE-DIRECT.1', 'Unnamed: 1', 'ROWS', 'COLUMNS']

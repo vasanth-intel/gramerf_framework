@@ -32,6 +32,8 @@ def read_command_line_args(config):
     os.environ["encryption"] = config.option.encryption
     os.environ["tmpfs"] = config.option.tmpfs
     os.environ["jenkins_build_num"] = config.option.jenkins_build_num
+    os.environ["client_username"] = config.option.client_username
+    os.environ["client_ip_addr"] = config.option.client_ip_addr
 
 
 @pytest.fixture(scope="session")
@@ -95,3 +97,9 @@ def pytest_addoption(parser):
     # Following option is the build number of the 'gramerf_performance_banehmarking' Jenkins job.
     # This number is used within the filename of the final report generated for the workload.
     parser.addoption("--jenkins_build_num", action="store", type=str, default="", help="Build number of Jenkins CI perf job")
+    # Following option is the username with which the system (client) needs to be rebooted.
+    # Applicable on for few workloads like Redis and Memcached.
+    parser.addoption("--client_username", action="store", type=str, default="", help="User name of the system to be rebooted")
+    # Following option is the IP address of the system (client) that needs to be rebooted.
+    # Applicable on for few workloads like Redis and Memcached.
+    parser.addoption("--client_ip_addr", action="store", type=str, default="", help="User name of the system to be rebooted")

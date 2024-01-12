@@ -75,7 +75,8 @@ class MemcachedWorkload:
         shutil.copy2(bin_file_name, self.workload_home_dir)
 
     def update_server_details_in_client(self, tcd):
-        client_name = tcd['client_username'] + "@" + tcd['client_ip']
+        client_IP = os.getenv('client_ip_addr') or tcd['client_ip']
+        client_name = tcd['client_username'] + "@" + client_IP
         client_file_path = os.path.join(tcd['client_scripts_path'], "instance_benchmark.sh")
 
         # Setting 'SSHPASS' env variable for ssh commands
@@ -102,7 +103,8 @@ class MemcachedWorkload:
     def delete_old_test_results(self, tcd):
         print("\n-- Deleting older test results from client..")
         test_res_path = os.path.join(tcd['client_results_path'], tcd['test_name'])
-        client_name = tcd['client_username'] + "@" + tcd['client_ip']
+        client_IP = os.getenv('client_ip_addr') or tcd['client_ip']
+        client_name = tcd['client_username'] + "@" + client_IP
         test_res_del_cmd = f"sshpass -e ssh {client_name} 'rm -rf {test_res_path}'"
         print(test_res_del_cmd)
         utils.exec_shell_cmd(test_res_del_cmd)
@@ -244,7 +246,8 @@ class MemcachedWorkload:
 
         # Copy test results folder from client to local server results folder.
         client_res_folder = os.path.join(tcd['client_results_path'], tcd['test_name'])
-        client_scp_path = tcd['client_username'] + "@" + tcd['client_ip'] + ":" + client_res_folder
+        client_IP = os.getenv('client_ip_addr') or tcd['client_ip']
+        client_scp_path = tcd['client_username'] + "@" + client_IP + ":" + client_res_folder
         copy_client_to_server_cmd = f"sshpass -e scp -r {client_scp_path} {csv_res_folder}"
         utils.exec_shell_cmd(copy_client_to_server_cmd)
 

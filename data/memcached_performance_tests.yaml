@@ -9,7 +9,7 @@ Default:
   server_size: 4096
   baremetal_server_port: 11211
   container_server_port: 11211
-  client_ip: "10.66.247.185"
+  client_ip: "10.66.234.200"
   client_username: "intel"
   client_scripts_path: "/home/intel/perf_benchmarking/gramerf_redis_client"
   client_results_path: "/home/intel/perf_benchmarking/redis-6.0.6/log/set/"

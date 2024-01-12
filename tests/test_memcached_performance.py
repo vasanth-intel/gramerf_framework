@@ -41,6 +41,11 @@ def setup_memcached_server():
     print("\nIf values are not as expected stop the test!!!\n")
     time.sleep(2)
 
+    # Reboot the client..
+    username = os.getenv('client_username') or 'intel'
+    client_IP = os.getenv('client_ip_addr') or '10.66.234.200'
+    utils.reboot_client(username, client_IP)
+
 
 @pytest.mark.usefixtures("setup_memcached_server")
 @pytest.mark.usefixtures("gramerf_setup")

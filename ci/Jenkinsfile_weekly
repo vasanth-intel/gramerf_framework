@@ -79,7 +79,7 @@ pipeline{
                                 build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                             }
                             build_perf_job('redis_perf', 'baremetal', get_exec_mode('redis_perf'), get_iterations('redis_perf'), edmm).call()
-                            build_perf_job('redis_perf', 'container', get_exec_mode('redis_perf'), get_iterations('redis_perf'), edmm).call()
+                            build_perf_job('redis_perf', 'container', 'native,gramine-sgx-single-thread-non-exitless', get_iterations('redis_perf'), edmm).call()
                         }
                     }
                 }
@@ -105,7 +105,16 @@ pipeline{
             }
             post {
                 always{
-                    archiveArtifacts artifacts: 'artifacts/**', followSymlinks: false
+                    script{
+                        sh """
+                            mkdir -p ${BUILD_TAG}/sklearn_reports
+                            cp -r artifacts/results/*.xlsx ${BUILD_TAG}
+                            cp -r artifacts/sklearn_reports/results/*.xlsx ${BUILD_TAG}/sklearn_reports
+                        """
+                        def status = bat returnStatus: true, script: "robocopy ${BUILD_TAG} Z:/gramerf_biweekly_reports/${BUILD_TAG} /E"
+                        println "ROBOCOPY returned ${status}"
+                        archiveArtifacts artifacts: "${BUILD_TAG}/**", followSymlinks: false
+                    }
                 }
             }
         }

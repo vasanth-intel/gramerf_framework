@@ -316,7 +316,7 @@ def determine_host_ip_addr():
         
     for ifaceName in ni.interfaces():
         if ni.ifaddresses(ifaceName).setdefault(ni.AF_INET) is not None and \
-                ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr'].startswith('192.168.0'):
+                ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr'].startswith('192.168'):
             host_IP = ni.ifaddresses(ifaceName).setdefault(ni.AF_INET)[0]['addr']
             break
 
@@ -366,7 +366,7 @@ def write_to_report(workload_name, test_results):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
-    if workload_name == 'Redis' or workload_name == 'Memcached':
+    if 'redis' in workload_name.lower() or 'memcached' in workload_name.lower():
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
                 'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']

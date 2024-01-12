@@ -2,6 +2,7 @@ import sys
 import yaml
 import time
 import shutil
+import socket
 import psutil
 import subprocess
 import lsb_release
@@ -366,6 +367,7 @@ def write_to_report(workload_name, test_results):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
+    
     if 'redis' in workload_name.lower() or 'memcached' in workload_name.lower():
         cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
                 'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
@@ -585,3 +587,25 @@ def track_process(test_config_dict, process=None, success_str='', timeout=0):
     
     if debug_log: debug_log.close()
     return result, final_output
+
+def reboot_client(username, sys_ip):
+    # This method issues a command to reboot the system (sys_ip) and returns 
+    # to the caller only after the system is rebooted.
+
+    # Reboot the client and sleep for 2 mins.
+    print(f"\n-- Rebooting client system '{sys_ip}' with username '{username}'..")
+    ssh_reboot_cmd = f"ssh {username}@{sys_ip} sudo reboot"
+    exec_shell_cmd(ssh_reboot_cmd, None)
+    time.sleep(120)
+
+    # Wait for the host to reboot..
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        try:
+            sock.connect((sys_ip, 22))
+            print(f"\n-- Client system: '{sys_ip}' is rebooted..")
+            break
+        except socket.error as e:
+            print("\n-- Still in process of rebooting..")
+    time.sleep(60)
+    sock.close()

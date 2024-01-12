@@ -99,4 +99,12 @@ def run_sklearn_perf(exec_cmd){
     }
 }
 
+def get_sklearn_mean_report(){
+    sh "echo generating sklearn mean report"
+    sh "mkdir -p sklearn_reports/output"
+    sh "cp -r sklearn_reports/results/*.xlsx sklearn_reports/output/"
+    sh "python3 helper-files/sklearn_utility.py -i ./sklearn_reports/output -o ./sklearn_reports/mean"
+    sh "rm -rf sklearn_reports/output"
+}
+
 return this

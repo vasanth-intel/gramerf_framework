@@ -40,8 +40,12 @@ def run_to_run_variation(tpt_lat_list):
 
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
     try:
-        cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
+        cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.PIPE, universal_newlines=True)
 
+        if cmd_stdout.returncode != 0:
+          print(cmd_stdout.stderr.strip())
+          raise Exception("Failed to run command {}".format(cmd))
+        
         if stdout_val is not None and cmd_stdout.stdout is not None:
             return cmd_stdout.stdout.strip()
 
@@ -422,7 +426,7 @@ def write_to_report(workload_name, test_results):
         time_df.columns = time_df.columns.str.upper()
         time_df.to_excel(writer, sheet_name=workload_name+"_Time")
 
-    writer.save()
+    writer._save()
 
 
 def generate_performance_report(test_res_dict):

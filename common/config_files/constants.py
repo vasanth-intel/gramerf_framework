@@ -67,7 +67,7 @@ PYTHON_PACKAGES_CMD = "python3 -m pip install -U "
 
 PIP_UPGRADE_CMD = "python3 -m pip install --upgrade pip"
 
-TENSORFLOW_INSTALL_CMD = "python3 -m pip install intel-tensorflow-avx512==2.4.0 --no-cache-dir"
+TENSORFLOW_INSTALL_CMD = "python3 -m pip install intel-tensorflow-avx512==2.11.0 --no-cache-dir"
 
 TF_BERT_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
 

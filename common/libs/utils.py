@@ -40,12 +40,8 @@ def run_to_run_variation(tpt_lat_list):
 
 def exec_shell_cmd(cmd, stdout_val=subprocess.PIPE):
     try:
-        cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.PIPE, universal_newlines=True)
+        cmd_stdout = subprocess.run([cmd], shell=True, check=True, stdout=stdout_val, stderr=subprocess.STDOUT, universal_newlines=True)
 
-        if cmd_stdout.returncode != 0:
-          print(cmd_stdout.stderr.strip())
-          raise Exception("Failed to run command {}".format(cmd))
-        
         if stdout_val is not None and cmd_stdout.stdout is not None:
             return cmd_stdout.stdout.strip()
 
@@ -218,7 +214,7 @@ def update_env_variables(build_prefix):
         print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
 
         print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
-        os.environ["PYTHONPATH"] = exec_shell_cmd(PYTHONPATH_CMD)
+        os.environ["PYTHONPATH"] = subprocess.check_output(PYTHONPATH_CMD, encoding='utf-8', shell=True)
         print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
 
     print(f"\n-- Updating 'LC_ALL' env-var\n")

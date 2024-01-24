@@ -34,17 +34,22 @@ class OpenvinoWorkload():
         os.makedirs(install_dir, exist_ok=True)
         
         distro, distro_version = utils.get_distro_and_version()
-        if distro == 'ubuntu' and distro_version in ["18.04", "20.04"]:
+        if distro == 'ubuntu' and distro_version in ["18.04", "20.04", "22.04"]:
             if distro_version == '18.04':
                 toolkit_name = "l_openvino_toolkit_dev_ubuntu18_p_2021.4.752"
-            else:
+            elif distro_version == '20.04':
                 toolkit_name = "l_openvino_toolkit_dev_ubuntu20_p_2021.4.752"
+            else:
+                toolkit_name = "l_openvino_toolkit_ubuntu22_2023.2.0.13089.cfd42bd2cb0_x86_64"
         elif distro == 'rhel':
             toolkit_name = "l_openvino_toolkit_dev_rhel8_p_2021.4.752"
         else:
             raise Exception("Unsupported distro for Openvino installation")
         
-        wget_cmd = "wget https://storage.openvinotoolkit.org/repositories/openvino/packages/2021.4.2/" + toolkit_name + ".tgz"
+        if distro == 'ubuntu' and distro_version =="22.04":
+            wget_cmd = "wget https://storage.openvinotoolkit.org/repositories/openvino/packages/2023.2/linux/" + toolkit_name + ".tgz"
+        else:
+            wget_cmd = "wget https://storage.openvinotoolkit.org/repositories/openvino/packages/2021.4.2/" + toolkit_name + ".tgz"
         untar_cmd = "tar xzf " + toolkit_name + ".tgz"
 
         print("\n-- Fetching and extracting Openvino workload from source..")

@@ -1,7 +1,7 @@
 ---
 Default:
   workload_name: "MariaDB"
-  docker_image: mariadb mariadb:10.7
+  docker_image: mariadb mariadb:11.0.3-jammy
   debug_mode: "n"
 
 test_mariadb_perf_read_only_1_threads:

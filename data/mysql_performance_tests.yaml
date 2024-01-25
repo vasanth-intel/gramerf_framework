@@ -1,7 +1,7 @@
 ---
 Default:
   workload_name: "MySql"
-  docker_image: mysql mysql:8.0.32-debian
+  docker_image: mysql mysql:8.0.35-debian
   debug_mode: "n"
 
 test_mysql_perf_read_only_1_threads:

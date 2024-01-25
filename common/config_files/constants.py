@@ -110,7 +110,7 @@ MYSQL_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/mysql/test_d
 MYSQL_INIT_FOLDER_PATH = os.path.join(MYSQL_TESTDB_PATH, "mysql")
 MYSQL_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db --user $(id -u):$(id -g) \
                             -v $PWD/workloads/mysql/test_db:/test_db \
-                            -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_DATABASE=test_db mysql:8.0.32-debian \
+                            -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_DATABASE=test_db mysql:8.0.35-debian \
                             --datadir /test_db"
 STOP_TEST_DB_CMD      = f"docker stop init_test_db"
 MYSQL_TEST_ENCRYPTION_KEY    = f"dd if=/dev/urandom bs=16 count=1 > workloads/mysql/base_image_helper/encryption_key"
@@ -134,7 +134,7 @@ COPY_MARIADB_TESTDB      = f"sudo cp -rf {MARIADB_TESTDB_PATH}/* /var/run/test_d
 MARIADB_INIT_FOLDER_PATH = os.path.join(MARIADB_TESTDB_PATH, "mariadb")
 MARIADB_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db \
                             -v $PWD/workloads/mariadb/test_db:/test_db \
-                            -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true -e MARIADB_DATABASE=test_db mariadb:10.7 \
+                            -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true -e MARIADB_DATABASE=test_db mariadb:11.0.3-jammy \
                             --datadir /test_db "
 MARIADB_ENCRYPTED_DB_TMPFS_PATH = f"/mnt/tmpfs/test_db_encrypted"
 MARIADB_TEST_ENCRYPTION_KEY    = f"dd if=/dev/urandom bs=16 count=1 > workloads/mariadb/base_image_helper/encryption_key"

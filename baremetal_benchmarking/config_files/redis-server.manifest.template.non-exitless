@@ -86,7 +86,7 @@ sgx.debug = false
 # 1024MB then it will start failing with random errors. Greater enclave sizes
 # result in longer startup times, smaller enclave sizes are not enough for
 # typical Redis workloads.
-sgx.enclave_size = "4G"
+#sgx.enclave_size = "4G"
 
 # Set maximum number of in-enclave threads (somewhat arbitrarily) to 8. Recall
 # that SGX v1 requires to specify the maximum number of simulteneous threads at
@@ -96,7 +96,7 @@ sgx.enclave_size = "4G"
 # and one for asynchronous events/alarms. Redis is technically single-threaded
 # but spawns couple additional threads to do background bookkeeping. Therefore,
 # specifying '8' allows to run a maximum of 6 Redis threads which is enough.
-sgx.max_threads = 8
+#sgx.max_threads = 8
 #sgx.insecure__rpc_thread_num = 8
 # Redis executable is typically a PIE (Position Independent Executable) on most
 # modern OS distros (e.g., Ubuntu 18.04). However, on some OS distros (notably,
@@ -155,7 +155,16 @@ sgx.allowed_files = [
 ]
 
 # Extra
-sgx.require_avx = 1
-sgx.require_avx512 = 1
+#sgx.require_avx = 1
+#sgx.require_avx512 = 1
 sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
 sgx.require_exinfo = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
+
+####### Jitender changes #######
+libos.check_invalid_pointers = false
+#sgx.insecure__rpc_thread_num = 16
+sgx.file_check_policy = "allow_all_but_log"
+sgx.require_avx = 1
+sgx.require_avx512 = 1
+sgx.enclave_size = "64G"
+sgx.max_threads = 512

@@ -13,8 +13,8 @@ class MemcachedWorkload:
     def __init__(self, test_config_dict):
         # Memcached home dir => "~/gramerf_framework/gramine/CI-Examples/memcached"
         self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
-        # Memcached build dir => "~/gramerf_framework/gramine/CI-Examples/memcached/memcached-1.5.21"
-        self.workload_bld_dir = os.path.join(self.workload_home_dir, "memcached-1.5.21")
+        # Memcached build dir => "~/gramerf_framework/gramine/CI-Examples/memcached/memcached-1.6.21"
+        self.workload_bld_dir = os.path.join(self.workload_home_dir, "memcached-1.6.21")
         self.server_ip_addr = utils.determine_host_ip_addr()
         self.command = None
 

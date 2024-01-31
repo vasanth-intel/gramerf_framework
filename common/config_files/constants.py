@@ -28,7 +28,7 @@ MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.
 
 REDIS_DOWNLOAD_CMD = "wget https://github.com/antirez/redis/archive/7.0.0.tar.gz"
 
-MEMCACHED_DOWNLOAD_CMD = "wget https://memcached.org/files/memcached-1.5.21.tar.gz"
+MEMCACHED_DOWNLOAD_CMD = "wget https://memcached.org/files/memcached-1.6.21.tar.gz"
 
 NGINX_VERSION = "nginx-1.22.0"
 NGINX_DOWNLOAD_CMD = f"wget http://nginx.org/download/{NGINX_VERSION}.tar.gz"

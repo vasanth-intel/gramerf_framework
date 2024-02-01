@@ -1,0 +1,14 @@
+workloads:
+- redis
+- openvino
+- tensorflow
+- tensorflow_encrypted
+- tensorflowserving
+- mariadb
+- openvinomodelserver
+- sklearnex
+- pytorch
+- mysql
+- memcached
+- nginx
+- specpower

@@ -33,16 +33,16 @@ dashboard_excl_file = "gramine_perf_data.xlsx"
 def is_port_in_use(port: int):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex((socket.gethostname(), port)) == 0
-	
+
 def stop_dashboard_execution():
-	if is_port_in_use(8050):
-		print("stop the dashboard")
-		for proc in psutil.process_iter():
-			for conns in proc.connections(kind='inet'):
-				if conns.laddr.port == 8050:
-					if proc.pid > 0:
-						print("stop the process : " + str(proc.pid))
-						proc.send_signal(signal.SIGTERM)
+    if is_port_in_use(8050):
+        print("stop the dashboard")
+        for proc in psutil.process_iter():
+            for conns in proc.connections(kind='inet'):
+                if conns.laddr.port == 8050:
+                    if proc.pid > 0:
+                        print("stop the process : " + str(proc.pid))
+                        proc.send_signal(signal.SIGTERM)
 
 def read_yaml_config():
     with open('config/workloads.yaml', 'r') as yaml_file:

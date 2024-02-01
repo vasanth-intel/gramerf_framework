@@ -9,6 +9,7 @@ import socket
 from dash import html
 from dash import dcc
 from dash.dependencies import Input, Output, State
+import datetime
 
 
 def update_test_name(test_name):
@@ -132,14 +133,20 @@ def make_graph(workload):
                                                   'commit': True
                                               },
                                               markers=True)
+        if workload in ['Redis', 'Memcached']:
+            fig_line_throughput_sgx_deg.add_vline(x='2024-01-13 35f5d4b', line_dash="dot", line_color="green")
+            fig_line_throughput_sgx_deg.add_annotation(x='2024-01-13 35f5d4b', yref='paper', y= 1.08, text="Updated setup with 100GB NIC", showarrow=False, align="left", font=dict(color="green", size=12))
+        if workload == 'OpenVINO™ Model Server':
+            fig_line_throughput_sgx_deg.add_vline(x='2024-01-14 35f5d4b', line_dash="dot", line_color="green")
+            fig_line_throughput_sgx_deg.add_annotation(x='2024-01-14 35f5d4b', yref='paper', y= 1.08, text="Perf Data collected on different system", showarrow=False, align="left", font=dict(color="green", size=12))
         if '2023-05-22' in set(df_workload_throughput['Date'].astype(str)):
-            fig_line_throughput_sgx_deg.add_vrect(x0="0", x1="2023-05-22 ad39399", annotation_text="Green section represents perf data collection on Ubuntu18.04 distro", 
-                                              annotation_position="top left", fillcolor="green", opacity=0.25, line_width=0, annotation_font_color="blue",
-                                              annotation=dict(font_size=20, font_family="Times New Roman"))
+            fig_line_throughput_sgx_deg.add_vrect(x0="0", x1="2023-05-22 ad39399", annotation_text="Green section represents<br>perf data collected on Ubuntu18.04 distro", 
+                                              annotation_position="inside left", fillcolor="green", opacity=0.25, line_width=0, annotation_font_color="blue",
+                                              annotation=dict(font_size=12))
         elif '2023-05-14' in set(df_workload_throughput['Date'].astype(str)):
-            fig_line_throughput_sgx_deg.add_vrect(x0="0", x1="2023-05-14 9ead920", annotation_text="Green section represents perf data collection on Ubuntu18.04 distro", 
-                                              annotation_position="top left", fillcolor="green", opacity=0.25, line_width=0, annotation_font_color="blue",
-                                              annotation=dict(font_size=20, font_family="Times New Roman"))
+            fig_line_throughput_sgx_deg.add_vrect(x0="0", x1="2023-05-14 9ead920", annotation_text="Green section represents<br>perf data collected on Ubuntu18.04 distro", 
+                                              annotation_position="bottom left", fillcolor="green", opacity=0.25, line_width=0, annotation_font_color="blue",
+                                              annotation=dict(font_size=12))
         fig_line_throughput_sgx_deg.update_layout(title_text=workload + " throughput perf data using Gramine SGX", title_x=0.45, 
                                                   xaxis_title='Weekly Perf Run on latest Gramine Commit(YYYY-MM-DD commitID)<br>gramine commit history <a href="https://github.com/gramineproject/gramine/commits/master">link</a>',
                                                   yaxis_title="Degradation in % (Gramine SGX vs Linux Native)")
@@ -159,14 +166,17 @@ def make_graph(workload):
                                                'commit': True
                                            },
                                            markers=True)
+        if workload in ['Redis', 'Memcached']:
+            fig_line_latency_sgx_deg.add_vline(x='2024-01-13 35f5d4b', line_dash="dot", line_color="green")
+            fig_line_latency_sgx_deg.add_annotation(x='2024-01-13 35f5d4b', yref='paper', y= 1.08, text="Updated setup with 100GB NIC", showarrow=False, align="left", font=dict(color="green", size=12))
         if '2023-05-22' in set(df_workload_latency['Date'].astype(str)):
-            fig_line_latency_sgx_deg.add_vrect(x0="0", x1="2023-05-22 ad39399", annotation_text="Green section represents perf data collection on Ubuntu18.04 distro", 
-                                              annotation_position="top left", fillcolor="green", opacity=0.25, line_width=0, annotation_font_color="blue",
-                                              annotation=dict(font_size=20, font_family="Times New Roman"))
+            fig_line_latency_sgx_deg.add_vrect(x0="0", x1="2023-05-22 ad39399", annotation_text="Green section represents<br>perf data collected on Ubuntu18.04 distro", 
+                                              annotation_position="bottom left", fillcolor="green", opacity=0.25, line_width=0, annotation_font_color="blue",
+                                              annotation=dict(font_size=12))
         elif '2023-05-14' in set(df_workload_latency['Date'].astype(str)):
-            fig_line_latency_sgx_deg.add_vrect(x0="0", x1="2023-05-14 9ead920", annotation_text="Green section represents perf data collection on Ubuntu18.04 distro", 
-                                              annotation_position="top left", fillcolor="green", opacity=0.25, line_width=0, annotation_font_color="blue",
-                                              annotation=dict(font_size=20, font_family="Times New Roman"))
+            fig_line_latency_sgx_deg.add_vrect(x0="0", x1="2023-05-14 9ead920", annotation_text="Green section represents<br>perf data collected on Ubuntu18.04 distro", 
+                                              annotation_position="bottom left", fillcolor="green", opacity=0.25, line_width=0, annotation_font_color="blue",
+                                              annotation=dict(font_size=12))
         fig_line_latency_sgx_deg.update_layout(title_text=workload + " latency perf data using Gramine SGX", title_x=0.45, xaxis_title='Weekly Perf Run on latest Gramine Commit(YYYY-MM-DD commitID)<br>gramine commit history <a href="https://github.com/gramineproject/gramine/commits/master">link</a>',
                                                yaxis_title="Degradation in % (Gramine SGX vs Linux Native)")
 

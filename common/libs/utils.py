@@ -214,7 +214,7 @@ def update_env_variables(build_prefix):
         print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
 
         print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
-        os.environ["PYTHONPATH"] = exec_shell_cmd(PYTHONPATH_CMD)
+        os.environ["PYTHONPATH"] = subprocess.check_output(PYTHONPATH_CMD, encoding='utf-8', shell=True)
         print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
 
     print(f"\n-- Updating 'LC_ALL' env-var\n")
@@ -422,7 +422,7 @@ def write_to_report(workload_name, test_results):
         time_df.columns = time_df.columns.str.upper()
         time_df.to_excel(writer, sheet_name=workload_name+"_Time")
 
-    writer.save()
+    writer._save()
 
 
 def generate_performance_report(test_res_dict):

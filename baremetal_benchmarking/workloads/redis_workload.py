@@ -172,13 +172,13 @@ class RedisWorkload:
         # Bring up the redis server.
         utils.exec_shell_cmd(self.command, None)
         
-        time.sleep(5)
+        time.sleep(30)
 
         # Construct and execute memtier benchmark command within client.
         client_ssh_cmd = memtier_benchmark.construct_client_exec_cmd(tcd, e_mode)
         utils.exec_shell_cmd(client_ssh_cmd, None)
         
-        time.sleep(5)
+        time.sleep(10)
 
         self.free_redis_server_port(tcd)
 

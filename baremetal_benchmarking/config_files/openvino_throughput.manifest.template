@@ -3,7 +3,7 @@ libos.entrypoint = "benchmark_app"
 
 loader.log_level = "{{ log_level }}"
 
-loader.env.LD_LIBRARY_PATH = "/lib:{{ openvino_dir }}/deployment_tools/inference_engine/external/tbb/lib:{{ openvino_dir }}/deployment_tools/inference_engine/lib/intel64:{{ openvino_dir }}/opencv/lib:{{ openvino_dir }}/deployment_tools/ngraph/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
+loader.env.LD_LIBRARY_PATH = "/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}:{{ openvino_dir }}/runtime/lib/intel64/"
 
 loader.env.LD_PRELOAD = "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"
 
@@ -34,11 +34,7 @@ sgx.trusted_files = [
   "file:{{ gramine.runtimedir() }}/",
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",
-  "file:{{ openvino_dir }}/deployment_tools/inference_engine/lib/intel64/",
-  "file:{{ openvino_dir }}/deployment_tools/inference_engine/external/tbb/lib/",
-  "file:{{ openvino_dir }}/opencv/lib/",
-  "file:{{ openvino_dir }}/deployment_tools/ngraph/lib/",
-  "file:{{ inference_engine_cpp_samples_build }}/intel64/Release/lib/",
+  "file:{{ openvino_dir }}/runtime/lib/intel64/",
   "file:model/",
 ]
 

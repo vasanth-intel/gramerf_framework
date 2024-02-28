@@ -30,7 +30,7 @@ fs.mounts = [
 
 sgx.debug = true
 sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
-sgx.require_exinfo = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
+# sgx.require_exinfo = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
 sgx.max_threads = 32
 
 # Memcached does not fail explicitly when enclave memory is exhausted. Instead, Memcached goes into

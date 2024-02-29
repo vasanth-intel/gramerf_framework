@@ -113,6 +113,9 @@ class InMemoryDBWorkload:
             arena_string = '$ a loader.env.MALLOC_ARENA_MAX = "1"'
             arena_sed_cmd = f"sed -i -e '{arena_string}' {manifest_file}"
             utils.exec_shell_cmd(arena_sed_cmd, None)
+            invalid_ptr_string = '$ a libos.check_invalid_pointers = false'
+            invalid_ptr_sed_cmd = f"sed -i -e '{invalid_ptr_string}' {manifest_file}"
+            utils.exec_shell_cmd(invalid_ptr_sed_cmd, None)
         utils.check_and_enable_edmm_in_manifest(manifest_file)
     
     def generate_curated_image(self, test_config_dict):
@@ -261,10 +264,14 @@ class InMemoryDBWorkload:
                 for row in f.readlines():
                     row = row.split()
                     if row:
-                        if "read:" in row[0]:
-                            read_throughput = row[1]
-                        elif "write:" in row[0]:
-                            write_throughput = row[1]
+                        # if "read:" in row[0]:
+                            # read_throughput = row[1]
+                        # elif "write:" in row[0]:
+                            # write_throughput = row[1]
+                        if "queries:" in row[0] and ('read_only' in tcd['test_name'] or 'read_write' in tcd['test_name']):
+                            read_throughput = row[2].split('(')[1]
+                        elif "queries:" in row[0] and 'write_only' in tcd['test_name']:
+                            write_throughput = row[2].split('(')[1]
                         elif "avg:" in row[0]:
                             avg_latency = row[1]
                         elif "95th" in row[0]:

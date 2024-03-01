@@ -159,3 +159,5 @@ sgx.require_avx = 1
 sgx.require_avx512 = 1
 sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
 sgx.require_exinfo = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
+
+libos.check_invalid_pointers = false

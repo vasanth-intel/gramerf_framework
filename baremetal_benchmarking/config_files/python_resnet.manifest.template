@@ -102,3 +102,5 @@ sgx.allowed_files = [
   "file:/usr/",
   # encrypted allowed file
 ]
+
+libos.check_invalid_pointers = false

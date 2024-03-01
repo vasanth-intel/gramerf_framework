@@ -533,6 +533,9 @@ def update_file_contents(old_contents, new_contents, filename, append=False):
     fd.close()
 
 def check_and_enable_edmm_in_manifest(manifest_file):
+    invalid_ptr_string = '$ a libos.check_invalid_pointers = false'
+    invalid_ptr_sed_cmd = f"sed -i -e '{invalid_ptr_string}' {manifest_file}"
+    exec_shell_cmd(invalid_ptr_sed_cmd, None)
     if os.environ["EDMM"] == "1":
         add_edmm_enable = add_exinfo = False
         with open(manifest_file) as f:

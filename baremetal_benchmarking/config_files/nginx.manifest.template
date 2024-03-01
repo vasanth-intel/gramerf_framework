@@ -47,3 +47,5 @@ sgx.trusted_files = [
 sgx.allowed_files = [
   "file:{{ install_dir }}/logs",
 ]
+
+libos.check_invalid_pointers = false

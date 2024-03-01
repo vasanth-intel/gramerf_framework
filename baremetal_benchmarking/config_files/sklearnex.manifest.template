@@ -60,3 +60,5 @@ sgx.trusted_files = [
   "file:/usr/",
 
 ]
+
+libos.check_invalid_pointers = false

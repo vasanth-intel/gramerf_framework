@@ -45,3 +45,5 @@ sgx.trusted_files = [
   "file:/usr/{{ arch_libdir }}/",
   "file:{{ gramine.libos }}",
 ]
+
+libos.check_invalid_pointers = false

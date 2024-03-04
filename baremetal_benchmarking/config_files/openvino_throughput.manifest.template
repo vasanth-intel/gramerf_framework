@@ -46,5 +46,3 @@ sgx.allowed_files = [
   "file:/etc/passwd",
   "file:output.txt",
 ]
-
-libos.check_invalid_pointers = false

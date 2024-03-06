@@ -167,12 +167,12 @@ class OpenVinoModelServerWorkload:
     def update_test_results_in_global_dict(self, tcd, test_dict):
         global trd
         if 'native' in tcd['exec_mode']:
-            test_dict['native-avg'] = '{:0.3f}'.format(statistics.median(test_dict['native']))
+            test_dict['native-med'] = '{:0.3f}'.format(statistics.median(test_dict['native']))
         
         if 'gramine-sgx' in tcd['exec_mode']:
-            test_dict['sgx-avg'] = '{:0.3f}'.format(statistics.median(test_dict['gramine-sgx']))
+            test_dict['sgx-med'] = '{:0.3f}'.format(statistics.median(test_dict['gramine-sgx']))
             if 'native' in tcd['exec_mode']:
-                test_dict['sgx-deg'] = utils.percent_degradation(tcd, test_dict['native-avg'], test_dict['sgx-avg'])
+                test_dict['sgx-deg'] = utils.percent_degradation(tcd, test_dict['native-med'], test_dict['sgx-med'])
 
         utils.write_to_csv(tcd, test_dict)
 

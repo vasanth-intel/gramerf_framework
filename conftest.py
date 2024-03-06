@@ -88,7 +88,7 @@ def pytest_addoption(parser):
     parser.addoption("--gsc_commit", action="store", type=str, default="master", help="Gramine GSC commit/branch to be checked out.")
     parser.addoption("--iterations", action="store", type=str, default='3', help="Number of times workload/benchmark app needs to be launched/executed.")
     # Following will be value of 'exec_mode' that would be expected by the framework.
-    # For Redis workload: "native,gramine-direct,gramine-sgx-single-thread-non-exitless,gramine-sgx-diff-core-exitless"
+    # For Redis workload: "native,gramine-direct,gramine-sgx,gramine-sgx-exitless"
     # For other workloads: "native,gramine-direct,gramine-sgx"
     parser.addoption("--exec_mode", action="store", type=str, default="native,gramine-direct,gramine-sgx", help="Workload execution modes.")
     parser.addoption("--edmm", action="store", type=str, default="0", help="EDMM mode")

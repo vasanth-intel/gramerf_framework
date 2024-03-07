@@ -49,7 +49,7 @@ def update_gramine_branch(gramine_repo='', gramine_commit=''):
     if gramine_repo == '': gramine_repo = GRAMINE_DEFAULT_REPO
     if gramine_commit == '': gramine_commit = 'v1.6'
     commit_str = f" && cd gramine && git checkout {gramine_commit} && cd .."
-    copy_cmd = "cp config.yaml.template config.yaml"
+    copy_cmd = "cp -f config.yaml.template config.yaml"
     gramine_string = GRAMINE_DEPTH_STR + GRAMINE_DEFAULT_REPO
     helper_file = os.path.join(ORIG_BASE_PATH, "verifier", "helper.sh")
     if not "v1" in gramine_commit:

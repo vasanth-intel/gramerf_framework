@@ -49,14 +49,21 @@ class OpenvinoWorkload():
 
     def download_and_convert_model(self, test_config_dict, model_file_path):
         if not os.path.exists(model_file_path):
-            venv_bin_path = os.path.join(self.workload_home_dir, 'openvino/bin/activate')
-            out_model_dir = os.path.join(self.workload_home_dir, 'model')
-            download_cmd = f"bash -c 'source {venv_bin_path} && omz_downloader --name {test_config_dict['model_name']} -o {out_model_dir} && deactivate'"
-            convert_cmd = f"bash -c 'source {self.setupvars_path} && source {venv_bin_path} && omz_converter --name {test_config_dict['model_name']} -d {out_model_dir} -o {out_model_dir} && deactivate'"
-            print("\n-- Model download cmd:", download_cmd)
-            utils.exec_shell_cmd(download_cmd, None)
-            print("\n-- Model convert cmd:", convert_cmd)
-            utils.exec_shell_cmd(convert_cmd, None)
+            if test_config_dict['model_name'] == "brain-tumor-segmentation-0001":
+                src_model_path = os.path.join(Path.home(),"Do_not_delete_gramerf_dependencies/brain-tumor-segmentation-0001")
+                if not os.path.exists(src_model_path):
+                    raise Exception(f"\n-- Failure: {src_model_path} not found!! Test model dependency not copied in SUT home folder.")
+                dest_model_path = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['model_dir'])
+                shutil.copytree(src_model_path, dest_model_path)
+            else:
+                venv_bin_path = os.path.join(self.workload_home_dir, 'openvino/bin/activate')
+                out_model_dir = os.path.join(self.workload_home_dir, 'model')
+                download_cmd = f"bash -c 'source {venv_bin_path} && omz_downloader --name {test_config_dict['model_name']} -o {out_model_dir} && deactivate'"
+                convert_cmd = f"bash -c 'source {self.setupvars_path} && source {venv_bin_path} && omz_converter --name {test_config_dict['model_name']} -d {out_model_dir} -o {out_model_dir} && deactivate'"
+                print("\n-- Model download cmd:", download_cmd)
+                utils.exec_shell_cmd(download_cmd, None)
+                print("\n-- Model convert cmd:", convert_cmd)
+                utils.exec_shell_cmd(convert_cmd, None)
         else:
             print("\n-- Models are already downloaded.")
 

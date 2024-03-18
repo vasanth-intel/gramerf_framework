@@ -178,6 +178,6 @@ def update_manifest_file(test_config_dict):
 def generate_sgx_token_and_sig(test_config_dict):
     sgx_exec = len(list(e_mode for e_mode in test_config_dict['exec_mode'] if 'gramine-sgx' in e_mode))
     if sgx_exec > 0:
-        print("\n-- Generating SGX manifest..")
         sign_cmd = "gramine-sgx-sign --manifest {0}.manifest --output {0}.manifest.sgx".format(test_config_dict['manifest_name'])
+        print("\n-- Generating SGX manifest..\n", sign_cmd)
         utils.exec_shell_cmd(sign_cmd)

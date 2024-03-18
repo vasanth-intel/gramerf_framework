@@ -55,7 +55,7 @@ pipeline{
                             build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                         }
                     }
-                }   
+                }
                 stage(""){
                     steps{
                         script{
@@ -73,32 +73,30 @@ pipeline{
                 stage(" "){
                     steps{
                         script{
-                            def redis_node_workloads = ['tf_serving_perf','memcached_perf', 'pytorch_perf']
-                            redis_node_workloads.each { workload ->
-                            print(workload)
+                            def node_workloads = ['redis_perf', 'memcached_perf']
+                            node_workloads.each{ workload ->
                                 build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                             }
-                            build_perf_job('redis_perf', 'baremetal', get_exec_mode('redis_perf'), get_iterations('redis_perf'), edmm).call()
-                            build_perf_job('redis_perf', 'container', 'native,gramine-sgx-single-thread-non-exitless', get_iterations('redis_perf'), edmm).call()
-                        }
-                    }
-                }
-                stage("  "){
-                    steps{
-                        script{
-                            def openvino_node_workloads = ['ov_perf_latency','ov_perf_throughput', 'tf_perf', 'ovms_perf']
-                            openvino_node_workloads.each { workload ->
-                                if (workload in ['ovms_perf']){
-                                    build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true')]).call()
-                                } else{
-                                    build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
-                                }                            
-                            }
-                            build_perf_job('tf_perf', get_perf_config('tf_perf'), get_exec_mode('tf_perf'), get_iterations('tf_perf'), edmm, [string(name: 'encryption', value: 'true')]).call() 
-                            if (!edmm.toBoolean()){
-                                build_perf_job('ov_perf_latency', get_perf_config('ov_perf_latency'), get_exec_mode('ov_perf_latency'), get_iterations('ov_perf_latency'), true).call()
-                                build_perf_job('ov_perf_throughput', get_perf_config('ov_perf_throughput'), get_exec_mode('ov_perf_throughput'), get_iterations('ov_perf_throughput'), true).call()
-                            }
+                            parallel  redisnode: {
+                                def redis_node_workloads = ['tf_perf', 'ovms_perf', 'tf_serving_perf', 'pytorch_perf']
+                                redis_node_workloads.each { workload ->
+                                    if (workload in ['ovms_perf']){
+                                        build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true'), string(name: 'node_name', value: 'graphene_perf_redis_taken_out_for_vasanth')]).call()
+                                    } else{
+                                        build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'node_name', value: 'graphene_perf_redis_taken_out_for_vasanth')]).call()
+                                    }                                    
+                                }
+                                build_perf_job('tf_perf', get_perf_config('tf_perf'), get_exec_mode('tf_perf'), get_iterations('tf_perf'), edmm, [string(name: 'encryption', value: 'true'), string(name: 'node_name', value: 'graphene_perf_redis_taken_out_for_vasanth')]).call() 
+                            }, openvinonode: {
+                                def openvino_node_workloads = ['ov_perf_latency', 'ov_perf_throughput']
+                                openvino_node_workloads.each { workload ->
+                                    build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()                  
+                                }
+                                if (!edmm.toBoolean()){
+                                    build_perf_job('ov_perf_latency', get_perf_config('ov_perf_latency'), get_exec_mode('ov_perf_latency'), get_iterations('ov_perf_latency'), true).call()
+                                    build_perf_job('ov_perf_throughput', get_perf_config('ov_perf_throughput'), get_exec_mode('ov_perf_throughput'), get_iterations('ov_perf_throughput'), true).call()
+                                }
+                            }                   
                         }
                     }
                 }

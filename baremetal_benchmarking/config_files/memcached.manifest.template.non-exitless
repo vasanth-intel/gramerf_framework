@@ -17,6 +17,9 @@ loader.env.LD_LIBRARY_PATH = "/lib:/usr/{{ arch_libdir }}"
 loader.uid = 1000
 loader.gid = 1000
 
+# The below option must be removed from manifest after PR# 1728 is merged to master.
+sys.insecure__allow_eventfd = true
+
 sys.enable_sigterm_injection = true
 
 fs.mounts = [

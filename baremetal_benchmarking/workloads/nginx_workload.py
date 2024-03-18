@@ -214,17 +214,17 @@ class NginxWorkload:
                     test_dict_throughput['gramine-direct'].append(float(avg_throughput))
 
         if 'native' in tcd['exec_mode']:
-            test_dict_throughput['native-avg'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['native']))
+            test_dict_throughput['native-med'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['native']))
 
         if 'gramine-direct' in tcd['exec_mode']:
-            test_dict_throughput['direct-avg'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-direct']))
+            test_dict_throughput['direct-med'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-direct']))
             if 'native' in tcd['exec_mode']:
-                test_dict_throughput['direct-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['direct-avg'], True)
+                test_dict_throughput['direct-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-med'], test_dict_throughput['direct-med'], True)
 
         if 'gramine-sgx' in tcd['exec_mode']:
-            test_dict_throughput['sgx-avg'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-sgx']))
+            test_dict_throughput['sgx-med'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-sgx']))
             if 'native' in tcd['exec_mode']:
-                test_dict_throughput['sgx-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['sgx-avg'], True)
+                test_dict_throughput['sgx-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-med'], test_dict_throughput['sgx-med'], True)
 
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
         trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_dict_throughput})

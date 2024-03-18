@@ -2,6 +2,7 @@ import sys
 import yaml
 import time
 import shutil
+import socket
 import psutil
 import subprocess
 import lsb_release
@@ -213,7 +214,7 @@ def update_env_variables(build_prefix):
         print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
 
         print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
-        os.environ["PYTHONPATH"] = exec_shell_cmd(PYTHONPATH_CMD)
+        os.environ["PYTHONPATH"] = subprocess.check_output(PYTHONPATH_CMD, encoding='utf-8', shell=True)
         print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
 
     print(f"\n-- Updating 'LC_ALL' env-var\n")
@@ -366,21 +367,16 @@ def write_to_report(workload_name, test_results):
         writer = pd.ExcelWriter(report_name, engine='openpyxl', mode='a')
     else:
         writer = pd.ExcelWriter(report_name, engine='openpyxl')
-    if 'redis' in workload_name.lower() or 'memcached' in workload_name.lower():
-        cols = ['native', 'gramine-sgx-single-thread-non-exitless', 'gramine-sgx-diff-core-exitless', 'gramine-direct', \
-                'native-avg', 'sgx-single-thread-avg', 'sgx-diff-core-exitless-avg', 'direct-avg', \
-                'sgx-single-thread-deg', 'sgx-diff-core-exitless-deg', 'direct-deg']
-    elif workload_name == 'Sklearnex':
+    
+    if workload_name == 'Sklearnex':
         cols = ['data_type', 'dataset_name', 'rows', 'columns', 'classes', 'time', 'gramine-sgx', 'gramine-direct', 'gramine-sgx-deg', 'gramine-direct-deg']
-    elif workload_name == 'TensorflowServing' or workload_name == 'MySql' or workload_name == 'OpenVinoModelServer':
-        cols = ['native', 'gramine-sgx', 'native-avg', 'sgx-avg', 'sgx-deg']
     elif workload_name == 'Pytorch':
         cols = ['native_s0', 'native_s1', 'gramine-direct_s0', 'gramine-direct_s1', 'gramine-sgx_s0', 'gramine-sgx_s1', \
                 'native_s0_avg', 'native_s1_avg', 'gramine-direct_s0_avg', 'gramine-direct_s1_avg', 'gramine-sgx_s0_avg', 'gramine-sgx_s1_avg', \
                 'native_s0_r2r_var', 'native_s1_r2r_var', 'gramine-direct_s0_r2r_var', 'gramine-direct_s1_r2r_var', 'gramine-sgx_s0_r2r_var', 'gramine-sgx_s1_r2r_var', \
                 'gramine-direct_s0_Deg', 'gramine-direct_s1_Deg', 'gramine-sgx_s0_Deg', 'gramine-sgx_s1_Deg']
     else:
-        cols = ['native', 'gramine-sgx', 'gramine-direct', 'native-avg', 'sgx-avg', 'direct-avg', 'sgx-deg', 'direct-deg']
+        cols = ['native', 'gramine-sgx', 'gramine-sgx-exitless', 'gramine-direct', 'native-med', 'sgx-med', 'sgx-exitless-med', 'direct-med', 'sgx-deg', 'sgx-exitless-deg', 'direct-deg']
 
     if len(throughput_dict) > 0:
         if workload_name == 'Pytorch':
@@ -420,7 +416,7 @@ def write_to_report(workload_name, test_results):
         time_df.columns = time_df.columns.str.upper()
         time_df.to_excel(writer, sheet_name=workload_name+"_Time")
 
-    writer.save()
+    writer._save()
 
 
 def generate_performance_report(test_res_dict):
@@ -585,3 +581,25 @@ def track_process(test_config_dict, process=None, success_str='', timeout=0):
     
     if debug_log: debug_log.close()
     return result, final_output
+
+def reboot_client(username, sys_ip):
+    # This method issues a command to reboot the system (sys_ip) and returns 
+    # to the caller only after the system is rebooted.
+
+    # Reboot the client and sleep for 2 mins.
+    print(f"\n-- Rebooting client system '{sys_ip}' with username '{username}'..")
+    ssh_reboot_cmd = f"ssh {username}@{sys_ip} sudo reboot"
+    exec_shell_cmd(ssh_reboot_cmd, None)
+    time.sleep(120)
+
+    # Wait for the host to reboot..
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        try:
+            sock.connect((sys_ip, 22))
+            print(f"\n-- Client system: '{sys_ip}' is rebooted..")
+            break
+        except socket.error as e:
+            print("\n-- Still in process of rebooting..")
+    time.sleep(60)
+    sock.close()

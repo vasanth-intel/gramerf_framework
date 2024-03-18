@@ -18,17 +18,17 @@ BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
 
 GRAMINE_DEFAULT_REPO = "https://github.com/gramineproject/gramine.git"
-GRAMINE_CLONE = "RUN git clone --depth 1 --branch v1.6 https://github.com/gramineproject/gramine.git"
-GRAMINE_DEPTH_STR  = "--depth 1 --branch v1.6 "
-GSC_CLONE          = "git clone --depth 1 --branch v1.6 https://github.com/gramineproject/gsc.git"
-GSC_DEPTH_STR      = "--depth 1 --branch v1.6 "
+GRAMINE_CLONE = "RUN git clone --depth 1 --branch v1.6.1 https://github.com/gramineproject/gramine.git"
+GRAMINE_DEPTH_STR  = "--depth 1 --branch v1.6.1 "
+GSC_CLONE          = "git clone --depth 1 --branch v1.6.1 https://github.com/gramineproject/gsc.git"
+GSC_DEPTH_STR      = "--depth 1 --branch v1.6.1 "
 EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.git"
 
 MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"
 
 REDIS_DOWNLOAD_CMD = "wget https://github.com/antirez/redis/archive/7.0.0.tar.gz"
 
-MEMCACHED_DOWNLOAD_CMD = "wget https://memcached.org/files/memcached-1.5.21.tar.gz"
+MEMCACHED_DOWNLOAD_CMD = "wget https://memcached.org/files/memcached-1.6.21.tar.gz"
 
 NGINX_VERSION = "nginx-1.22.0"
 NGINX_DOWNLOAD_CMD = f"wget http://nginx.org/download/{NGINX_VERSION}.tar.gz"
@@ -67,7 +67,7 @@ PYTHON_PACKAGES_CMD = "python3 -m pip install -U "
 
 PIP_UPGRADE_CMD = "python3 -m pip install --upgrade pip"
 
-TENSORFLOW_INSTALL_CMD = "python3 -m pip install intel-tensorflow-avx512==2.4.0 --no-cache-dir"
+TENSORFLOW_INSTALL_CMD = "python3 -m pip install intel-tensorflow-avx512==2.8.0 --no-cache-dir"
 
 TF_BERT_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
 
@@ -110,7 +110,7 @@ MYSQL_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/mysql/test_d
 MYSQL_INIT_FOLDER_PATH = os.path.join(MYSQL_TESTDB_PATH, "mysql")
 MYSQL_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db --user $(id -u):$(id -g) \
                             -v $PWD/workloads/mysql/test_db:/test_db \
-                            -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_DATABASE=test_db mysql:8.0.32-debian \
+                            -e MYSQL_ALLOW_EMPTY_PASSWORD=true -e MYSQL_DATABASE=test_db mysql:8.0.35-debian \
                             --datadir /test_db"
 STOP_TEST_DB_CMD      = f"docker stop init_test_db"
 MYSQL_TEST_ENCRYPTION_KEY    = f"dd if=/dev/urandom bs=16 count=1 > workloads/mysql/base_image_helper/encryption_key"
@@ -134,7 +134,7 @@ COPY_MARIADB_TESTDB      = f"sudo cp -rf {MARIADB_TESTDB_PATH}/* /var/run/test_d
 MARIADB_INIT_FOLDER_PATH = os.path.join(MARIADB_TESTDB_PATH, "mariadb")
 MARIADB_INIT_DB_CMD      = f"docker run --rm --net=host --name init_test_db \
                             -v $PWD/workloads/mariadb/test_db:/test_db \
-                            -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true -e MARIADB_DATABASE=test_db mariadb:10.7 \
+                            -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true -e MARIADB_DATABASE=test_db mariadb:11.0.3-jammy \
                             --datadir /test_db "
 MARIADB_ENCRYPTED_DB_TMPFS_PATH = f"/mnt/tmpfs/test_db_encrypted"
 MARIADB_TEST_ENCRYPTION_KEY    = f"dd if=/dev/urandom bs=16 count=1 > workloads/mariadb/base_image_helper/encryption_key"

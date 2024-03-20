@@ -50,7 +50,7 @@ def getNodeName(){
             return 'graphene_perf_redis_taken_out_for_vasanth'
         } else if (run_specific_perf_test.contains("pytorch_perf") || run.contains("pytorch_perf")){
             echo "pytorch workload is selected ..."
-            return 'graphene_perf_redis_taken_out_for_vasanth'
+            return 'graphene_wcity_02'
         } else if (run_specific_perf_test.contains("mysql") || run.contains("mysql") || run_specific_perf_test.contains("mariadb_perf") || run.contains("mariadb_perf")){
             echo "mysql/mariadb workload is selected ..."
             return 'graphene_sklearn'

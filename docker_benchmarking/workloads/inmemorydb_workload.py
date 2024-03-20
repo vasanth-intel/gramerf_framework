@@ -299,21 +299,21 @@ class InMemoryDBWorkload:
                     raise Exception(f"\n-- Incorrect results file present in test results folder.\n")
 
         if 'native' in tcd['exec_mode']:
-            test_read_tpt_dict['native-avg'] = '{:0.3f}'.format(statistics.median(test_read_tpt_dict['native']))
-            test_write_tpt_dict['native-avg'] = '{:0.3f}'.format(statistics.median(test_write_tpt_dict['native']))
-            test_avg_lat_dict['native-avg'] = '{:0.3f}'.format(statistics.median(test_avg_lat_dict['native']))
-            test_95_pcnt_lat_dict['native-avg'] = '{:0.3f}'.format(statistics.median(test_95_pcnt_lat_dict['native']))
+            test_read_tpt_dict['native-med'] = '{:0.3f}'.format(statistics.median(test_read_tpt_dict['native']))
+            test_write_tpt_dict['native-med'] = '{:0.3f}'.format(statistics.median(test_write_tpt_dict['native']))
+            test_avg_lat_dict['native-med'] = '{:0.3f}'.format(statistics.median(test_avg_lat_dict['native']))
+            test_95_pcnt_lat_dict['native-med'] = '{:0.3f}'.format(statistics.median(test_95_pcnt_lat_dict['native']))
             
         if 'gramine-sgx' in tcd['exec_mode']:
-            test_read_tpt_dict['sgx-avg'] = '{:0.3f}'.format(statistics.median(test_read_tpt_dict['gramine-sgx']))
-            test_write_tpt_dict['sgx-avg'] = '{:0.3f}'.format(statistics.median(test_write_tpt_dict['gramine-sgx']))
-            test_avg_lat_dict['sgx-avg'] = '{:0.3f}'.format(statistics.median(test_avg_lat_dict['gramine-sgx']))
-            test_95_pcnt_lat_dict['sgx-avg'] = '{:0.3f}'.format(statistics.median(test_95_pcnt_lat_dict['gramine-sgx']))
+            test_read_tpt_dict['sgx-med'] = '{:0.3f}'.format(statistics.median(test_read_tpt_dict['gramine-sgx']))
+            test_write_tpt_dict['sgx-med'] = '{:0.3f}'.format(statistics.median(test_write_tpt_dict['gramine-sgx']))
+            test_avg_lat_dict['sgx-med'] = '{:0.3f}'.format(statistics.median(test_avg_lat_dict['gramine-sgx']))
+            test_95_pcnt_lat_dict['sgx-med'] = '{:0.3f}'.format(statistics.median(test_95_pcnt_lat_dict['gramine-sgx']))
             if 'native' in tcd['exec_mode']:
-                test_read_tpt_dict['sgx-deg'] = utils.percent_degradation(tcd, test_read_tpt_dict['native-avg'], test_read_tpt_dict['sgx-avg'], True)
-                test_write_tpt_dict['sgx-deg'] = utils.percent_degradation(tcd, test_write_tpt_dict['native-avg'], test_write_tpt_dict['sgx-avg'], True)
-                test_avg_lat_dict['sgx-deg'] = utils.percent_degradation(tcd, test_avg_lat_dict['native-avg'], test_avg_lat_dict['sgx-avg'])
-                test_95_pcnt_lat_dict['sgx-deg'] = utils.percent_degradation(tcd, test_95_pcnt_lat_dict['native-avg'], test_95_pcnt_lat_dict['sgx-avg'])
+                test_read_tpt_dict['sgx-deg'] = utils.percent_degradation(tcd, test_read_tpt_dict['native-med'], test_read_tpt_dict['sgx-med'], True)
+                test_write_tpt_dict['sgx-deg'] = utils.percent_degradation(tcd, test_write_tpt_dict['native-med'], test_write_tpt_dict['sgx-med'], True)
+                test_avg_lat_dict['sgx-deg'] = utils.percent_degradation(tcd, test_avg_lat_dict['native-med'], test_avg_lat_dict['sgx-med'])
+                test_95_pcnt_lat_dict['sgx-deg'] = utils.percent_degradation(tcd, test_95_pcnt_lat_dict['native-med'], test_95_pcnt_lat_dict['sgx-med'])
 
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
         if 'read_only' in tcd['test_name']:

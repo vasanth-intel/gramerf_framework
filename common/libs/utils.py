@@ -497,8 +497,12 @@ def popen_subprocess(command, dest_dir=None):
 def gen_encryption_key():
     enc_key_name = "encryption_key"
     exec_shell_cmd("gramine-sgx-pf-crypt gen-key -w " + enc_key_name)
+    return enc_key_name
+
+
+def get_encryption_key_dump(enc_key_name):
     hex_enc_key_dump = exec_shell_cmd("xxd -p " + enc_key_name)
-    return hex_enc_key_dump, enc_key_name
+    return hex_enc_key_dump
 
 
 def is_package_installed(package_name):
@@ -603,3 +607,7 @@ def reboot_client(username, sys_ip):
             print("\n-- Still in process of rebooting..")
     time.sleep(60)
     sock.close()
+
+def is_program_installed(program_name):
+    from shutil import which
+    return which(program_name) is not None

@@ -128,6 +128,11 @@ MYSQL_ENCRYPT_DB_REGFS_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/
 MYSQL_CLIENT_INSTALL_CMD = f"sudo apt-get -y install mysql-client"
 MYSQL_CLIENT_CMD       = f"printf 'SELECT User FROM mysql.user;\nexit' > input.txt | mysql -h 127.0.0.1 -uroot < input.txt"
 
+MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH  = f"/var/run/bm_test_db_encrypted"
+MYSQL_BM_PLAIN_DB_TMPFS_PATH  = f"/var/run/bm_test_db_plain"
+MYSQL_BM_CLEANUP_ENCRYPTED_DB_TMPFS = f"sudo rm -rf /var/run/bm_test_db_encrypted"
+MYSQL_BM_CLEANUP_PLAIN_DB_TMPFS = f"sudo rm -rf /var/run/bm_test_db_plain"
+
 MARIADB_CLEANUP_ENCRYPTED_DB_TMPFS = f"sudo rm -rf /mnt/tmpfs/test_db_encrypted"
 MARIADB_TESTDB_PATH      = os.path.join(CURATED_APPS_PATH, "workloads/mariadb/test_db")
 COPY_MARIADB_TESTDB      = f"sudo cp -rf {MARIADB_TESTDB_PATH}/* /var/run/test_db_plain"

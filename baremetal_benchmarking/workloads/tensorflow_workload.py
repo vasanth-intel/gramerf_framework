@@ -183,9 +183,10 @@ class TensorflowWorkload():
         self.download_workload()
         self.build_and_install_workload(test_config_dict)
         if os.environ['encryption'] == '1':
-            hex_enc_key_dump, enc_key = utils.gen_encryption_key()
+            enc_key_name = utils.gen_encryption_key()
+            hex_enc_key_dump = utils.get_encryption_key_dump(enc_key_name)
             self.update_manifest_entries(test_config_dict, hex_enc_key_dump)
-            self.encrypt_models(test_config_dict, enc_key)
+            self.encrypt_models(test_config_dict, enc_key_name)
         self.generate_manifest()
         gramine_libs.generate_sgx_token_and_sig(test_config_dict)
 

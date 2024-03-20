@@ -21,8 +21,6 @@ def get_perf_config(workload) {
 def get_exec_mode(workload) {
     if (workload in ['mariadb_perf', 'mysql_perf', 'ovms_perf', 'tf_serving_perf']){
         return 'native,gramine-sgx'
-    } else if (workload in ["memcached_perf", "redis_perf"]){
-        return 'native,gramine-direct,gramine-sgx-single-thread-non-exitless'
     } else{
         return 'native,gramine-direct,gramine-sgx'
     }

@@ -21,8 +21,6 @@ def get_perf_config(workload) {
 def get_exec_mode(workload) {
     if (workload in ['mariadb_perf', 'mysql_perf', 'ovms_perf', 'tf_serving_perf']){
         return 'native,gramine-sgx'
-    } else if (workload in ["memcached_perf", "redis_perf"]){
-        return 'native,gramine-direct,gramine-sgx-single-thread-non-exitless'
     } else{
         return 'native,gramine-direct,gramine-sgx'
     }
@@ -78,7 +76,7 @@ pipeline{
                                 build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                             }
                             parallel  redisnode: {
-                                def redis_node_workloads = ['tf_perf', 'ovms_perf', 'tf_serving_perf', 'pytorch_perf']
+                                def redis_node_workloads = ['tf_perf', 'ovms_perf', 'tf_serving_perf']
                                 redis_node_workloads.each { workload ->
                                     if (workload in ['ovms_perf']){
                                         build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true'), string(name: 'node_name', value: 'graphene_perf_redis_taken_out_for_vasanth')]).call()
@@ -88,7 +86,7 @@ pipeline{
                                 }
                                 build_perf_job('tf_perf', get_perf_config('tf_perf'), get_exec_mode('tf_perf'), get_iterations('tf_perf'), edmm, [string(name: 'encryption', value: 'true'), string(name: 'node_name', value: 'graphene_perf_redis_taken_out_for_vasanth')]).call() 
                             }, openvinonode: {
-                                def openvino_node_workloads = ['ov_perf_latency', 'ov_perf_throughput']
+                                def openvino_node_workloads = ['ov_perf_latency', 'ov_perf_throughput', 'pytorch_perf']
                                 openvino_node_workloads.each { workload ->
                                     build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()                  
                                 }

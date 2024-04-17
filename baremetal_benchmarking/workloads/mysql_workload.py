@@ -86,13 +86,13 @@ class MySqlWorkload():
         operation_cmd = ''
         if sysbench_cmd == 'prepare' or sysbench_cmd == 'cleanup':
             operation_cmd = f"sysbench --db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=3306 --mysql-user=root --mysql-db=test_db \
-                                --time=90 --report-interval=5 {tcd['operation']} --tables=16 --table_size=100000 \
+                                --time=90 --report-interval=5 {tcd['operation']} --tables=8 --table_size=100000 \
                                 --threads={os.environ['CORES_COUNT']} {sysbench_cmd}"
         elif sysbench_cmd == 'run':
             results_dir = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])
             output_file_name = results_dir + "/" + tcd['test_name'] + '_' + e_mode + '_' + str(iteration) + '.log'
             operation_cmd = f"sysbench --db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=3306 --mysql-user=root --mysql-db=test_db \
-                                --time=90 --report-interval=5 {tcd['operation']} --tables=16 --table_size=100000 \
+                                --time=90 --report-interval=5 {tcd['operation']} --tables=8 --table_size=100000 \
                                 --threads={tcd['threads']} {sysbench_cmd} | tee {output_file_name}"
         else:
             raise Exception("\n-- Invalid MySql operation command requested!!")
@@ -118,6 +118,9 @@ class MySqlWorkload():
         if curated_apps_lib.verify_process(test_config_dict, server_process, 60*10) == False:
             raise Exception(f"\n-- Failure - Couldn't launch {workload_name} server in {e_mode} mode!!")
 
+        print(f"\n-- Disabling INNODB REDO_LOG for {test_config_dict['test_name']} in {e_mode} mode")
+        utils.exec_shell_cmd('mysql -P 3306 --protocol=tcp -u root -e "ALTER INSTANCE DISABLE INNODB REDO_LOG;"', None)
+        
         print(f"\n-- Creating test_db for {test_config_dict['test_name']} in {e_mode} mode")
         utils.exec_shell_cmd("sudo mysqladmin -h 127.0.0.1 -P 3306 create test_db", None)
 
@@ -141,6 +144,9 @@ class MySqlWorkload():
         print(f"\n-- Deleting test_db for {test_config_dict['test_name']} in {e_mode} mode")
         utils.exec_shell_cmd("sudo mysqladmin -h 127.0.0.1 -P 3306 drop -f test_db", None)
         time.sleep(5)
+
+        print(f"\n-- Enabling INNODB REDO_LOG for {test_config_dict['test_name']} in {e_mode} mode")
+        utils.exec_shell_cmd('mysql -P 3306 --protocol=tcp -u root -e "ALTER INSTANCE ENABLE INNODB REDO_LOG;"', None)
 
         print(f"\n\n-- Stopping {workload_name} Server DB running in {e_mode} mode..\n")
         utils.kill(server_process.pid)

@@ -1,8 +1,11 @@
 ---
 Default:
   workload_name: "MySql"
-  docker_image: mysql mysql:8.0.32-debian
+  docker_image: mysql mysql:8.0.35-debian
   debug_mode: "n"
+  workload_home_dir: "gramine/examples/mysql"   # Needed for baremetal workload
+  manifest_name: "mysqld"                        # Needed for baremetal workload
+  manifest_file: "mysqld.manifest.template"      # Needed for baremetal workload
 
 test_mysql_perf_read_only_1_threads:
   threads: 1

@@ -41,6 +41,11 @@ def setup_redis_server():
     print("\nIf values are not as expected stop the test!!!\n")
     time.sleep(2)
 
+    # Reboot the client..
+    username = os.getenv('client_username') or 'intel'
+    client_IP = os.getenv('client_ip_addr') or '10.66.234.200'
+    utils.reboot_client(username, client_IP)
+
 
 @pytest.mark.usefixtures("setup_redis_server")
 @pytest.mark.usefixtures("gramerf_setup")
@@ -74,6 +79,22 @@ class TestClass:
     @pytest.mark.redis_perf_4096_data_size
     @pytest.mark.redis_perf_4096_data_size_1_9_rw_ratio
     def test_redis_perf_4096_data_size_1_9_rw_ratio(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.redis_perf
+    @pytest.mark.redis_perf_8192_data_size
+    @pytest.mark.redis_perf_8192_data_size_1_1_rw_ratio
+    def test_redis_perf_8192_data_size_1_1_rw_ratio(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.redis_perf
+    @pytest.mark.redis_perf_8192_data_size
+    @pytest.mark.redis_perf_8192_data_size_1_9_rw_ratio
+    def test_redis_perf_8192_data_size_1_9_rw_ratio(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result

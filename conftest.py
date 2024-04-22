@@ -32,6 +32,8 @@ def read_command_line_args(config):
     os.environ["encryption"] = config.option.encryption
     os.environ["tmpfs"] = config.option.tmpfs
     os.environ["jenkins_build_num"] = config.option.jenkins_build_num
+    os.environ["client_username"] = config.option.client_username
+    os.environ["client_ip_addr"] = config.option.client_ip_addr
 
 
 @pytest.fixture(scope="session")
@@ -77,7 +79,7 @@ def pytest_addoption(parser):
     # to build gramine from source. If 'gramine_commit' is not specified, latest
     # master will be used to build gramine.
     # ************** For container workloads **************
-    # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.5 would be
+    # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.6.1 would be
     # used as default for both commits.
     # If 'gramine_commit' is master/any other commit, 'gsc_commit' must be passed as master.
     parser.addoption("--gramine_repo", action="store", type=str, default="", help="Gramine repo to be used.")
@@ -86,7 +88,7 @@ def pytest_addoption(parser):
     parser.addoption("--gsc_commit", action="store", type=str, default="master", help="Gramine GSC commit/branch to be checked out.")
     parser.addoption("--iterations", action="store", type=str, default='3', help="Number of times workload/benchmark app needs to be launched/executed.")
     # Following will be value of 'exec_mode' that would be expected by the framework.
-    # For Redis workload: "native,gramine-direct,gramine-sgx-single-thread-non-exitless,gramine-sgx-diff-core-exitless"
+    # For Redis workload: "native,gramine-direct,gramine-sgx,gramine-sgx-exitless"
     # For other workloads: "native,gramine-direct,gramine-sgx"
     parser.addoption("--exec_mode", action="store", type=str, default="native,gramine-direct,gramine-sgx", help="Workload execution modes.")
     parser.addoption("--edmm", action="store", type=str, default="0", help="EDMM mode")
@@ -95,3 +97,9 @@ def pytest_addoption(parser):
     # Following option is the build number of the 'gramerf_performance_banehmarking' Jenkins job.
     # This number is used within the filename of the final report generated for the workload.
     parser.addoption("--jenkins_build_num", action="store", type=str, default="", help="Build number of Jenkins CI perf job")
+    # Following option is the username with which the system (client) needs to be rebooted.
+    # Applicable on for few workloads like Redis and Memcached.
+    parser.addoption("--client_username", action="store", type=str, default="", help="User name of the system to be rebooted")
+    # Following option is the IP address of the system (client) that needs to be rebooted.
+    # Applicable on for few workloads like Redis and Memcached.
+    parser.addoption("--client_ip_addr", action="store", type=str, default="", help="User name of the system to be rebooted")

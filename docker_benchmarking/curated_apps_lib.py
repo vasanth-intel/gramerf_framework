@@ -36,7 +36,7 @@ def copy_repo():
 
 
 def update_curation_verifier_scripts():
-    # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.5 would be
+    # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.6.1 would be
     # used as default for both commits.
     # If 'gramine_commit' is master/any other commit, 'gsc_commit' must be passed as master.
     if os.environ["gramine_repo"] or os.environ["gramine_commit"]:
@@ -47,9 +47,9 @@ def update_curation_verifier_scripts():
 
 def update_gramine_branch(gramine_repo='', gramine_commit=''):
     if gramine_repo == '': gramine_repo = GRAMINE_DEFAULT_REPO
-    if gramine_commit == '': gramine_commit = 'v1.5'
+    if gramine_commit == '': gramine_commit = 'v1.6.1'
     commit_str = f" && cd gramine && git checkout {gramine_commit} && cd .."
-    copy_cmd = "cp config.yaml.template config.yaml"
+    copy_cmd = "cp -f config.yaml.template config.yaml"
     gramine_string = GRAMINE_DEPTH_STR + GRAMINE_DEFAULT_REPO
     helper_file = os.path.join(ORIG_BASE_PATH, "verifier", "helper.sh")
     if not "v1" in gramine_commit:

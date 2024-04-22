@@ -183,9 +183,10 @@ class TensorflowWorkload():
         self.download_workload()
         self.build_and_install_workload(test_config_dict)
         if os.environ['encryption'] == '1':
-            hex_enc_key_dump, enc_key = utils.gen_encryption_key()
+            enc_key_name = utils.gen_encryption_key()
+            hex_enc_key_dump = utils.get_encryption_key_dump(enc_key_name)
             self.update_manifest_entries(test_config_dict, hex_enc_key_dump)
-            self.encrypt_models(test_config_dict, enc_key)
+            self.encrypt_models(test_config_dict, enc_key_name)
         self.generate_manifest()
         gramine_libs.generate_sgx_token_and_sig(test_config_dict)
 
@@ -286,17 +287,17 @@ class TensorflowWorkload():
     def update_test_results_in_global_dict(self, tcd, test_dict):
         global trd
         if 'native' in tcd['exec_mode']:
-            test_dict['native-avg'] = '{:0.3f}'.format(statistics.median(test_dict['native']))
+            test_dict['native-med'] = '{:0.3f}'.format(statistics.median(test_dict['native']))
 
         if 'gramine-direct' in tcd['exec_mode']:
-            test_dict['direct-avg'] = '{:0.3f}'.format(statistics.median(test_dict['gramine-direct']))
+            test_dict['direct-med'] = '{:0.3f}'.format(statistics.median(test_dict['gramine-direct']))
             if 'native' in tcd['exec_mode']:
-                test_dict['direct-deg'] = utils.percent_degradation(tcd, test_dict['native-avg'], test_dict['direct-avg'])
+                test_dict['direct-deg'] = utils.percent_degradation(tcd, test_dict['native-med'], test_dict['direct-med'])
 
         if 'gramine-sgx' in tcd['exec_mode']:
-            test_dict['sgx-avg'] = '{:0.3f}'.format(statistics.median(test_dict['gramine-sgx']))
+            test_dict['sgx-med'] = '{:0.3f}'.format(statistics.median(test_dict['gramine-sgx']))
             if 'native' in tcd['exec_mode']:
-                test_dict['sgx-deg'] = utils.percent_degradation(tcd, test_dict['native-avg'], test_dict['sgx-avg'])
+                test_dict['sgx-deg'] = utils.percent_degradation(tcd, test_dict['native-med'], test_dict['sgx-med'])
 
         utils.write_to_csv(tcd, test_dict)
 

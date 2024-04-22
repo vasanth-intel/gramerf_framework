@@ -13,8 +13,8 @@ class MemcachedWorkload:
     def __init__(self, test_config_dict):
         # Memcached home dir => "~/gramerf_framework/gramine/CI-Examples/memcached"
         self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
-        # Memcached build dir => "~/gramerf_framework/gramine/CI-Examples/memcached/memcached-1.5.21"
-        self.workload_bld_dir = os.path.join(self.workload_home_dir, "memcached-1.5.21")
+        # Memcached build dir => "~/gramerf_framework/gramine/CI-Examples/memcached/memcached-1.6.21"
+        self.workload_bld_dir = os.path.join(self.workload_home_dir, "memcached-1.6.21")
         self.server_ip_addr = utils.determine_host_ip_addr()
         self.command = None
 
@@ -75,7 +75,8 @@ class MemcachedWorkload:
         shutil.copy2(bin_file_name, self.workload_home_dir)
 
     def update_server_details_in_client(self, tcd):
-        client_name = tcd['client_username'] + "@" + tcd['client_ip']
+        client_IP = os.getenv('client_ip_addr') or tcd['client_ip']
+        client_name = tcd['client_username'] + "@" + client_IP
         client_file_path = os.path.join(tcd['client_scripts_path'], "instance_benchmark.sh")
 
         # Setting 'SSHPASS' env variable for ssh commands
@@ -102,7 +103,8 @@ class MemcachedWorkload:
     def delete_old_test_results(self, tcd):
         print("\n-- Deleting older test results from client..")
         test_res_path = os.path.join(tcd['client_results_path'], tcd['test_name'])
-        client_name = tcd['client_username'] + "@" + tcd['client_ip']
+        client_IP = os.getenv('client_ip_addr') or tcd['client_ip']
+        client_name = tcd['client_username'] + "@" + client_IP
         test_res_del_cmd = f"sshpass -e ssh {client_name} 'rm -rf {test_res_path}'"
         print(test_res_del_cmd)
         utils.exec_shell_cmd(test_res_del_cmd)
@@ -134,7 +136,7 @@ class MemcachedWorkload:
             memcached_exec_cmd = tmp_exec_cmd
         elif exec_mode == 'gramine-direct':
             memcached_exec_cmd = "gramine-direct " + tmp_exec_cmd
-        elif exec_mode == 'gramine-sgx-single-thread-non-exitless':
+        elif exec_mode == 'gramine-sgx':
             memcached_exec_cmd = "gramine-sgx " + tmp_exec_cmd
         else:
             raise Exception(f"\nInvalid execution mode specified in config yaml!")
@@ -207,30 +209,30 @@ class MemcachedWorkload:
                 if "native" in filename:
                     test_dict_latency['native'].append(float(avg_latency))
                     test_dict_throughput['native'].append(float(avg_throughput))
-                elif "graphene_sgx_single_thread" in filename:
-                    test_dict_latency['gramine-sgx-single-thread-non-exitless'].append(float(avg_latency))
-                    test_dict_throughput['gramine-sgx-single-thread-non-exitless'].append(float(avg_throughput))
+                elif "gramine_sgx" in filename:
+                    test_dict_latency['gramine-sgx'].append(float(avg_latency))
+                    test_dict_throughput['gramine-sgx'].append(float(avg_throughput))
                 else:
                     test_dict_latency['gramine-direct'].append(float(avg_latency))
                     test_dict_throughput['gramine-direct'].append(float(avg_throughput))
 
         if 'native' in tcd['exec_mode']:
-            test_dict_latency['native-avg'] = '{:0.3f}'.format(statistics.median(test_dict_latency['native']))
-            test_dict_throughput['native-avg'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['native']))
+            test_dict_latency['native-med'] = '{:0.3f}'.format(statistics.median(test_dict_latency['native']))
+            test_dict_throughput['native-med'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['native']))
 
         if 'gramine-direct' in tcd['exec_mode']:
-            test_dict_latency['direct-avg'] = '{:0.3f}'.format(statistics.median(test_dict_latency['gramine-direct']))
-            test_dict_throughput['direct-avg'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-direct']))
+            test_dict_latency['direct-med'] = '{:0.3f}'.format(statistics.median(test_dict_latency['gramine-direct']))
+            test_dict_throughput['direct-med'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-direct']))
             if 'native' in tcd['exec_mode']:
-                test_dict_latency['direct-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-avg'], test_dict_latency['direct-avg'])
-                test_dict_throughput['direct-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['direct-avg'], True)
+                test_dict_latency['direct-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-med'], test_dict_latency['direct-med'])
+                test_dict_throughput['direct-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-med'], test_dict_throughput['direct-med'], True)
 
-        if 'gramine-sgx-single-thread-non-exitless' in tcd['exec_mode']:
-            test_dict_latency['sgx-single-thread-avg'] = '{:0.3f}'.format(statistics.median(test_dict_latency['gramine-sgx-single-thread-non-exitless']))
-            test_dict_throughput['sgx-single-thread-avg'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-sgx-single-thread-non-exitless']))
+        if 'gramine-sgx' in tcd['exec_mode']:
+            test_dict_latency['sgx-med'] = '{:0.3f}'.format(statistics.median(test_dict_latency['gramine-sgx']))
+            test_dict_throughput['sgx-med'] = '{:0.3f}'.format(statistics.median(test_dict_throughput['gramine-sgx']))
             if 'native' in tcd['exec_mode']:
-                test_dict_latency['sgx-single-thread-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-avg'], test_dict_latency['sgx-single-thread-avg'])
-                test_dict_throughput['sgx-single-thread-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-avg'], test_dict_throughput['sgx-single-thread-avg'], True)
+                test_dict_latency['sgx-deg'] = utils.percent_degradation(tcd, test_dict_latency['native-med'], test_dict_latency['sgx-med'])
+                test_dict_throughput['sgx-deg'] = utils.percent_degradation(tcd, test_dict_throughput['native-med'], test_dict_throughput['sgx-med'], True)
 
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
         trd[tcd['workload_name']].update({tcd['test_name']+'_latency': test_dict_latency})
@@ -244,7 +246,8 @@ class MemcachedWorkload:
 
         # Copy test results folder from client to local server results folder.
         client_res_folder = os.path.join(tcd['client_results_path'], tcd['test_name'])
-        client_scp_path = tcd['client_username'] + "@" + tcd['client_ip'] + ":" + client_res_folder
+        client_IP = os.getenv('client_ip_addr') or tcd['client_ip']
+        client_scp_path = tcd['client_username'] + "@" + client_IP + ":" + client_res_folder
         copy_client_to_server_cmd = f"sshpass -e scp -r {client_scp_path} {csv_res_folder}"
         utils.exec_shell_cmd(copy_client_to_server_cmd)
 

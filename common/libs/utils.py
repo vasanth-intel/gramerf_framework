@@ -353,10 +353,12 @@ def write_to_report(workload_name, test_results):
     now = dt.isoformat(dt.now()).replace(":","-").split('.')[0]
     if workload_name == 'Tensorflow' and os.environ['encryption'] == '1':
         workload_name = 'tensorflow_encrypted'
-    if workload_name == 'Openvino' and os.environ['EDMM'] == '1':
+    elif workload_name == 'Openvino' and os.environ['EDMM'] == '1':
         workload_name = 'openvino_edmm'
-    if workload_name == 'Redis' and os.environ['perf_config'] == 'container':
+    elif workload_name == 'Redis' and os.environ['perf_config'] == 'container':
         workload_name = 'redis_container'
+    elif workload_name == 'MySql' and os.environ['perf_config'] == 'container':
+        workload_name = 'mysql_container'
     gramine_commit = os.environ["gramine_commit"]
     if "/" in gramine_commit:
         gramine_commit = os.path.basename(gramine_commit)

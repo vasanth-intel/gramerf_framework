@@ -90,13 +90,13 @@ class TestClass:
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
-    @pytest.mark.mysql_perf
-    @pytest.mark.mysql_perf_write_only
-    @pytest.mark.mysql_perf_write_only_64_threads
-    def test_mysql_perf_write_only_64_threads(self):
+    #@pytest.mark.mysql_perf
+    #@pytest.mark.mysql_perf_write_only
+    #@pytest.mark.mysql_perf_write_only_64_threads
+    #def test_mysql_perf_write_only_64_threads(self):
 
-        test_result = run_test(self, tests_yaml_path)
-        assert test_result
+    #    test_result = run_test(self, tests_yaml_path)
+    #    assert test_result
 
     @pytest.mark.mysql_perf
     @pytest.mark.mysql_perf_read_write

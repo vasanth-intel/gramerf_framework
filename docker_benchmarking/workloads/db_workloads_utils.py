@@ -12,11 +12,10 @@ def init_db(workload_name):
         return init_baremetal_db(workload_name)
 
 def init_container_db(workload_name):
-    # We need to stop the baremetal MySql service if we are running container MySql.
-    # Otherwise, we would not be able to run container MySql, as it uses the same port(3306).
-    if utils.is_program_installed(workload_name.lower()):
-        print("\n -- Stopping MySQL service..\n")
-        utils.exec_shell_cmd("sudo systemctl stop mysql.service", None)
+    # We need to stop the baremetal MySql service if we are running container MySql/MariaDB workloads.
+    # Otherwise, we would not be able to run container workloads, as they use the same port(3306).
+    print("\n -- Stopping MySQL service..\n")
+    utils.exec_shell_cmd("sudo systemctl stop mysql.service", None)
     docker_output = ''
     output = None
     init_result = False

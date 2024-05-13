@@ -180,8 +180,6 @@ class MongoDBWorkload():
                 if 'native' in tcd['exec_mode']:
                     test_tpt_dict['sgx-deg'].append(float(utils.percent_degradation(tcd, test_tpt_dict['native-med'][i], test_tpt_dict['sgx-med'][i], True)))
 
-        print("\n\n,Test Dictionary: \n\n", test_tpt_dict)
-        
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
         trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_tpt_dict})
 

@@ -162,3 +162,6 @@ OVMS_TEST_ENCRYPTION_KEY = f"dd if=/dev/urandom bs=16 count=1 > workloads/openvi
 OVMS_ENCRYPTED_DB_PATH = "/mnt/tmpfs/model_encrypted"
 OVMS_ENCRYPT_DB_CMD   = f"sudo gramine-sgx-pf-crypt encrypt -w workloads/openvino-model-server/base_image_helper/encryption_key \
                         -i workloads/openvino-model-server/test_model -o {OVMS_ENCRYPTED_DB_PATH}"
+
+MONGO_DB_PATH  = f"/var/run/db_mongodb"
+MONGO_DB_CLEANUP_CMD = f"sudo rm -rf /var/run/db_mongodb"

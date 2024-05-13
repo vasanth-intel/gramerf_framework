@@ -1,0 +1,42 @@
+# Copyright (C) 2024 Gramine contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
+loader.entrypoint = "file:{{ gramine.libos }}"
+libos.entrypoint = "{{ execdir }}/mongod"
+
+loader.log_level = "{{ log_level }}"
+
+# loader.argv = ["mongod", "--nounixsocket"]
+loader.insecure__use_cmdline_argv = true
+
+loader.env.LD_LIBRARY_PATH = "/lib:/usr/{{ arch_libdir }}"
+loader.env.PATH = "{{ execdir }}"
+
+fs.mounts = [
+  { path = "/lib", uri = "file:{{ gramine.runtimedir() }}" },
+  { path = "{{ execdir }}/mongod", uri = "file:{{ execdir }}/mongod" },
+  { path = "/usr/{{ arch_libdir }}", uri = "file:/usr/{{ arch_libdir }}" },
+  { path = "/data/db", uri = "file:data/db" },
+  { path = "/var/run/db_mongodb", uri = "file:/var/run/db_mongodb" },
+]
+
+sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
+sgx.enclave_size = "8G"
+sgx.max_threads = {{ '1' if env.get('EDMM', '0') == '1' else '128' }}
+
+sgx.trusted_files = [
+  "file:{{ gramine.libos }}",
+  "file:{{ execdir }}/mongod",
+  "file:{{ gramine.runtimedir() }}/",
+  "file:/usr/{{ arch_libdir }}/",
+]
+
+sgx.file_check_policy = "allow_all_but_log"
+
+sgx.allowed_files = [
+  "file:data/db/",    # MongoDB data will be stored in plaintext; this is insecure!
+]
+
+# BSD (flock) locks are currently experimental
+sys.experimental__enable_flock = true
+sys.enable_sigterm_injection = true

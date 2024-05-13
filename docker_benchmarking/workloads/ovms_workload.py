@@ -151,7 +151,7 @@ class OpenVinoModelServerWorkload:
         
         process = utils.popen_subprocess(init_db_cmd, CURATED_APPS_PATH)
         time.sleep(10)
-        if curated_apps_lib.verify_process(test_config_dict, process, 60*10) == False:
+        if utils.verify_process(test_config_dict, process, 60*10) == False:
             raise Exception(f"\n-- Failure - Couldn't launch {workload_name} server in {e_mode} mode!!")
         
         self.exec_workload_perf_cmd(test_config_dict, test_dict, e_mode)

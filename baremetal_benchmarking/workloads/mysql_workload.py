@@ -115,7 +115,7 @@ class MySqlWorkload():
         
         server_process = utils.popen_subprocess(server_exec_cmd)
         time.sleep(5)
-        if curated_apps_lib.verify_process(test_config_dict, server_process, 60*10) == False:
+        if utils.verify_process(test_config_dict, server_process, 60*10) == False:
             raise Exception(f"\n-- Failure - Couldn't launch {workload_name} server in {e_mode} mode!!")
 
         print(f"\n-- Disabling INNODB REDO_LOG for {test_config_dict['test_name']} in {e_mode} mode")

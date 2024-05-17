@@ -613,3 +613,61 @@ def reboot_client(username, sys_ip):
 def is_program_installed(program_name):
     from shutil import which
     return which(program_name) is not None
+
+def get_workload_result(test_config_dict):
+    if "workload_result" in test_config_dict.keys():
+        workload_result = [test_config_dict["workload_result"]]
+    elif "redis" in test_config_dict["workload_name"].lower():
+        workload_result = "Ready to accept connections"
+    elif "tensorflowserving" in test_config_dict["workload_name"].lower():
+        workload_result = "Running gRPC ModelServer at 0.0.0.0:8500"
+    elif "mysql" in test_config_dict["workload_name"].lower():
+        workload_result = MYSQL_TESTDB_VERIFY
+    elif "mariadb" in test_config_dict["workload_name"].lower():
+        workload_result = MARIADB_TESTDB_VERIFY
+    elif "openvinomodelserver" in test_config_dict["workload_name"].lower():
+        workload_result = "ServableManagerModule started"
+    elif "mongodb" == test_config_dict["workload_name"].lower():
+        workload_result = "mongod startup complete"
+    return workload_result
+
+
+def verify_process(test_config_dict, process=None, timeout=0):
+    result = False
+    workload_output = ''
+    debug_log = None
+    output = None
+    workload_result = get_workload_result(test_config_dict)
+    print(workload_result)
+
+    # Redirecting the debug mode logs to file instead of console because
+    # it consumes whole lot of console and makes difficult to debug
+    if test_config_dict.get("debug_mode") == "y":
+        console_log_file = f"{LOGS_DIR}/{test_config_dict['test_name']}_console.log"
+        debug_log = open(console_log_file, "w+")
+
+    if timeout != 0:
+        timeout = time.time() + timeout
+    while True:
+        if process.poll() is not None and output == '':
+            break
+
+        output = process.stdout.readline()
+        
+        if debug_log:
+            if output: debug_log.write(output)
+        else:
+            if output: print(output.strip())
+
+        if output:
+            if output:
+                workload_output += output
+            if workload_output.count(workload_result) > 0:
+                process.stdout.close()
+                result = True
+                break
+            elif timeout != 0 and time.time() > timeout:
+                break
+    
+    if debug_log: debug_log.close()
+    return result

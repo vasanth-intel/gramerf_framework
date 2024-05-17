@@ -6,3 +6,4 @@ from baremetal_benchmarking.workloads.memcached_workload import MemcachedWorkloa
 from baremetal_benchmarking.workloads.nginx_workload import NginxWorkload
 from baremetal_benchmarking.workloads.specpower_workload import SpecPowerWorkload
 from baremetal_benchmarking.workloads.mysql_workload import MySqlWorkload
+from baremetal_benchmarking.workloads.mongodb_workload import MongoDBWorkload

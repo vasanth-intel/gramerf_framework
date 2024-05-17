@@ -109,70 +109,7 @@ def get_docker_run_command(workload_name):
     return output
 
 
-def get_workload_result(test_config_dict):
-    if "workload_result" in test_config_dict.keys():
-        workload_result = [test_config_dict["workload_result"]]
-    elif "bash" in test_config_dict["docker_image"]:
-        workload_result = ["total        used        free      shared  buff/cache   available"]
-    elif "redis" in test_config_dict["docker_image"]:
-        workload_result = "Ready to accept connections"
-    elif "pytorch" in test_config_dict["docker_image"]:
-        workload_result = ["Done. The result was written to `result.txt`."]
-    elif "sklearn" in test_config_dict["docker_image"]:
-        workload_result = "Kmeans perf evaluation finished"
-    elif "tensorflow-serving" in test_config_dict["docker_image"]:
-        workload_result = "Running gRPC ModelServer at 0.0.0.0:8500"
-    elif "mysql" in test_config_dict["docker_image"]:
-        workload_result = MYSQL_TESTDB_VERIFY
-    elif "mariadb" in test_config_dict["docker_image"]:
-        workload_result = MARIADB_TESTDB_VERIFY
-    elif "openvino-model-server" in test_config_dict["docker_image"]:
-        workload_result = "ServableManagerModule started"
-    return workload_result
-
-
-def verify_process(test_config_dict, process=None, timeout=0):
-    result = False
-    docker_output = ''
-    debug_log = None
-    output = None
-    workload_result = get_workload_result(test_config_dict)
-    print(workload_result)
-
-    # Redirecting the debug mode logs to file instead of console because
-    # it consumes whole lot of console and makes difficult to debug
-    if test_config_dict.get("debug_mode") == "y":
-        console_log_file = f"{LOGS_DIR}/{test_config_dict['test_name']}_console.log"
-        debug_log = open(console_log_file, "w+")
-
-    if timeout != 0:
-        timeout = time.time() + timeout
-    while True:
-        if process.poll() is not None and output == '':
-            break
-
-        output = process.stdout.readline()
-        
-        if debug_log:
-            if output: debug_log.write(output)
-        else:
-            if output: print(output.strip())
-
-        if output:
-            if output:
-                docker_output += output
-            if docker_output.count(workload_result) > 0:
-                process.stdout.close()
-                result = True
-                break
-            elif timeout != 0 and time.time() > timeout:
-                break
-    
-    if debug_log: debug_log.close()
-    return result
-
-
 def run_curated_image(test_config_dict, docker_run_cmd):
     process = utils.popen_subprocess(docker_run_cmd)
-    return verify_process(test_config_dict, process)
+    return utils.verify_process(test_config_dict, process)
 

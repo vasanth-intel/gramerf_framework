@@ -83,7 +83,7 @@ class TensorflowServingWorkload:
             # docker run --net=host -it tf-serving-base --model_name="resnet" --model_base_path="/models/resnet"
             docker_native_cmd = f"docker run --rm --net=host -t {workload_docker_image_name} {workload_docker_arguments}"
             process = utils.popen_subprocess(docker_native_cmd)
-            if curated_apps_lib.verify_process(test_config_dict, process) == False:
+            if utils.verify_process(test_config_dict, process) == False:
                 raise Exception(f"\n-- Failure - Couldn't launch tf-serving in {e_mode} mode!!")
         else:
             docker_run_cmd = curated_apps_lib.get_docker_run_command(workload_docker_image_name + ' ' + workload_docker_arguments)

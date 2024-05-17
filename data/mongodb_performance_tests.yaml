@@ -1,0 +1,28 @@
+---
+Default:
+  workload_name: "MongoDB"
+  debug_mode: "n"
+  workload_home_dir: "gramine/examples/mongodb"
+  manifest_name: "mongod"
+  manifest_file: "mongod.manifest.template"
+
+test_mongodb_perf_1_threads:
+  threads: 1
+
+test_mongodb_perf_2_threads:
+  threads: 2
+
+test_mongodb_perf_4_threads:
+  threads: 4
+
+test_mongodb_perf_8_threads:
+  threads: 8
+
+test_mongodb_perf_16_threads:
+  threads: 16
+
+test_mongodb_perf_32_threads:
+  threads: 32
+
+test_mongodb_perf_64_threads:
+  threads: 64

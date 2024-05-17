@@ -4,6 +4,8 @@
 loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "{{ execdir }}/mongod"
 
+libos.check_invalid_pointers = false
+
 loader.log_level = "{{ log_level }}"
 
 # loader.argv = ["mongod", "--nounixsocket"]
@@ -21,8 +23,8 @@ fs.mounts = [
 ]
 
 sgx.edmm_enable = {{ 'true' if env.get('EDMM', '0') == '1' else 'false' }}
-sgx.enclave_size = "8G"
-sgx.max_threads = {{ '1' if env.get('EDMM', '0') == '1' else '128' }}
+sgx.enclave_size = "16G"
+sgx.max_threads = {{ '1' if env.get('EDMM', '0') == '1' else '256' }}
 
 sgx.trusted_files = [
   "file:{{ gramine.libos }}",
@@ -32,10 +34,6 @@ sgx.trusted_files = [
 ]
 
 sgx.file_check_policy = "allow_all_but_log"
-
-sgx.allowed_files = [
-  "file:data/db/",    # MongoDB data will be stored in plaintext; this is insecure!
-]
 
 # BSD (flock) locks are currently experimental
 sys.experimental__enable_flock = true

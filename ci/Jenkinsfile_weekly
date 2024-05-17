@@ -33,7 +33,7 @@ def get_iterations(workload) {
         return '20'
     } else if (workload == 'pytorch_perf'){
         return '3'
-    } else if (workload == 'specpower_perf'){
+    } else if (workload in ['specpower_perf', 'mongodb_perf']){
         return '5'
     } else{
         return iterations
@@ -51,8 +51,10 @@ pipeline{
                     steps{
                         script{
                             cleanWs()
-                            workload = 'specpower_perf'
-                            build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
+                            def spec_node_workload = ['specpower_perf', 'mongodb_perf']
+                            spec_node_workload.each{ workload ->
+                                build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
+                            }
                         }
                     }
                 }

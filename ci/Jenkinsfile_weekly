@@ -1,7 +1,9 @@
 properties([
     parameters([
         choice(choices: ['source', 'package'], name: 'build_gramine'),
+        string(defaultValue: 'https://github.com/gramineproject/gramine.git', name: 'gramine_repo'),
         string(defaultValue: 'master', name: 'gramine_commit'),
+        string(defaultValue: 'https://github.com/gramineproject/gsc.git', name: 'gsc_repo'),
         string(defaultValue: 'master', name: 'gsc_commit'),
         string(defaultValue: '10', name: 'iterations'),
         booleanParam('edmm')
@@ -63,7 +65,9 @@ pipeline{
                                     build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true'), string(name: 'tmpfs', value: 'true')]).call() 
                                 } else {
                                     build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
-                                }                                
+                                }
+                                workload = 'mysql_perf'
+                                build_perf_job(workload, 'baremetal', get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true')]).call()
                             }  
                         }
                     }
@@ -118,7 +122,8 @@ pipeline{
 }
 
 def build_perf_job(workload, perf_config, exec_mode, iterations, is_edmm, extra_params=null) {
-    def params = [string(name: 'perf_config', value: perf_config), string(name: 'build_gramine', value: build_gramine), 
+    def params = [string(name: 'perf_config', value: perf_config), string(name: 'gramine_repo', value: gramine_repo),
+    string(name: 'build_gramine', value: build_gramine), string(name: 'gsc_repo', value: gsc_repo),
     string(name: 'gramine_commit', value: gramine_commit), string(name: 'run', value: workload), 
     string(name: 'gsc_commit', value: gsc_commit), string(name: 'exec_mode', value: exec_mode),
     string(name: 'iterations', value: iterations)]

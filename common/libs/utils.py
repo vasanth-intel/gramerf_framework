@@ -353,10 +353,12 @@ def write_to_report(workload_name, test_results):
     now = dt.isoformat(dt.now()).replace(":","-").split('.')[0]
     if workload_name == 'Tensorflow' and os.environ['encryption'] == '1':
         workload_name = 'tensorflow_encrypted'
-    if workload_name == 'Openvino' and os.environ['EDMM'] == '1':
+    elif workload_name == 'Openvino' and os.environ['EDMM'] == '1':
         workload_name = 'openvino_edmm'
-    if workload_name == 'Redis' and os.environ['perf_config'] == 'container':
+    elif workload_name == 'Redis' and os.environ['perf_config'] == 'container':
         workload_name = 'redis_container'
+    elif workload_name == 'MySql' and os.environ['perf_config'] == 'container':
+        workload_name = 'mysql_container'
     gramine_commit = os.environ["gramine_commit"]
     if "/" in gramine_commit:
         gramine_commit = os.path.basename(gramine_commit)
@@ -497,8 +499,12 @@ def popen_subprocess(command, dest_dir=None):
 def gen_encryption_key():
     enc_key_name = "encryption_key"
     exec_shell_cmd("gramine-sgx-pf-crypt gen-key -w " + enc_key_name)
+    return enc_key_name
+
+
+def get_encryption_key_dump(enc_key_name):
     hex_enc_key_dump = exec_shell_cmd("xxd -p " + enc_key_name)
-    return hex_enc_key_dump, enc_key_name
+    return hex_enc_key_dump
 
 
 def is_package_installed(package_name):
@@ -603,3 +609,7 @@ def reboot_client(username, sys_ip):
             print("\n-- Still in process of rebooting..")
     time.sleep(60)
     sock.close()
+
+def is_program_installed(program_name):
+    from shutil import which
+    return which(program_name) is not None

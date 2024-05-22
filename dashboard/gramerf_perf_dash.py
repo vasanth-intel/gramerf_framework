@@ -55,6 +55,8 @@ system_details['NGINX'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 
                                      html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
 system_details['SPECpower'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
                                      html.Br(), 'CPU(s): 128', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 32'])
+system_details['MongoDB'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
+                                     html.Br(), 'CPU(s): 128', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 32'])
 
 workload_details = {}
 workload_details['TensorFlow'] = html.P(['TensorFlow: v2.4.0', html.Br(), 'Enclave size: 32GB'])
@@ -71,6 +73,7 @@ workload_details['OpenVINO™ Model Server'] = html.P(['OpenVINO™ Model Server
 workload_details['PyTorch'] = html.P(['PyTorch', html.Br(), 'Enclave size: 4GB'])
 workload_details['NGINX'] = html.P(['NGINX', html.Br(), 'Enclave size: 512MB'])
 workload_details['SPECpower'] = html.P(['SPECpower : 2008-v1.12', html.Br(), 'Enclave size: 64GB'])
+workload_details['MongoDB'] = html.P(['MongoDB : 2008-v1.12', html.Br(), 'Enclave size: 64GB'])
 
 app.layout = html.Div([
     html.H1("Gramine Performance Dashboard",

@@ -25,6 +25,7 @@ workload_namelist['openvinomodelserver'] = 'OpenVINO™ Model Server'
 workload_namelist['pytorch'] = 'PyTorch'
 workload_namelist['nginx'] = 'NGINX'
 workload_namelist['specpower'] = 'SPECpower'
+workload_namelist['mongodb'] = 'MongoDB'
 
 unwamted_cols = ['NATIVE', 'GRAMINE-SGX', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS', 'GRAMINE-DIRECT',
                  'Unnamed: 9', 'NATIVE.1', 'GRAMINE-SGX.1', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS.1', 
@@ -51,6 +52,8 @@ def read_yaml_config():
         parsed_yaml_file = yaml.safe_load(yaml_file)
     return parsed_yaml_file
 
+def return_last_element(row):
+    return row.split(',')[-1][:-1].strip()
 
 def add_workload(workload):
     parsed_yaml_file = read_yaml_config()
@@ -82,6 +85,12 @@ def get_pytorch_data(df_pytorch):
     df = df_pytorch[pytorch_columns]
     return df
 
+def get_mongodb_data(df_mongo):
+    #create duplicate SGX-DEG-MULTI-VALUE column from SGX-DEG
+    df_mongo['SGX-DEG-MULTI-VALUES'] = df_mongo.loc[:, 'SGX-DEG']
+    df_mongo['SGX-DEG'] = df_mongo['SGX-DEG'].apply(return_last_element)
+    return df_mongo
+
 def get_perf_data(filename, date, commit_id, workload):
     df = pd.read_excel(filename, usecols=lambda x: x not in unwamted_cols)
     if workload == "redis" or workload == "memcached":
@@ -91,6 +100,8 @@ def get_perf_data(filename, date, commit_id, workload):
         df.rename(columns={'GRAMINE-SGX-DEG': 'SGX-DEG'}, inplace=True)
     if workload == 'pytorch':
         df = get_pytorch_data(df)
+    if workload == 'mongodb':
+        df = get_mongodb_data(df)
 
     df.rename(columns={'Unnamed: 0': 'model'}, inplace=True)
     df['Date'] = date

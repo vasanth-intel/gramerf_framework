@@ -13,3 +13,4 @@ workloads:
 - nginx
 - specpower
 - mysql
+- mongodb

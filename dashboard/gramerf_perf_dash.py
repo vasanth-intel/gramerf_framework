@@ -39,6 +39,8 @@ system_details['Memcached'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kern
                                      html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
 system_details['MySQL'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
                                  html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
+system_details['MySQL Container'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
+                                 html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
 system_details['scikit-learn'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
                                      html.Br(), 'CPU(s): 152', html.Br(), 'Thread(s) per core: 2', html.Br(), 'Core(s) per Socket: 38'])
 system_details['TensorFlow Encrypted'] = html.P(['OS: Ubuntu 20.04.6 LTS', html.Br(), 'Kernel: 6.0.0-060000-generic',
@@ -59,6 +61,7 @@ workload_details['TensorFlow'] = html.P(['TensorFlow: v2.4.0', html.Br(), 'Encla
 workload_details['Redis'] = html.P(['Redis: v6.0.5', html.Br(), 'Memtier benchmark: v1.3.0', html.Br(), 'Enclave size: 4GB'])
 workload_details['OpenVINO'] = html.P(['OpenVino: v2021.4.2', html.Br(), 'Enclave size: 32GB'])
 workload_details['MySQL'] = html.P(['MySQL: v8.0.32-debian (Docker image)', html.Br(), 'Enclave size: 4GB'])
+workload_details['MySQL Container'] = html.P(['MySQL: v8.0.32-debian', html.Br(), 'Enclave size: 4GB'])
 workload_details['Memcached'] = html.P(['Memcached: v1.5.21', html.Br(), 'Memtier benchmark: v1.3.0', html.Br(), 'Enclave size: 4GB'])
 workload_details['scikit-learn'] = html.P(['Scikit-Learn: v1.2.0', html.Br(), 'Scikit-learn-intelex: v2023.0.1', html.Br(), 'Enclave size: 64GB'])
 workload_details['TensorFlow Serving'] = html.P(['TensorFlow Serving: intel-optimized-tensorflow-serving-avx512-ubuntu20.04', html.Br(), 'Enclave size: 64GB'])

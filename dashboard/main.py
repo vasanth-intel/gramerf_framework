@@ -17,6 +17,7 @@ workload_namelist['tensorflow'] = 'TensorFlow'
 workload_namelist['tensorflow_encrypted'] = 'TensorFlow Encrypted'
 workload_namelist['tensorflowserving'] = 'TensorFlow Serving'
 workload_namelist['mysql'] = 'MySQL'
+workload_namelist['mysql_container'] = 'MySQL Container'
 workload_namelist['memcached'] = 'Memcached'
 workload_namelist['sklearnex'] = 'scikit-learn'
 workload_namelist['mariadb'] = 'MariaDB'
@@ -26,7 +27,8 @@ workload_namelist['nginx'] = 'NGINX'
 workload_namelist['specpower'] = 'SPECpower'
 
 unwamted_cols = ['NATIVE', 'GRAMINE-SGX', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS', 'GRAMINE-DIRECT',
-                 'Unnamed: 9', 'NATIVE.1', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS.1', 'GRAMINE-DIRECT.1', 'Unnamed: 1', 'ROWS', 'COLUMNS']
+                 'Unnamed: 9', 'NATIVE.1', 'GRAMINE-SGX.1', 'GRAMINE-SGX-SINGLE-THREAD-NON-EXITLESS.1', 
+                 'GRAMINE-DIRECT.1', 'Unnamed: 1', 'ROWS', 'COLUMNS']
 
 dashboard_excl_file = "gramine_perf_data.xlsx"
 
@@ -62,19 +64,16 @@ def add_workload(workload):
 
 
 def get_redis_data(df):
-    latency_columns = ['Unnamed: 10', 'NATIVE-AVG.1', 'SGX-SINGLE-THREAD-AVG.1',
-                       'DIRECT-AVG.1', 'SGX-SINGLE-THREAD-DEG.1', 'DIRECT-DEG.1']
+    latency_columns = ['Unnamed: 10', 'NATIVE-MED.1', 'SGX-MED.1',
+                       'DIRECT-MED.1', 'SGX-DEG.1', 'DIRECT-DEG.1']
     rename_latency_columns = {'Unnamed: 10': 'Unnamed: 0',
-                              'NATIVE-AVG.1': 'NATIVE-AVG', 'SGX-SINGLE-THREAD-AVG.1': 'SGX-SINGLE-THREAD-AVG',
-                              'DIRECT-AVG.1': 'DIRECT-AVG', 'SGX-SINGLE-THREAD-DEG.1': 'SGX-SINGLE-THREAD-DEG', 'DIRECT-DEG.1': 'DIRECT-DEG'}
-    rename_columns = {
-        'SGX-SINGLE-THREAD-AVG': 'SGX-AVG', 'SGX-SINGLE-THREAD-DEG': 'SGX-DEG'}
+                              'NATIVE-MED.1': 'NATIVE-MED', 'SGX-MED.1': 'SGX-MED',
+                              'DIRECT-MED.1': 'DIRECT-MED', 'SGX-DEG.1': 'SGX-DEG', 'DIRECT-DEG.1': 'DIRECT-DEG'}
 
     df_latency = df[latency_columns]
     df_latency.rename(columns=rename_latency_columns, inplace=True)
     df = df.drop(columns=latency_columns)
     df = pd.concat([df, df_latency], ignore_index=True)
-    df.rename(columns=rename_columns, inplace=True)
     return df
 
 
@@ -92,6 +91,7 @@ def get_perf_data(filename, date, commit_id, workload):
         df.rename(columns={'GRAMINE-SGX-DEG': 'SGX-DEG'}, inplace=True)
     if workload == 'pytorch':
         df = get_pytorch_data(df)
+
     df.rename(columns={'Unnamed: 0': 'model'}, inplace=True)
     df['Date'] = date
     df['Date'] = pd.to_datetime(df.Date, format='%Y-%m-%d').dt.date

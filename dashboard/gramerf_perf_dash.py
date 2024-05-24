@@ -156,6 +156,8 @@ def make_graph(workload):
         fig_line_throughput_sgx_deg.update_layout(title_text=workload + " throughput perf data using Gramine SGX", title_x=0.45, 
                                                   xaxis_title='Weekly Perf Run on latest Gramine Commit(YYYY-MM-DD commitID)<br>gramine commit history <a href="https://github.com/gramineproject/gramine/commits/master">link</a>',
                                                   yaxis_title="Degradation in % (Gramine SGX vs Linux Native)")
+        if workload == 'MongoDB':
+            fig_line_throughput_sgx_deg.update_layout(title_text=workload + ' throughput perf data using Gramine SGX <br><span style="font-size: 14px;">Parameter monitored : SetWithIgnoredIndex_String</span>')
 
 
     skip_latency_graph = False

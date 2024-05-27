@@ -137,6 +137,7 @@ class MemcachedWorkload:
         elif exec_mode == 'gramine-direct':
             memcached_exec_cmd = "gramine-direct " + tmp_exec_cmd
         elif exec_mode == 'gramine-sgx':
+            utils.exec_shell_cmd("gramine-sgx --version", None)
             memcached_exec_cmd = "gramine-sgx " + tmp_exec_cmd
         else:
             raise Exception(f"\nInvalid execution mode specified in config yaml!")

@@ -87,7 +87,7 @@ def clean_up_system():
     # Cleanup existing gramine binaries (if any) before starting a fresh build.
     # Passing prefix path as argument, so that user installed (if any) gramine
     # binaries are also removed.
-    cleanup_gramine_binaries(BUILD_PREFIX)
+    check_and_cleanup_gramine()
 
     try:
         print("\n-- Removing unnecessary packages and dependencies..")
@@ -139,29 +139,78 @@ def set_permissions():
     exec_shell_cmd("sudo mount -o remount,exec /dev")
 
 
-def cleanup_gramine_binaries(build_prefix):
+def cleanup_local_gramine(prefix, os_flavour):
+    libdir = subprocess.run("cc -dumpmachine", shell=True, stdout=subprocess.PIPE,
+                            encoding="utf-8").stdout.strip()
+    arch_libdir = f"/lib/{libdir}"
+    if os_flavour == "fedora":
+        arch_libdir = "/lib64"
+    python_proc = subprocess.run(f"python3 get-python-platlib.py {prefix}", shell=True, stdout=subprocess.PIPE,
+                                 encoding="utf-8")
+    python_path = python_proc.stdout.strip()
+    subprocess.run(f"sudo rm -rf {prefix}/bin/gramine*", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/bin/is-sgx-available", shell=True)
+    subprocess.run(f"sudo rm -rf {python_path}/*graminelibos*", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/*gramine*", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libsgx_util.a", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libra_tls_attest.so", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libra_tls_verify.a", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libra_tls_verify_epid.so", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libsecret_prov_attest.so", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libsecret_prov_verify.a", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libsecret_prov_verify_epid.so", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libra_tls_verify_dcap*", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/libsecret_prov_verify_dcap.so", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/{arch_libdir}/pkgconfig/*gramine*", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/share/doc/gramine*", shell=True)
+    subprocess.run(f"sudo rm -rf {prefix}/include/gramine", shell=True)
+    print(f"Cleaned Gramine Installation at {prefix}")
+
+
+def clean_gramine(gramine_path, os_flavour):
+    if gramine_path == "/usr":
+        pkg_mgr = "apt-get"
+        if os_flavour == "fedora":
+            pkg_mgr = "yum"
+        print("Removing Gramine Installation Using Package Manager")
+        subprocess.run(f"sudo {pkg_mgr} autoremove gramine -y > /dev/null", shell=True)
+        subprocess.run(f"sudo {pkg_mgr} autoremove gramine-dcap -y > /dev/null", shell=True)
+
+    cleanup_local_gramine(gramine_path, os_flavour)
+
+
+def get_os_details():
+    proc = subprocess.run("grep '^NAME' /etc/os-release", shell=True, stdout=subprocess.PIPE,
+                            encoding="utf-8")
+    os_details = proc.stdout.strip()
+    os_flavour = "ubuntu"
+    if ("Ubuntu" not in os_details) and ("Debian" not in os_details):
+        os_flavour = "fedora"
+    return os_flavour
+
+
+def check_and_cleanup_gramine():
     """
     Function to clean up gramine binaries from standard system paths
     and user defined installed paths (installed via "--build_prefix" option)
-    :param build_prefix:
     :return:
     """
-    if os.path.exists(build_prefix): shutil.rmtree(build_prefix)
-
-    gramine_uninstall_cmd = "sudo apt-get remove -y gramine"
-    python_version_str = "python" + str(sys.version_info.major) + "." + str(sys.version_info.minor)
-    # The substring "x86_64-linux-gnu" within below path is for Ubuntu. It would be different
-    # for other distros like CentOS or RHEL. Currently, hardcoding it for Ubuntu but needs to
-    # be updated for other distros in future.
-    gramine_user_installed_bin_rm_cmd = "sudo rm -rf /usr/local/bin/gramine* /usr/local/lib/" + \
-                                        python_version_str + \
-                                        "/dist-packages/graminelibos /usr/local/lib/x86_64-linux-gnu/*gramine*"
-
-    print("\n-- Uninstalling gramine..\n", gramine_uninstall_cmd)
-    os.system(gramine_uninstall_cmd)
-
-    print("\n-- Removing user installed gramine binaries..\n", gramine_user_installed_bin_rm_cmd)
-    os.system(gramine_user_installed_bin_rm_cmd)
+    os_flavour = get_os_details()
+    subprocess.run("wget https://github.com/gramineproject/gramine/raw/master/scripts/get-python-platlib.py",
+                   shell=True)
+    prefix_path = ["/usr", "/usr/local"]
+    for paths in prefix_path:
+        clean_gramine(paths, os_flavour)
+    while True:
+        proc_1 = subprocess.run("which gramine-sgx", shell=True, stdout=subprocess.PIPE,
+                                encoding="utf-8")
+        output = proc_1.stdout.strip()
+        if output in ["", None]:
+            break
+        print("Gramine Installation Found at : ", output)
+        gramine_path = output.split("/bin/gramine-sgx")[0]
+        cleanup_local_gramine(gramine_path, os_flavour)
+    subprocess.run("sudo rm -rf get-python-platlib.py", shell=True)
 
 
 def gramine_package_install():
@@ -187,7 +236,7 @@ def gramine_package_install():
     exec_shell_cmd("sudo apt-get -y install gramine")
 
 
-def update_env_variables(build_prefix):
+def update_env_variables():
     """
     Function to update the following environment variables to below respective locations,
     as the gramine binaries can be installed at some other place other than '/usr/local'.
@@ -197,31 +246,23 @@ def update_env_variables(build_prefix):
     :param build_prefix:
     :return:
     """
-
-    if os.environ["build_gramine"] != "package":
+    if os.environ["build_gramine"] != "package" and USE_PREFIX:
         # Update environment 'PATH' variable to the path (<prefix>/bin) where gramine
         # binaries would be installed.
-        os.environ["PATH"] = build_prefix + "/bin" + os.pathsep + os.environ["PATH"]
+        os.environ["PATH"] = BUILD_PREFIX + "/bin" + os.pathsep + os.environ["PATH"]
         print(f"\n-- Updated environment PATH variable to the following..\n", os.environ["PATH"])
 
         # Update environment 'PKG_CONFIG_PATH' variable to <prefix>/<libdir>/pkgconfig.
-        libdir_path_cmd = "meson introspect " + GRAMINE_HOME_DIR + \
-                        "/build/ --buildoptions | jq -r '(map(select(.name == \"libdir\"))) | map(.value) | join(\"/\")'"
+        libdir_path_cmd = "meson introspect " + GRAMINE_HOME_DIR + "/build/ --buildoptions | jq -r '(map(select(.name == \"libdir\"))) | map(.value) | join(\"/\")'"
         libdir_path = exec_shell_cmd(libdir_path_cmd)
 
-        os.environ["PKG_CONFIG_PATH"] = build_prefix + "/" + libdir_path + "/pkgconfig" + os.pathsep + os.environ.get(
+        os.environ["PKG_CONFIG_PATH"] = BUILD_PREFIX + "/" + libdir_path + "/pkgconfig" + os.pathsep + os.environ.get(
             'PKG_CONFIG_PATH', '')
         print(f"\n-- Updated environment PKG_CONFIG_PATH variable to the following..\n", os.environ["PKG_CONFIG_PATH"])
 
         print(f"\n-- PYTHONPATH command\n", PYTHONPATH_CMD)
         os.environ["PYTHONPATH"] = subprocess.check_output(PYTHONPATH_CMD, encoding='utf-8', shell=True)
         print(f"\n-- Updated environment PYTHONPATH variable to the following..\n", os.environ["PYTHONPATH"])
-
-    print(f"\n-- Updating 'LC_ALL' env-var\n")
-    os.environ['LC_ALL'] = "C.UTF-8"
-
-    print(f"\n-- Updating 'LANG' env-var\n")
-    os.environ['LANG'] = "C.UTF-8"
 
     print(f"\n-- Updating 'SSHPASS' env-var\n")
     os.environ['SSHPASS'] = "intel@123"

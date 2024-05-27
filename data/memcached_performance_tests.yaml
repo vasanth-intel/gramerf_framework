@@ -23,13 +23,6 @@ test_memcached_perf_1024_data_size_1_9_rw_ratio:
   data_size: 1024
   rw_ratio: "1:9"
 
-test_memcached_perf_4096_data_size_1_1_rw_ratio:
-  data_size: 4096
-
-test_memcached_perf_4096_data_size_1_9_rw_ratio:
-  data_size: 4096
-  rw_ratio: "1:9"
-
 test_memcached_perf_16384_data_size_1_1_rw_ratio:
   data_size: 16384
 
@@ -42,4 +35,18 @@ test_memcached_perf_32768_data_size_1_1_rw_ratio:
 
 test_memcached_perf_32768_data_size_1_9_rw_ratio:
   data_size: 32768
+  rw_ratio: "1:9"
+
+test_memcached_perf_49152_data_size_1_1_rw_ratio:
+  data_size: 49152
+
+test_memcached_perf_49152_data_size_1_9_rw_ratio:
+  data_size: 49152
+  rw_ratio: "1:9"
+
+test_memcached_perf_65536_data_size_1_1_rw_ratio:
+  data_size: 65536
+
+test_memcached_perf_65536_data_size_1_9_rw_ratio:
+  data_size: 65536
   rw_ratio: "1:9"

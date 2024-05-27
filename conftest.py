@@ -41,6 +41,9 @@ def gramerf_setup(request):
     print("\n###### In gramerf_setup #####\n")
     read_command_line_args(request.config)
 
+    print("\n-- Removing unnecessary packages and dependencies..")
+    utils.exec_shell_cmd("git clean -xfd", None)
+    
     # Delete old logs if any and create new logs directory.
     if os.path.exists(LOGS_DIR):
         del_logs_cmd = 'rm -rf ' + LOGS_DIR

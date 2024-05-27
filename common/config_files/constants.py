@@ -12,6 +12,7 @@ PYTHON_PACKAGES_FILE = "python_packages.yaml"
 PKG_INSTALL_WAIT_TIME = 25
 TEST_SLEEP_TIME_BW_ITERATIONS = 15
 BUILD_TYPE = "release"
+USE_PREFIX = True
 BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 
 # Commands constants
@@ -39,7 +40,13 @@ MIMALLOC_INSTALL_PATH = "/usr/local/lib/libmimalloc.so.1.7"
 
 TCMALLOC_INSTALL_PATH = "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"
 
-BUILD_TYPE_PREFIX_STRING = "--prefix=" + BUILD_PREFIX + " --buildtype=" + BUILD_TYPE
+if USE_PREFIX:
+    BUILD_TYPE_PREFIX_STRING = "--prefix=" + BUILD_PREFIX + " --buildtype=" + BUILD_TYPE
+    PYTHONPATH_CMD = "gramine/scripts/get-python-platlib.py " + BUILD_PREFIX
+    GRAMINE_NINJA_INSTALL_CMD = "ninja -vC build install > " + LOGS_DIR + "/gramine_ninja_install_cmd_output.txt"
+else:
+    BUILD_TYPE_PREFIX_STRING = " --buildtype=" + BUILD_TYPE
+    GRAMINE_NINJA_INSTALL_CMD = "sudo ninja -vC build install > " + LOGS_DIR + "/gramine_ninja_install_cmd_output.txt"
 
 GRAMINE_SGX_SED_CMD = "sed -i \"/uname/ a '/usr/src/linux-headers-@0@/arch/x86/include/uapi'.format(run_command('uname', '-r').stdout().split('-generic')[0].strip()),\" meson.build"
 
@@ -49,10 +56,6 @@ GRAMINE_BUILD_MESON_CMD = "meson setup build/ --werror " + \
                         LOGS_DIR + "/gramine_build_meson_cmd_output.txt"
 
 GRAMINE_NINJA_BUILD_CMD = "ninja -vC build > " + LOGS_DIR + "/gramine_ninja_build_cmd_output.txt"
-
-GRAMINE_NINJA_INSTALL_CMD = "ninja -vC build install > " + LOGS_DIR + "/gramine_ninja_install_cmd_output.txt"
-
-PYTHONPATH_CMD = "gramine/scripts/get-python-platlib.py " + BUILD_PREFIX
 
 GRAMINE_SGX_GEN_PRIVATE_KEY_CMD = "gramine-sgx-gen-private-key -f"
 

@@ -101,6 +101,11 @@ class MySqlWorkload():
 
     # Build the workload execution command based on execution params and execute it.
     def execute_workload(self, test_config_dict, e_mode, test_dict):
+        # Skipping and not executing the 'test_mysql_perf_write_only_64_threads' for baremetal case 
+        # due to random crash behavior while execution impacting the other tests too.
+        if test_config_dict['test_name'] == "test_mysql_perf_write_only_64_threads" and os.environ["perf_config"] == "baremetal":
+            return
+
         print("\n##### In execute_workload #####\n")
         print(f"\n-- Executing {test_config_dict['test_name']} in {e_mode} mode")
 

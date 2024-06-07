@@ -56,7 +56,7 @@ def setup_gramine_environment():
     # Need to update these variables only after building gramine as there would be some
     # dereferences of few path values which are created only after successful build.
 
-    utils.update_env_variables(BUILD_PREFIX)
+    utils.update_env_variables()
 
     print("\n-- Generating gramine-sgx private key..\n", GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
     utils.exec_shell_cmd(GRAMINE_SGX_GEN_PRIVATE_KEY_CMD)
@@ -117,8 +117,9 @@ def build_and_install_gramine():
     # Create prefix dir
     print(f"\n-- Creating build prefix directory '{BUILD_PREFIX}'..\n")
     # In the below makedirs call, if the target directory already exists an OSError is raised
-    # if 'exist_ok' value is False. Otherwise, True value leaves the directory unaltered. 
-    os.makedirs(BUILD_PREFIX, exist_ok=True)
+    # if 'exist_ok' value is False. Otherwise, True value leaves the directory unaltered.
+    if USE_PREFIX:
+        os.makedirs(BUILD_PREFIX, exist_ok=True)
 
     print("\n-- Executing below mentioned gramine-sgx sed cmd..\n", GRAMINE_SGX_SED_CMD)
     utils.exec_shell_cmd(GRAMINE_SGX_SED_CMD)

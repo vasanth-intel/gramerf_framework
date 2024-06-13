@@ -119,7 +119,7 @@ class MongoDBWorkload():
         for row in file_des.readlines():
             if '"ops_per_sec":' in row:
                 row = row.split()
-                throughput = '{:0.3f}'.format(float(row[1]))
+                throughput = '{:0.3f}'.format(float(row[1].strip(',')))
                 mongod_res_dict[param_count].append(float(throughput))
                 param_count += 1
                 if param_count == (max_params):

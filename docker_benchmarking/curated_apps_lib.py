@@ -12,21 +12,22 @@ def curated_setup():
     rm_cmd = "sudo rm -rf {}".format(ORIG_CURATED_PATH)
     utils.exec_shell_cmd(rm_cmd)
     print("Cloning and checking out Contrib Git Repo")
-    utils.exec_shell_cmd(CONTRIB_GIT_CMD)
+    utils.run_subprocess(CONTRIB_GIT_CMD)
+    utils.run_subprocess(GIT_CHECKOUT_CMD, ORIG_CURATED_PATH)
+    os.environ["gramine_commit"] = os.environ.get("gramine_commit", "")
+    os.environ["gsc_repo"]       = os.environ.get("gsc_repo", "")
+    os.environ["gsc_commit"]     = os.environ.get("gsc_commit", "")
+    os.environ["contrib_repo"]   = os.environ.get("contrib_repo", "")
+    os.environ["contrib_branch"] = os.environ.get("contrib_branch", "")
+    print("\n\n############################################################################")
+    print("Printing the environment variables before curation")
+    print("Gramine Commit: ", os.environ["gramine_commit"])
+    print("GSC Repo:       ", os.environ["gsc_repo"])
+    print("GSC Commit:     ", os.environ["gsc_commit"])
+    print("Contrib Repo:   ", os.environ["contrib_repo"])
+    print("Contrib Commit: ", os.environ["contrib_branch"])
+    print("############################################################################\n\n")
     update_curation_verifier_scripts()
-    if os.environ["gramine_commit"]:
-        # This is to update the 'gramine_commit' env var with
-        # the commit id to support perf dashboard implementation.
-        if os.environ["gramine_commit"] == "master":
-            git_commit_cmd = "git ls-remote https://github.com/gramineproject/gramine master"
-            master_commit = utils.exec_shell_cmd(git_commit_cmd)
-            os.environ["gramine_commit"] = master_commit.split()[0][:7]
-        if os.environ["gsc_commit"] == "master":
-            gsc_commit_cmd = "git ls-remote https://github.com/gramineproject/gsc.git master"
-            gsc_commit = utils.exec_shell_cmd(gsc_commit_cmd)
-            os.environ['gsc_commit'] = gsc_commit.split()[0][:7]
-    print("\n -- Gramine Commit: ", os.environ.get("gramine_commit", ""))
-    print("\n -- GSC Commit: ", os.environ.get("gsc_commit", ""))
 
 
 def copy_repo():
@@ -39,39 +40,27 @@ def update_curation_verifier_scripts():
     # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.6.1 would be
     # used as default for both commits.
     # If 'gramine_commit' is master/any other commit, 'gsc_commit' must be passed as master.
-    if os.environ["gramine_repo"] or os.environ["gramine_commit"]:
-        update_gramine_branch(os.environ["gramine_repo"], os.environ["gramine_commit"])
+    if os.environ["gramine_commit"]:
+        update_gramine_branch(os.environ["gramine_commit"])
     if os.environ["gsc_repo"] or os.environ["gsc_commit"]:
-        update_gsc(os.environ["gsc_repo"], os.environ["gsc_commit"])
+        update_gsc(os.environ["gsc_commit"], os.environ["gsc_repo"])
 
 
-def update_gramine_branch(gramine_repo='', gramine_commit=''):
-    if gramine_repo == '': gramine_repo = GRAMINE_DEFAULT_REPO
-    if gramine_commit == '': gramine_commit = 'v1.6.1'
-    commit_str = f" && cd gramine && git checkout {gramine_commit} && cd .."
+def update_gramine_branch(commit):
     copy_cmd = "cp -f config.yaml.template config.yaml"
-    gramine_string = GRAMINE_DEPTH_STR + GRAMINE_DEFAULT_REPO
-    helper_file = os.path.join(ORIG_BASE_PATH, "verifier", "helper.sh")
-    if not "v1" in gramine_commit:
-        utils.exec_shell_cmd(f"cp -rf helper-files/{VERIFIER_TEMPLATE} {VERIFIER_DOCKERFILE}")
-    utils.update_file_contents(copy_cmd,
-                               copy_cmd + "\nsed -i 's|Branch:.*master|Branch: \"{}|' config.yaml".format(gramine_commit), CURATION_SCRIPT)
-    utils.update_file_contents(copy_cmd,
-                               copy_cmd + "\nsed -i 's|{}|{}|' config.yaml".format(GRAMINE_DEFAULT_REPO, gramine_repo), CURATION_SCRIPT)
-    utils.update_file_contents(gramine_string, gramine_repo + commit_str,
-                                   VERIFIER_DOCKERFILE)
-    utils.update_file_contents(gramine_string, gramine_repo + commit_str, helper_file)
+    gsc_tag = utils.run_subprocess(f"git ls-remote --sort='version:refname' --tags  {GSC_MAIN_REPO} | tail --lines=1 | cut --delimiter=\"/\" --fields=3")
+    if not "v1" in commit:
+        utils.run_subprocess(f"cp -rf helper-files/{VERIFIER_TEMPLATE} {VERIFIER_DOCKERFILE}")
+    sed_string = "sed -i \"s/Branch.*master.*\\|Branch.*{}.*/Branch: '{}'/\" config.yaml".format(gsc_tag, commit.replace('/', '\\/'))
+    utils.update_file_contents(copy_cmd, (copy_cmd + "\n" + sed_string), CURATION_SCRIPT)
+    utils.update_file_contents("git checkout(.*)", f"git checkout {commit}", VERIFIER_DOCKERFILE)
 
 
-def update_gsc(gsc_repo='', gsc_commit=''):
-    if gsc_commit: checkout_str = f" && cd gsc && git checkout {gsc_commit} && cd .."
-    if gsc_repo: repo_str = f"git clone {gsc_repo}"
-    if gsc_repo and gsc_commit:
-        utils.update_file_contents(GSC_CLONE, repo_str + checkout_str, CURATION_SCRIPT)
-    elif gsc_repo and not gsc_commit:
-        utils.update_file_contents(GSC_CLONE, repo_str, CURATION_SCRIPT)
-    elif gsc_commit:
-        utils.update_file_contents(GSC_CLONE, GSC_CLONE.replace(GSC_DEPTH_STR, "") + checkout_str, CURATION_SCRIPT)
+def update_gsc(gsc_commit='', gsc_repo=''):
+    if gsc_repo:
+        utils.update_file_contents(GSC_MAIN_REPO, gsc_repo, CURATION_SCRIPT)
+    if gsc_commit:
+        utils.update_file_contents("git checkout(.*)", f"git checkout {gsc_commit}", CURATION_SCRIPT)
 
 
 def verify_image_creation(curation_output):

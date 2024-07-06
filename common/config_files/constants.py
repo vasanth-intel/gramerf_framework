@@ -18,11 +18,6 @@ BUILD_PREFIX = FRAMEWORK_HOME_DIR + "/gramine_install/usr"
 # Commands constants
 GRAMINE_CLONE_CMD = "git clone https://github.com/gramineproject/gramine.git"
 
-GRAMINE_DEFAULT_REPO = "https://github.com/gramineproject/gramine.git"
-GRAMINE_CLONE = "RUN git clone --depth 1 --branch v1.6.1 https://github.com/gramineproject/gramine.git"
-GRAMINE_DEPTH_STR  = "--depth 1 --branch v1.6.1 "
-GSC_CLONE          = "git clone --depth 1 --branch v1.6.1 https://github.com/gramineproject/gsc.git"
-GSC_DEPTH_STR      = "--depth 1 --branch v1.6.1 "
 EXAMPLES_REPO_CLONE_CMD = "git clone https://github.com/gramineproject/examples.git"
 
 MIMALLOC_CLONE_CMD = "git clone -b v1.7.6 https://github.com/microsoft/mimalloc.git"
@@ -94,12 +89,22 @@ LOG_LEVEL = "error"
 
 REPO_PATH             = os.path.join(os.getcwd(), "contrib_repo")
 ORIG_CURATED_PATH     = os.path.join(os.getcwd(), "orig_contrib_repo")
-CONTRIB_GIT_CMD       = "git clone -b master https://github.com/gramineproject/contrib.git orig_contrib_repo"
+
+CONTRIB_GIT_REPO            = os.environ.get("contrib_repo")
+if not CONTRIB_GIT_REPO:
+    CONTRIB_GIT_REPO        = "https://github.com/gramineproject/contrib.git"
+CONTRIB_GIT_CMD             = f"git clone {CONTRIB_GIT_REPO} orig_contrib_repo"
+CONTRIB_BRANCH              = os.environ.get("contrib_branch")
+if not CONTRIB_BRANCH:
+    CONTRIB_BRANCH          = "master"
+GIT_CHECKOUT_CMD            = f"git checkout {CONTRIB_BRANCH}"
 CURATED_PATH          = "Intel-Confidential-Compute-for-X"
 CURATED_APPS_PATH     = os.path.join(REPO_PATH, CURATED_PATH)
 VERIFIER_TEMPLATE      = "verifier.dockerfile.template"
 ORIG_BASE_PATH         = os.path.join(ORIG_CURATED_PATH, CURATED_PATH)
 VERIFIER_DOCKERFILE    = os.path.join(ORIG_BASE_PATH, "verifier", VERIFIER_TEMPLATE)
+GRAMINE_MAIN_REPO      = "https://github.com/gramineproject/gramine.git"
+GSC_MAIN_REPO          = "https://github.com/gramineproject/gsc.git"
 
 WORKLOADS_PATH         = os.path.join(CURATED_APPS_PATH, "workloads")
 TFSERVING_HELPER_PATH    = os.path.join(WORKLOADS_PATH, "tensorflow-serving", "base_image_helper")

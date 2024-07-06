@@ -712,3 +712,50 @@ def verify_process(test_config_dict, process=None, timeout=0):
     
     if debug_log: debug_log.close()
     return result
+
+def run_subprocess(command, dest_dir=None):
+    if dest_dir:
+        os.chdir(dest_dir)
+
+    print("Starting Process %s from %s" %(command, os.getcwd()))
+    process = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    universal_newlines=True, shell=True)
+    try:
+        if dest_dir: os.chdir(FRAMEWORK_HOME_DIR)
+    except:
+        print("Failed to change directory")
+
+    if process.returncode != 0:
+        print(process.stderr.strip())
+        raise Exception("Failed to run command {}".format(command))
+    
+    return process.stdout.strip()
+
+def verify_build_env_details():
+    result = False
+    out = []
+    if os.environ["gramine_commit"] or os.environ["gsc_repo"] or os.environ["gsc_commit"]:
+        print("\n\n############################################################################")
+        os.chdir(os.path.join(CURATED_APPS_PATH, "gsc"))
+        if os.environ["gramine_commit"]:
+            fd = open("config.yaml", mode="r")
+            fd_data = yaml.safe_load(fd.read())
+            c_gramine_repo = fd_data["Gramine"]["Repository"]
+            c_gramine_commit = fd_data["Gramine"]["Branch"]
+            out.append(os.environ["gramine_commit"] == c_gramine_commit)
+            print("\nGramine Repo: ", c_gramine_repo)
+            print("Gramine Commit: ", c_gramine_commit)
+        if os.environ["gsc_repo"]:
+            c_gsc_url = run_subprocess("git config --get remote.origin.url")
+            out.append(os.environ["gsc_repo"] == c_gsc_url)
+            print("\nGSC Repo: ", c_gsc_url)
+        if os.environ["gsc_commit"]:
+            c_gsc_commit = run_subprocess("git branch --show-current")
+            out.append(os.environ["gsc_commit"] == c_gsc_commit)
+            print("\nGSC Commit: ", c_gsc_commit)
+        print("\n\n############################################################################")
+        result = all(out)
+    else:
+        print("No environment variable specified")
+        result = True
+    return result

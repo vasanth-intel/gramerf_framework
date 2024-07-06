@@ -103,3 +103,11 @@ def pytest_addoption(parser):
     # Following option is the IP address of the system (client) that needs to be rebooted.
     # Applicable on for few workloads like Redis and Memcached.
     parser.addoption("--client_ip_addr", action="store", type=str, default="", help="User name of the system to be rebooted")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def test_gramine_gsc_version():
+    yield
+    if os.environ["perf_config"] == "container":
+      test_result = utils.verify_build_env_details()
+      assert test_result

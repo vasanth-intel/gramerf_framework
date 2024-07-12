@@ -291,13 +291,19 @@ class PytorchWorkload:
         if tcd['metric'] == 'throughput':
             test_dict_throughput[e_mode+"_s0_Deg"] = utils.percent_degradation(tcd, test_dict_throughput['native_s0_avg'], test_dict_throughput[e_mode+"_s0_avg"])
         else:
-            test_dict_latency[e_mode+"_s0_Deg"] = utils.percent_degradation(tcd, test_dict_latency['native_s0_avg'], test_dict_latency[e_mode+"_s0_avg"])
-        
+            # Even though the test is for latency, we are passing 'True' to the last argument in the below call. This is intentional as the output of the command
+            # executed for latency gives results as 'Throughput' and not 'Latency'. The 'percent_degradation' function in the above 'if' condition automatically
+            # takes care for throughput and we need not pass 'True' explicitly as the function checks if 'throughput' is present in the test name.
+            test_dict_latency[e_mode+"_s0_Deg"] = utils.percent_degradation(tcd, test_dict_latency['native_s0_avg'], test_dict_latency[e_mode+"_s0_avg"], True)
+
         if os.environ['SOCKETS'] == "2" and tcd['model_name'] == "resnet50":
             if tcd['metric'] == 'throughput':
                 test_dict_throughput[e_mode+"_s1_Deg"] = utils.percent_degradation(tcd, test_dict_throughput['native_s1_avg'], test_dict_throughput[e_mode+"_s1_avg"])
             else:
-                test_dict_latency[e_mode+"_s1_Deg"] = utils.percent_degradation(tcd, test_dict_latency['native_s1_avg'], test_dict_latency[e_mode+"_s1_avg"])
+                # Even though the test is for latency, we are passing 'True' to the last argument in the below call. This is intentional as the output of the command
+                # executed for latency gives results as 'Throughput' and not 'Latency'. The 'percent_degradation' function in the above 'if' condition automatically
+                # takes care for throughput and we need not pass 'True' explicitly as the function checks if 'throughput' is present in the test name.
+                test_dict_latency[e_mode+"_s1_Deg"] = utils.percent_degradation(tcd, test_dict_latency['native_s1_avg'], test_dict_latency[e_mode+"_s1_avg"], True)
 
     def process_results(self, tcd):
         results_dir = PERF_RESULTS_DIR + '/' + tcd['test_name']

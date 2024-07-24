@@ -1,6 +1,6 @@
 ---
 Default:
-  workload_home_dir: "gramine/CI-Examples/nginx/"
+  workload_home_dir: "gramine/CI-Examples/nginx"
   workload_name: "Nginx"
   manifest_name: "nginx"
   manifest_file: "nginx.manifest.template"

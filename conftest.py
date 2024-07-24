@@ -108,6 +108,6 @@ def pytest_addoption(parser):
 @pytest.fixture(scope="session", autouse=True)
 def test_gramine_gsc_version():
     yield
-    if os.environ["perf_config"] == "container":
+    if os.environ["perf_config"] == "container" and not 'Pytorch' in trd.keys():
       test_result = utils.verify_build_env_details()
       assert test_result

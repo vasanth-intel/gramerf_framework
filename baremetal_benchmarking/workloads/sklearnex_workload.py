@@ -44,6 +44,12 @@ class SklearnexWorkload():
         if not os.listdir(self.workload_home_dir):
             print("\n-- Cloning scikit-learn benchmark..")
             utils.exec_shell_cmd(SKL_REPO_CLONE_CMD, None)
+            # We are pointing to below commit (1d29e5c) to mitigate the changes from benchmark refactoring commit (eddb9e8).
+            # Due to the refacoring changes in the benchmark, our benchmark execution commands, config files and report parsing
+            # logic will need major changes. Hence, to avoid these changes we are point to the previous commit in the benchmark
+            # so that bi-weekly perf runs are not impacted. Once we incorporate the changes correspoding to the refactored code
+            # of the benchmark, we can remove the below git reset statement.
+            utils.exec_shell_cmd("git reset --hard 1d29e5c966ec6a7465e6516c0f432d00fb663ab3",None)
 
         # Deleting old data folder. Result file deletion will be taken care later.
         # Data within the 'Data' folder should be freshly taken if the version of 

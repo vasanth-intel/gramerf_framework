@@ -32,7 +32,7 @@ class TensorflowWorkload():
         utils.exec_shell_cmd(markupsafe_cmd, None)
 
     def download_bert_models(self):
-        if not os.path.exists('./models'):
+        if not os.path.exists('./ai-reference-models'):
             utils.exec_shell_cmd(TF_BERT_INTEL_AI_MODELS_CLONE_CMD, None)
         
         os.makedirs('./data', exist_ok=True)
@@ -56,7 +56,7 @@ class TensorflowWorkload():
         print("\n-- Required BERT models downloaded..")
 
     def download_resnet_models(self):
-        if not os.path.exists('./models'):
+        if not os.path.exists('./ai-reference-models'):
             print("\n-- Downloading RESNET Intel_AI models..")
             utils.exec_shell_cmd(TF_RESNET_INTEL_AI_MODELS_CLONE_CMD, None)
             # Until r2.9 branch of Resnet IntelAI models repo, inference was
@@ -70,9 +70,9 @@ class TensorflowWorkload():
             # mentioned file is added for all precisions inside respective folders.
             # Until dev team informs us as to what precision to run on, we will
             # execute perf runs by checking out the older branch (r2.9) of the repo.
-            os.chdir('models')
-            print("\n-- Checking out RESNET models r2.9 branch..")
-            utils.exec_shell_cmd("git checkout r2.9", None)
+            #os.chdir('models')
+            #print("\n-- Checking out RESNET models r2.9 branch..")
+            #utils.exec_shell_cmd("git checkout r2.9", None)
             os.chdir(self.workload_home_dir)
 
         print("\n-- Downloading RESNET Pretrained model..")
@@ -200,7 +200,7 @@ class TensorflowWorkload():
         if test_config_dict['model_name'] == 'bert':
             tf_exec_cmd = "OMP_NUM_THREADS=" + os.environ['CORES_PER_SOCKET'] + " KMP_AFFINITY=granularity=fine,verbose,compact,1,0" + \
                             " taskset -c " + taskset_str + exec_mode_cmd + \
-                            " models/models/language_modeling/tensorflow/bert_large/inference/run_squad.py" + \
+                            " ai-reference-models/models/language_modeling/tensorflow/bert_large/inference/run_squad.py" + \
                             " --init_checkpoint=data/bert_large_checkpoints/model.ckpt-3649" + \
                             " --vocab_file=data/wwm_uncased_L-24_H-1024_A-16/vocab.txt" + \
                             " --bert_config_file=data/wwm_uncased_L-24_H-1024_A-16/bert_config.json" + \
@@ -220,7 +220,7 @@ class TensorflowWorkload():
         elif test_config_dict['model_name'] == 'resnet':
             tf_exec_cmd = "OMP_NUM_THREADS=" + os.environ['CORES_PER_SOCKET'] + " KMP_AFFINITY=granularity=fine,verbose,compact,1,0" + \
                             " taskset -c " + taskset_str + exec_mode_cmd + \
-                            " models/models/image_recognition/tensorflow/resnet50v1_5/inference/eval_image_classifier_inference.py" + \
+                            " ai-reference-models/models/image_recognition/tensorflow/resnet50v1_5/inference/cpu/eval_image_classifier_inference.py" + \
                             " --input-graph=" + input_model_file + \
                             " --num-inter-threads=1" + \
                             " --num-intra-threads=" + os.environ['CORES_PER_SOCKET'] + \

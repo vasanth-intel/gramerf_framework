@@ -97,7 +97,7 @@ sgx.trusted_files = [
 sgx.allowed_files = [
   "file:/tmp/",
   "file:/etc/",
-  "file:models/",
+  "file:ai-reference-models/",
   "dev:/dev/shm/",
   "file:/usr/",
   # encrypted allowed file

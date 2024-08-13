@@ -67,7 +67,7 @@ PIP_UPGRADE_CMD = "python3 -m pip install --upgrade pip"
 
 TENSORFLOW_INSTALL_CMD = "python3 -m pip install intel-tensorflow-avx512==2.8.0 --no-cache-dir"
 
-TF_BERT_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
+TF_BERT_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/intel/ai-reference-models.git"
 
 TF_BERT_DATASET_WGET_CMD = "wget https://storage.googleapis.com/bert_models/2019_05_30/wwm_uncased_L-24_H-1024_A-16.zip -P data/"
 TF_BERT_DATASET_UNZIP_CMD = "unzip data/wwm_uncased_L-24_H-1024_A-16.zip -d data"
@@ -77,7 +77,7 @@ TF_BERT_CHECKPOINTS_WGET_CMD = "wget https://storage.googleapis.com/intel-optimi
 TF_BERT_CHECKPOINTS_UNZIP_CMD = "unzip data/bert_large_checkpoints.zip -d data"
 TF_BERT_FP32_MODEL_WGET_CMD = "wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_4_0/fp32_bert_squad.pb -P data/"
 
-TF_RESNET_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/IntelAI/models.git"
+TF_RESNET_INTEL_AI_MODELS_CLONE_CMD = "git clone https://github.com/intel/ai-reference-models.git"
 TF_RESNET_INT8_MODEL_WGET_CMD = "wget https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/resnet50v1_5_int8_pretrained_model.pb"
 
 TF_BERT_FP32_MODEL_NAME = os.path.basename(TF_BERT_FP32_MODEL_WGET_CMD.split()[1])

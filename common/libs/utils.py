@@ -762,4 +762,4 @@ def verify_build_env_details():
 
 def search_text_and_return_line_in_file(file_name, search_str):
     with open(file_name, "r") as fp:
-        return [line for line in fp if search_str.lower() in line or search_str.capitalize() in line]
+        return [line for line in fp if search_str.lower() in line or search_str.upper() in line or search_str.capitalize() in line]

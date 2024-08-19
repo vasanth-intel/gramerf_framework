@@ -132,7 +132,21 @@ def build_and_install_gramine():
 
     print("\n-- Executing below mentioned gramine ninja build install cmd..\n", GRAMINE_NINJA_INSTALL_CMD)
     utils.exec_shell_cmd(GRAMINE_NINJA_INSTALL_CMD)
-     
+
+    meson_output_file = LOGS_DIR + "/gramine_build_meson_cmd_output.txt"
+    ninja_build_output_file = LOGS_DIR + "/gramine_ninja_build_cmd_output.txt"
+    ninja_install_output_file = LOGS_DIR + "/gramine_ninja_install_cmd_output.txt"
+
+    failure_line = utils.search_text_and_return_line_in_file(meson_output_file, 'fail')
+    if failure_line:
+        raise Exception("Failure during meson build as shown below..\n", failure_line)
+    failure_line = utils.search_text_and_return_line_in_file(ninja_build_output_file, 'fail')
+    if failure_line:
+        raise Exception("Failure during ninja build as shown below..\n", failure_line)
+    failure_line = utils.search_text_and_return_line_in_file(ninja_install_output_file, 'fail')
+    if failure_line:
+        raise Exception("Failure during ninja install as shown below..\n", failure_line)
+
     os.chdir(FRAMEWORK_HOME_DIR)
 
 

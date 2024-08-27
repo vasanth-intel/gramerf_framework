@@ -22,43 +22,97 @@ def setup_db():
 class TestClass:
 
     @pytest.mark.mongodb_perf
-    @pytest.mark.mongodb_perf_1_threads
-    def test_mongodb_perf_1_threads(self):
+    @pytest.mark.mongodb_perf_set_operation
+    @pytest.mark.mongodb_perf_set_operation_1_threads
+    def test_mongodb_perf_set_operation_1_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.mongodb_perf
-    @pytest.mark.mongodb_perf_2_threads
-    def test_mongodb_perf_2_threads(self):
+    @pytest.mark.mongodb_perf_set_operation
+    @pytest.mark.mongodb_perf_set_operation_2_threads
+    def test_mongodb_perf_set_operation_2_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.mongodb_perf
-    @pytest.mark.mongodb_perf_8_threads
-    def test_mongodb_perf_8_threads(self):
+    @pytest.mark.mongodb_perf_set_operation
+    @pytest.mark.mongodb_perf_set_operation_8_threads
+    def test_mongodb_perf_set_operation_8_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.mongodb_perf
-    @pytest.mark.mongodb_perf_16_threads
-    def test_mongodb_perf_16_threads(self):
+    @pytest.mark.mongodb_perf_set_operation
+    @pytest.mark.mongodb_perf_set_operation_16_threads
+    def test_mongodb_perf_set_operation_16_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.mongodb_perf
-    @pytest.mark.mongodb_perf_32_threads
-    def test_mongodb_perf_32_threads(self):
+    @pytest.mark.mongodb_perf_set_operation
+    @pytest.mark.mongodb_perf_set_operation_32_threads
+    def test_mongodb_perf_set_operation_32_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result
 
     @pytest.mark.mongodb_perf
-    @pytest.mark.mongodb_perf_64_threads
-    def test_mongodb_perf_64_threads(self):
+    @pytest.mark.mongodb_perf_set_operation
+    @pytest.mark.mongodb_perf_set_operation_64_threads
+    def test_mongodb_perf_set_operation_64_threads(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.mongodb_perf
+    @pytest.mark.mongodb_perf_get_operation
+    @pytest.mark.mongodb_perf_get_operation_1_threads
+    def test_mongodb_perf_get_operation_1_threads(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.mongodb_perf
+    @pytest.mark.mongodb_perf_get_operation
+    @pytest.mark.mongodb_perf_get_operation_2_threads
+    def test_mongodb_perf_get_operation_2_threads(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.mongodb_perf
+    @pytest.mark.mongodb_perf_get_operation
+    @pytest.mark.mongodb_perf_get_operation_8_threads
+    def test_mongodb_perf_get_operation_8_threads(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.mongodb_perf
+    @pytest.mark.mongodb_perf_get_operation
+    @pytest.mark.mongodb_perf_get_operation_16_threads
+    def test_mongodb_perf_get_operation_16_threads(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.mongodb_perf
+    @pytest.mark.mongodb_perf_get_operation
+    @pytest.mark.mongodb_perf_get_operation_32_threads
+    def test_mongodb_perf_get_operation_32_threads(self):
+
+        test_result = run_test(self, tests_yaml_path)
+        assert test_result
+
+    @pytest.mark.mongodb_perf
+    @pytest.mark.mongodb_perf_get_operation
+    @pytest.mark.mongodb_perf_get_operation_64_threads
+    def test_mongodb_perf_get_operation_64_threads(self):
 
         test_result = run_test(self, tests_yaml_path)
         assert test_result

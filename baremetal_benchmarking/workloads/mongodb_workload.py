@@ -102,7 +102,12 @@ class MongoDBWorkload():
         for i in range(test_config_dict['iterations']):
             results_dir = os.path.join(PERF_RESULTS_DIR, test_config_dict['workload_name'], test_config_dict['test_name'])
             output_file_name = results_dir + "/" + test_config_dict['test_name'] + '_' + e_mode + '_' + str(i+1) + '.log'
-            benchmark_cmd = f"python3 benchrun.py -f testcases/complex_update.js -t {test_config_dict['threads']} | tee {output_file_name}"
+            if 'set' in test_config_dict['test_name']:
+                benchmark_cmd = f"python3 benchrun.py -f testcases/complex_update.js -t {test_config_dict['threads']} | tee {output_file_name}"
+            elif 'get' in test_config_dict['test_name']:
+                benchmark_cmd = f"python3 benchrun.py -f testcases/compound_wildcard_index_query.js -t {test_config_dict['threads']} | tee {output_file_name}"
+            else:
+                raise Exception("\nInvalid test case name: {test_config_dict['test_name']} !!\n")
             print(f"\n-- Invoking benchmark for iteration {i}..\n", benchmark_cmd)
             run_cmd_output = utils.exec_shell_cmd(benchmark_cmd)
             print(run_cmd_output)
@@ -128,6 +133,32 @@ class MongoDBWorkload():
         if param_count != max_params:
             print(f"\n\n-- Warning: Not all parameters of the workload are present in result file {file_des.name}..\n")
 
+    def copy_results_from_relevant_indices(self, tcd, test_tpt_dict, final_res_dict):
+        global trd
+        # Following list is the list of indices/tests within the results file where 
+        # we are taking the results for following tests (with below lines in the results).
+        # These indices/tests were discussed with dev team and arrived at.
+        # 3 - Point Query with sort. Collection size 100000 docs.
+        # 9 - Point and Range Query. Collection size 100000 docs.
+        # 17 - Wildcard Component on 0. Point Query with sort. Collection size 100000 docs.
+        # 27 - Wildcard Component on 0. Prefix query. Collection size 100000 docs.
+        # 31 - Wildcard Component on 1. Point Query with sort. Collection size 100000 docs.
+        results_indices = [3, 9, 17, 27, 31]
+        for i,j in enumerate(results_indices):
+            if 'native' in tcd['exec_mode']:
+                final_res_dict['native'].update({i: test_tpt_dict['native'][j]})
+                final_res_dict['native-med'].append(test_tpt_dict['native-med'][j])
+            if 'gramine-direct' in tcd['exec_mode']:
+                final_res_dict['gramine-direct'].update({i: test_tpt_dict['gramine-direct'][j]})
+                final_res_dict['direct-med'].append(test_tpt_dict['direct-med'][j])
+                if 'native' in tcd['exec_mode']:
+                    final_res_dict['direct-deg'].append(test_tpt_dict['direct-deg'][j])
+            if 'gramine-sgx' in tcd['exec_mode']:
+                final_res_dict['gramine-sgx'].update({i: test_tpt_dict['gramine-sgx'][j]})
+                final_res_dict['sgx-med'].append(test_tpt_dict['sgx-med'][j])
+                if 'native' in tcd['exec_mode']:
+                    final_res_dict['sgx-deg'].append(test_tpt_dict['sgx-deg'][j])
+
     def process_results(self, tcd):
         log_test_res_folder = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])
         os.chdir(log_test_res_folder)
@@ -138,8 +169,15 @@ class MongoDBWorkload():
 
         global trd
         test_tpt_dict = {}
+        final_res_dict = {}
         mongod_native_res_dict, mongod_direct_res_dict, mongod_sgx_res_dict = {}, {}, {}
-        max_params = 5
+        if 'set' in tcd['test_name']:
+            max_params = 5
+        elif 'get' in tcd['test_name']:
+            max_params = 42
+        else:
+            raise Exception("\nInvalid test case name: {tcd['test_name']} !!\n")
+        
         for i in range(max_params):
             mongod_native_res_dict[i] = []
             mongod_direct_res_dict[i] = []
@@ -148,10 +186,13 @@ class MongoDBWorkload():
         for e_mode in tcd['exec_mode']:
             if e_mode == 'native':
                 test_tpt_dict[e_mode], test_tpt_dict[e_mode + '-med'] = {}, []
+                final_res_dict[e_mode], final_res_dict[e_mode + '-med'] = {}, []
             elif e_mode == 'gramine-direct':
                 test_tpt_dict[e_mode], test_tpt_dict['direct-med'], test_tpt_dict['direct-deg'] = {}, [], []
+                final_res_dict[e_mode], final_res_dict['direct-med'], final_res_dict['direct-deg'] = {}, [], []
             elif e_mode == 'gramine-sgx':
                 test_tpt_dict[e_mode], test_tpt_dict['sgx-med'], test_tpt_dict['sgx-deg'] = {}, [], []
+                final_res_dict[e_mode], final_res_dict['sgx-med'], final_res_dict['sgx-deg'] = {}, [], []
 
         for filename in log_files:
             with open(filename, "r") as f:
@@ -181,6 +222,13 @@ class MongoDBWorkload():
                     test_tpt_dict['sgx-deg'].append(float(utils.percent_degradation(tcd, test_tpt_dict['native-med'][i], test_tpt_dict['sgx-med'][i], True)))
 
         trd[tcd['workload_name']] = trd.get(tcd['workload_name'], {})
-        trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_tpt_dict})
+
+        if 'set' in tcd['test_name']:
+            trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': test_tpt_dict})
+        elif 'get' in tcd['test_name']:
+            self.copy_results_from_relevant_indices(tcd, test_tpt_dict, final_res_dict)
+            trd[tcd['workload_name']].update({tcd['test_name']+'_throughput': final_res_dict})
+        else:
+            raise Exception("\nInvalid test case name: {tcd['test_name']} !!\n")
 
         os.chdir(self.workload_home_dir)

@@ -6,23 +6,44 @@ Default:
   manifest_name: "mongod"
   manifest_file: "mongod.manifest.template"
 
-test_mongodb_perf_1_threads:
+test_mongodb_perf_set_operation_1_threads:
   threads: 1
 
-test_mongodb_perf_2_threads:
+test_mongodb_perf_set_operation_2_threads:
   threads: 2
 
-test_mongodb_perf_4_threads:
+test_mongodb_perf_set_operation_4_threads:
   threads: 4
 
-test_mongodb_perf_8_threads:
+test_mongodb_perf_set_operation_8_threads:
   threads: 8
 
-test_mongodb_perf_16_threads:
+test_mongodb_perf_set_operation_16_threads:
   threads: 16
 
-test_mongodb_perf_32_threads:
+test_mongodb_perf_set_operation_32_threads:
   threads: 32
 
-test_mongodb_perf_64_threads:
+test_mongodb_perf_set_operation_64_threads:
+  threads: 64
+
+test_mongodb_perf_get_operation_1_threads:
+  threads: 1
+
+test_mongodb_perf_get_operation_2_threads:
+  threads: 2
+
+test_mongodb_perf_get_operation_4_threads:
+  threads: 4
+
+test_mongodb_perf_get_operation_8_threads:
+  threads: 8
+
+test_mongodb_perf_get_operation_16_threads:
+  threads: 16
+
+test_mongodb_perf_get_operation_32_threads:
+  threads: 32
+
+test_mongodb_perf_get_operation_64_threads:
   threads: 64

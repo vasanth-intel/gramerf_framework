@@ -1,6 +1,5 @@
 # Nginx manifest example
 
-sgx.nonpie_binary = true
 loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "{{ install_dir }}/sbin/nginx"
 

@@ -3,11 +3,10 @@
 
 FROM ubuntu:22.04
 
-RUN echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list.d/focal-security.list
-
 RUN env DEBIAN_FRONTEND=noninteractive apt-get update \
     && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
+    cmake \
     curl \
     git \
     gnupg2 \
@@ -18,13 +17,7 @@ RUN env DEBIAN_FRONTEND=noninteractive apt-get update \
     nasm \
     ninja-build \
     python3 \
-    python3-click \
-    python3-jinja2 \
     python3-pyelftools \
-    libssl1.1 \
-    libunwind8 \
-    musl-tools \
-    python3-pytest \
     libprotobuf-c-dev \
     protobuf-c-compiler \
     protobuf-compiler \
@@ -34,29 +27,23 @@ RUN env DEBIAN_FRONTEND=noninteractive apt-get update \
     pkg-config
 
 RUN python3 -m pip install -U \
-    'meson>=0.56' \
+    'meson>=0.56,!=1.2.*' \
     'tomli>=1.1.0' \
     'tomli-w>=0.4.0'
 
 COPY keys/* /usr/share/keyrings/
 
-# Installing Azure DCAP Quote Provider Library (az-dcap-client).
-# Here, the version of az-dcap-client should be in sync with the az-dcap-client
-# version used for quote generation. User can replace the below package with the
-# latest package.
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.asc] https://packages.microsoft.com/ubuntu/20.04/prod focal main" \
-    | tee /etc/apt/sources.list.d/msprod.list
-
 RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx-deb.asc] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" \
     | tee /etc/apt/sources.list.d/intel-sgx.list
 
-RUN env DEBIAN_FRONTEND=noninteractive apt-get update
+RUN env DEBIAN_FRONTEND=noninteractive apt-get update \
+    && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    libsgx-dcap-default-qpl=1.16.100.2-jammy1 libsgx-dcap-quote-verify-dev
 
-RUN env DEBIAN_FRONTEND=noninteractive apt-get install -y az-dcap-client
+RUN sed -i "s|^\(  \"pccs_url\": \"https://\).*\(/sgx/certification.*\)|\1api.trustedservices.intel.com\2|g" /etc/sgx_default_qcnl.conf
 
-RUN env DEBIAN_FRONTEND=noninteractive apt-get install -y libsgx-dcap-quote-verify-dev
-
-RUN git clone --depth 1 --branch v1.6.1 https://github.com/gramineproject/gramine.git
+RUN git clone https://github.com/gramineproject/gramine.git \
+    && cd gramine && git checkout $(git tag --list 'v*.*' --sort=taggerdate | tail -1)
 
 RUN mkdir -p /gramine/driver/asm && cd /gramine/driver/asm && wget --timeout=10 -O sgx.h  \
     https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/plain/arch/x86/include/uapi/asm/sgx.h?h=v5.11  \
@@ -69,19 +56,19 @@ RUN cd gramine/ && meson setup build/ --buildtype=release -Ddirect=enabled -Dsgx
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-ARG server_dcap_pf="n"
-RUN if [ $server_dcap_pf="y" ]; then \
+ARG server_dcap_type="secret_prov_minimal"
+RUN if [ $server_dcap_type="secret_prov_pf" ]; then \
         sed -i "s|verify_measurements_callback,|NULL,|g" \
         "gramine/CI-Examples/ra-tls-secret-prov/secret_prov_pf/server.c"; \
     fi
 
-RUN mkdir -p /ra-tls-secret-prov/secret_prov_minimal
+RUN mkdir -p /ra-tls-secret-prov/$server_dcap_type
 RUN cd gramine/CI-Examples/ra-tls-secret-prov/ \
     && make clean && make dcap \
-    && cp secret_prov_minimal/server_dcap /ra-tls-secret-prov/secret_prov_minimal/
+    && cp $server_dcap_type/server_dcap /ra-tls-secret-prov/$server_dcap_type/
 
 RUN rm -rf gramine >/dev/null 2>&1
 
-WORKDIR /ra-tls-secret-prov/secret_prov_minimal
+WORKDIR /ra-tls-secret-prov/$server_dcap_type
 
 ENTRYPOINT ["./server_dcap"]

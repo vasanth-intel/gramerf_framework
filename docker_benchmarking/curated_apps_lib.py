@@ -40,20 +40,25 @@ def update_curation_verifier_scripts():
     # If both 'gramine_commit' or 'gsc_commit' are not passed as parameters, v1.6.1 would be
     # used as default for both commits.
     # If 'gramine_commit' is master/any other commit, 'gsc_commit' must be passed as master.
-    if os.environ["gramine_commit"]:
-        update_gramine_branch(os.environ["gramine_commit"])
+    if os.environ["gramine_commit"] or os.environ["gramine_repo"]:
+        update_gramine_branch(os.environ["gramine_commit"], os.environ["gramine_repo"])
     if os.environ["gsc_repo"] or os.environ["gsc_commit"]:
         update_gsc(os.environ["gsc_commit"], os.environ["gsc_repo"])
 
 
-def update_gramine_branch(commit):
+def update_gramine_branch(gramine_commit='', gramine_repo=''):
     copy_cmd = "cp -f config.yaml.template config.yaml"
-    gsc_tag = utils.run_subprocess(f"git ls-remote --sort='version:refname' --tags  {GSC_MAIN_REPO} | tail --lines=1 | cut --delimiter=\"/\" --fields=3")
-    if not "v1" in commit:
-        utils.run_subprocess(f"cp -rf helper-files/{VERIFIER_TEMPLATE} {VERIFIER_DOCKERFILE}")
-    sed_string = "sed -i \"s/Branch.*master.*\\|Branch.*{}.*/Branch: '{}'/\" config.yaml".format(gsc_tag, commit.replace('/', '\\/'))
-    utils.update_file_contents(copy_cmd, (copy_cmd + "\n" + sed_string), CURATION_SCRIPT)
-    utils.update_file_contents("git checkout(.*)", f"git checkout {commit}", VERIFIER_DOCKERFILE)
+    if gramine_commit:
+        gsc_tag = utils.run_subprocess(f"git ls-remote --sort='version:refname' --tags  {GSC_MAIN_REPO} | tail --lines=1 | cut --delimiter=\"/\" --fields=3")
+        if not "v1" in gramine_commit:
+            utils.run_subprocess(f"cp -rf helper-files/{VERIFIER_TEMPLATE} {VERIFIER_DOCKERFILE}")
+        sed_string = "sed -i \"s/Branch.*master.*\\|Branch.*{}.*/Branch: '{}'/\" config.yaml".format(gsc_tag, gramine_commit.replace('/', '\\/'))
+        utils.update_file_contents(copy_cmd, (copy_cmd + "\n" + sed_string), CURATION_SCRIPT)
+        utils.update_file_contents("git checkout(.*)", f"git checkout {gramine_commit}", VERIFIER_DOCKERFILE)
+    if gramine_repo:
+        sed_string = "sed -i \"s|Repository.*gramine.git.*|Repository: '{}'|\" config.yaml".format(gramine_repo.replace('/', '\\/'))
+        utils.update_file_contents(copy_cmd, (copy_cmd + "\n" + sed_string), CURATION_SCRIPT)
+        utils.update_file_contents("git clone(.*)gramine.git", f"git clone {gramine_repo}", VERIFIER_DOCKERFILE)
 
 
 def update_gsc(gsc_commit='', gsc_repo=''):

@@ -9,8 +9,6 @@ loader.insecure__disable_aslr = true
 
 loader.env.LD_LIBRARY_PATH = "{{ python.stdlib }}/lib:/lib:{{ arch_libdir }}:/usr/lib:/usr/{{ arch_libdir }}"
 
-loader.pal_internal_mem_size = "512M"
-
 # fs.mount.usr_local.type = "chroot"
 # fs.mount.usr_local.path = "/usr/local"
 # fs.mount.usr_local.uri = "file:/usr/local"

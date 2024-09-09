@@ -8,6 +8,7 @@ from common.libs import utils
 from common.perf_benchmarks import memtier_benchmark
 from conftest import trd
 import re
+import time
 
 class TensorflowServingWorkload:
     def __init__(self, test_config_dict):
@@ -91,6 +92,7 @@ class TensorflowServingWorkload:
             if result == False:
                 raise Exception(f"\n-- Failure - Couldn't launch tf-serving in {e_mode} mode!!")
 
+        time.sleep(15)
         self.exec_workload_perf_cmd(test_config_dict, test_dict, e_mode)
 
         # workload cleanup

@@ -158,6 +158,10 @@ class MySqlWorkload():
         time.sleep(5)
 
     def process_results(self, tcd):
+        # Skipping and not executing the 'test_mysql_perf_write_only_64_threads' for baremetal case 
+        # due to random crash behavior while execution impacting the other tests too.
+        if tcd['test_name'] == "test_mysql_perf_write_only_64_threads" and os.environ["perf_config"] == "baremetal":
+            return
         log_test_res_folder = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])
         os.chdir(log_test_res_folder)
         log_files = glob.glob1(log_test_res_folder, "*.log")

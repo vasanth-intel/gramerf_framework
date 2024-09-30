@@ -68,9 +68,9 @@ pipeline{
                                 } else {
                                     build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                                 }
-                                workload = 'mysql_perf'
-                                build_perf_job(workload, 'baremetal', get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true')]).call()
-                            }  
+                            }
+                            workload = 'mysql_perf'
+                            build_perf_job(workload, 'baremetal', get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true')]).call()
                         }
                     }
                 }

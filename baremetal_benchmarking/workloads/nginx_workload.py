@@ -80,7 +80,7 @@ class NginxWorkload:
         install_abs_path = os.path.join(self.workload_home_dir, "install")
         manifest_cmd = "gramine-manifest -Dlog_level={} -Darch_libdir={} -Dinstall_dir=./install -Dinstall_dir_abspath={} \
                             nginx.manifest.template > nginx.manifest".format(LOG_LEVEL, os.environ.get('ARCH_LIBDIR'), install_abs_path)
-        
+        print("\nGenerate manifest cmd:", manifest_cmd)
         utils.exec_shell_cmd(manifest_cmd, None)
 
     def generate_test_data(self, tcd):

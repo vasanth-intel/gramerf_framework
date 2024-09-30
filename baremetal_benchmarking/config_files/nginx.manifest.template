@@ -1,6 +1,5 @@
 # Nginx manifest example
 
-loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "{{ install_dir }}/sbin/nginx"
 
 loader.log_level = "{{ log_level }}"
@@ -32,7 +31,6 @@ sgx.enclave_size = "512M"
 sgx.max_threads = 4
 
 sgx.trusted_files = [
-  "file:{{ gramine.libos }}",
   "file:{{ install_dir }}/sbin/nginx",
   "file:{{ install_dir }}/conf/",
   "file:{{ install_dir }}/html/",
@@ -40,10 +38,14 @@ sgx.trusted_files = [
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",
   "file:nginx_args",
+  "file:{{ install_dir }}/conf/server.crt",
+  "file:{{ install_dir }}/conf/server.key",
 ]
 
 # For simplicity, Nginx logs are not protected. In production, you must either disable logs in Nginx
 # or mount them as "encrypted" files.
 sgx.allowed_files = [
   "file:{{ install_dir }}/logs",
+  "file:{{ install_dir }}/conf/server.crt",
+  "file:{{ install_dir }}/conf/server.key",
 ]

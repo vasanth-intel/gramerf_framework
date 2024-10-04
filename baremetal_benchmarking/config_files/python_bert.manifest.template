@@ -1,5 +1,4 @@
 libos.entrypoint = "{{ entrypoint }}"
-loader.entrypoint = "file:{{ gramine.libos }}"
 loader.env.LD_PRELOAD = "/usr/local/lib/libmimalloc.so.1.7"
 loader.log_level = "{{ log_level }}"
 
@@ -78,7 +77,6 @@ sgx.trusted_files = [
   "file:{{ gramine.runtimedir() }}/",
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",
-  "file:{{ gramine.libos }}",
   "file:{{ entrypoint }}",
   "file:{{ python.stdlib }}/",
   "file:{{ python.distlib }}/",

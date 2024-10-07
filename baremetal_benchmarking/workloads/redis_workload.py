@@ -110,8 +110,8 @@ class RedisWorkload:
     def setup_workload(self, test_config_dict):
         self.download_workload(test_config_dict)
         self.build_and_install_workload(test_config_dict)
-        self.generate_manifest()
         self.copy_server_binary()
+        self.generate_manifest()
         self.delete_old_test_results(test_config_dict)
         gramine_libs.generate_sgx_token_and_sig(test_config_dict)
 

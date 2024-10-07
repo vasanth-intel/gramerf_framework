@@ -1,4 +1,3 @@
-loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "benchmark_app"
 
 loader.log_level = "{{ log_level }}"
@@ -31,7 +30,6 @@ libos.check_invalid_pointers = false
 sgx.trusted_files = [
   "file:/usr/local/lib/libmimalloc.so.1.7",
   "file:benchmark_app",
-  "file:{{ gramine.libos }}",
   "file:{{ gramine.runtimedir() }}/",
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",

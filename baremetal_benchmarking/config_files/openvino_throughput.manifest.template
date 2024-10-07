@@ -1,4 +1,3 @@
-loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "benchmark_app"
 
 loader.log_level = "{{ log_level }}"
@@ -30,7 +29,6 @@ sgx.trusted_files = [
   "file:/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4",
   "file:/usr/lib/x86_64-linux-gnu/libunwind.so.8",
   "file:benchmark_app",
-  "file:{{ gramine.libos }}",
   "file:{{ gramine.runtimedir() }}/",
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",

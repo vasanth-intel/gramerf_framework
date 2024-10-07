@@ -1,4 +1,3 @@
-loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "{{ entrypoint }}"
 loader.env.LD_PRELOAD = "/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4"
 loader.log_level = "{{ log_level }}"
@@ -79,7 +78,6 @@ sgx.trusted_files = [
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",
   "file:resnet50v1_5_int8_pretrained_model.pb",
-  "file:{{ gramine.libos }}",
   "file:{{ entrypoint }}",
   "file:{{ python.stdlib }}/",
   "file:{{ python.distlib }}/",

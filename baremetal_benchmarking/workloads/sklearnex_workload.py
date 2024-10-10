@@ -83,6 +83,9 @@ class SklearnexWorkload():
         os.chdir(self.get_workload_home_dir())
         utils.set_threads_cnt_env_var()
         utils.set_cpu_freq_scaling_governor()
+        # Below line to set vm.max_map_count is required to address issue# 107 in examples repo.
+        # Default value is 65530. But, for this workload this is being set to '6553000' as per dev's suggestion.
+        utils.set_vm_max_map_count(6553000)
 
     def delete_old_test_reports(self, tcd):
         print("\n-- Deleting old test reports..")

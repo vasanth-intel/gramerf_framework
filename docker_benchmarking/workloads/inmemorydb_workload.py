@@ -113,6 +113,8 @@ class InMemoryDBWorkload:
             arena_string = '$ a loader.env.MALLOC_ARENA_MAX = "1"'
             arena_sed_cmd = f"sed -i -e '{arena_string}' {manifest_file}"
             utils.exec_shell_cmd(arena_sed_cmd, None)
+        enable_recovery_cmd = f"sed -i 's/type = \"encrypted\"/type = \"encrypted\", enable_recovery = false /' {manifest_file}"
+        utils.exec_shell_cmd(enable_recovery_cmd, None)
         utils.check_and_enable_edmm_in_manifest(manifest_file)
     
     def generate_curated_image(self, test_config_dict):

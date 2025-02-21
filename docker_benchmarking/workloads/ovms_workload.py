@@ -65,7 +65,9 @@ class OpenVinoModelServerWorkload:
         # Increasing the enclave size from 16G to 32G as the workload was giving
         # 'bad_alloc' error for the model 'faster-rcnn-resnet101-coco-sparse'.
         enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size =.*/sgx.enclave_size = \"32G\"/' {manifest_file}"
+        enable_recovery_cmd = f"sed -i 's/type = \"encrypted\"/type = \"encrypted\", enable_recovery = false /' {manifest_file}"
         utils.exec_shell_cmd(enc_size_sed_cmd, None)
+        utils.exec_shell_cmd(enable_recovery_cmd, None)
         utils.check_and_enable_edmm_in_manifest(manifest_file)
 
     def generate_curated_image(self, test_config_dict):
@@ -83,7 +85,7 @@ class OpenVinoModelServerWorkload:
         workload_docker_image_name = utils.get_workload_name(tcd['docker_image'])
         if e_mode == 'native':
             init_db_cmd = f"docker run --net=host --name {container_name} -u $(id -u):$(id -g) -v $(pwd)/workloads/openvino-model-server/test_model:/model \
-                            -p 9001:9001 openvino/model_server:latest --model_path /model {tcd['docker_arguments']}"
+                            -p 9001:9001 openvino/model_server:2024.5-gpu --model_path /model {tcd['docker_arguments']}"
         elif e_mode == 'gramine-sgx':
             if os.environ['encryption'] == '1':
                 init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx/enclave \

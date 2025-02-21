@@ -45,7 +45,7 @@ class MySqlWorkload():
         manifest_filename = test_config_dict['manifest_name'] + ".manifest.template"
 
         search_str = "# encrypted file mount"
-        replace_str = "{ type = \"encrypted\", path = \"" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\", uri = \"file:" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\" },"
+        replace_str = "{ type = \"encrypted\", path = \"" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\", uri = \"file:" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\", enable_recovery = false },"
         enc_file_mount_cmd = f"sed -i 's|{search_str}|{replace_str}|' {manifest_filename}"
         utils.exec_shell_cmd(enc_file_mount_cmd, None)
         search_str = "# encrypted insecure__keys"

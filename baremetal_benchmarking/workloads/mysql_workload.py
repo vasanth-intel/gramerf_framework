@@ -45,7 +45,7 @@ class MySqlWorkload():
         manifest_filename = test_config_dict['manifest_name'] + ".manifest.template"
 
         search_str = "# encrypted file mount"
-        replace_str = "{ type = \"encrypted\", path = \"" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\", uri = \"file:" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\" },"
+        replace_str = "{ type = \"encrypted\", path = \"" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\", uri = \"file:" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\"},"
         enc_file_mount_cmd = f"sed -i 's|{search_str}|{replace_str}|' {manifest_filename}"
         utils.exec_shell_cmd(enc_file_mount_cmd, None)
         search_str = "# encrypted insecure__keys"
@@ -86,13 +86,13 @@ class MySqlWorkload():
         operation_cmd = ''
         if sysbench_cmd == 'prepare' or sysbench_cmd == 'cleanup':
             operation_cmd = f"sysbench --db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=3306 --mysql-user=root --mysql-db=test_db \
-                                --time=90 --report-interval=5 {tcd['operation']} --tables=8 --table_size=100000 \
+                                --time=90 --report-interval=5 {tcd['operation']} --tables=8 --table_size=5000000 \
                                 --threads={os.environ['CORES_COUNT']} {sysbench_cmd}"
         elif sysbench_cmd == 'run':
             results_dir = os.path.join(PERF_RESULTS_DIR, tcd['workload_name'], tcd['test_name'])
             output_file_name = results_dir + "/" + tcd['test_name'] + '_' + e_mode + '_' + str(iteration) + '.log'
             operation_cmd = f"sysbench --db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=3306 --mysql-user=root --mysql-db=test_db \
-                                --time=90 --report-interval=5 {tcd['operation']} --tables=8 --table_size=100000 \
+                                --time=90 --report-interval=5 {tcd['operation']} --tables=8 --table_size=5000000 \
                                 --threads={tcd['threads']} {sysbench_cmd} | tee {output_file_name}"
         else:
             raise Exception("\n-- Invalid MySql operation command requested!!")
@@ -108,7 +108,7 @@ class MySqlWorkload():
 
         print("\n##### In execute_workload #####\n")
         print(f"\n-- Executing {test_config_dict['test_name']} in {e_mode} mode")
-
+        testcase_name = str(test_config_dict['test_name'])
         results_dir = os.path.join(PERF_RESULTS_DIR, test_config_dict['workload_name'], test_config_dict['test_name'])
         os.makedirs(results_dir, exist_ok=True)
 
@@ -139,6 +139,10 @@ class MySqlWorkload():
             run_op_cmd = self.construct_sysbench_operation(test_config_dict, "run", e_mode, i + 1)
             run_cmd_output = utils.exec_shell_cmd(run_op_cmd)
             print(run_cmd_output)
+            filename="newfile_"+ testcase_name + "_" + str(e_mode)+"_"+str(i)
+            writefile = open(filename,"w")
+            writefile.write(run_cmd_output)
+            writefile.close()
             time.sleep(TEST_SLEEP_TIME_BW_ITERATIONS)
 
         cleanup_op_cmd = self.construct_sysbench_operation(test_config_dict, "cleanup")
@@ -154,7 +158,15 @@ class MySqlWorkload():
         utils.exec_shell_cmd('mysql -P 3306 --protocol=tcp -u root -e "ALTER INSTANCE ENABLE INNODB REDO_LOG;"', None)
 
         print(f"\n\n-- Stopping {workload_name} Server DB running in {e_mode} mode..\n")
+        print(f"\n SSS************* Before Killing MySQL ************************")
+        value_return = utils.exec_shell_cmd("ps aux | grep mysql")
+        print(value_return)
         utils.kill(server_process.pid)
+        print(f"\n SSS************* After Killing MySQL ************************")
+        value_return = utils.exec_shell_cmd("ps aux | grep mysql")
+        print(value_return)
+        print(f"\nSSS*********************END**************")
+
         time.sleep(5)
 
     def process_results(self, tcd):

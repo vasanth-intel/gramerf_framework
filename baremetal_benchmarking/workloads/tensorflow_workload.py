@@ -145,7 +145,7 @@ class TensorflowWorkload():
         
         encrypted_file = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'], "encrypted_models", model_name)
         search_str = "# encrypted file mount"
-        replace_str = "{ type = \"encrypted\", path = \"" + encrypted_file + "\", uri = \"file:" + encrypted_file + "\" },"
+        replace_str = "{ type = \"encrypted\", path = \"" + encrypted_file + "\", uri = \"file:" + encrypted_file + "\" , enable_recovery = false },"
         enc_file_mount_cmd = f"sed -i 's|{search_str}|{replace_str}|' {manifest_filename}"
         utils.exec_shell_cmd(enc_file_mount_cmd, None)
         search_str = "# encrypted insecure__keys"

@@ -1,5 +1,5 @@
 Default:
-  docker_image: openvino-model-server openvino/model_server
+  docker_image: openvino-model-server openvino/model_server:2024.5-gpu
   workload_name: "OpenVinoModelServer"
   
 test_ovms_perf_resnet_throughput:

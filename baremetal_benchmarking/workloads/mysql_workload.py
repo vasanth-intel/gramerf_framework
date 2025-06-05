@@ -45,7 +45,7 @@ class MySqlWorkload():
         manifest_filename = test_config_dict['manifest_name'] + ".manifest.template"
 
         search_str = "# encrypted file mount"
-        replace_str = "{ type = \"encrypted\", path = \"" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\", uri = \"file:" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\" },"
+        replace_str = "{ type = \"encrypted\", path = \"" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\", uri = \"file:" + MYSQL_BM_ENCRYPTED_DB_TMPFS_PATH + "\", enable_recovery = true },"
         enc_file_mount_cmd = f"sed -i 's|{search_str}|{replace_str}|' {manifest_filename}"
         utils.exec_shell_cmd(enc_file_mount_cmd, None)
         search_str = "# encrypted insecure__keys"
@@ -154,7 +154,13 @@ class MySqlWorkload():
         utils.exec_shell_cmd('mysql -P 3306 --protocol=tcp -u root -e "ALTER INSTANCE ENABLE INNODB REDO_LOG;"', None)
 
         print(f"\n\n-- Stopping {workload_name} Server DB running in {e_mode} mode..\n")
+        print(f"\n ************************ Before Killing MySQL ************************")
+        ret_val = utils.exec_shell_cmd("ps aux | grep mysql")
+        print(ret_val)
         utils.kill(server_process.pid)
+        print(f"\n ************************ After Killing MySQL ************************")
+        ret_val = utils.exec_shell_cmd("ps aux | grep mysql")
+        print(ret_val)
         time.sleep(5)
 
     def process_results(self, tcd):

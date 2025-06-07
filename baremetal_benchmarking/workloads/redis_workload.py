@@ -13,8 +13,8 @@ class RedisWorkload:
     def __init__(self, test_config_dict):
         # Redis home dir => "~/gramerf_framework/gramine/CI-Examples/redis"
         self.workload_home_dir = os.path.join(FRAMEWORK_HOME_DIR, test_config_dict['workload_home_dir'])
-        # Redis build dir => "~/gramerf_framework/gramine/CI-Examples/redis/redis-7.0.0"
-        self.workload_bld_dir = os.path.join(self.workload_home_dir, "redis-7.0.0")
+        # Redis build dir => "~/gramerf_framework/gramine/CI-Examples/redis/redis"
+        self.workload_bld_dir = os.path.join(self.workload_home_dir, "redis")
         self.server_ip_addr = utils.determine_host_ip_addr()
         self.command = None
 
@@ -27,12 +27,8 @@ class RedisWorkload:
             print("\n-- Redis already downloaded. Not fetching from source..")
             return True
 
-        tar_file_name = os.path.basename(REDIS_DOWNLOAD_CMD.split()[1])
-        untar_cmd = "tar xzf " + tar_file_name
-
-        print("\n-- Fetching and extracting Redis workload from source..")
+        print("\n-- Cloning Redis workload from source..")
         utils.exec_shell_cmd(REDIS_DOWNLOAD_CMD)
-        utils.exec_shell_cmd(untar_cmd)
 
     def build_and_install_workload(self, test_config_dict):
         print("\n###### In build_and_install_workload #####\n")

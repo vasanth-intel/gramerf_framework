@@ -142,21 +142,21 @@ class InMemoryDBWorkload:
             if os.environ['encryption'] == '1' and os.environ["tmpfs"] == "1":
                 workload_name = tcd["docker_image"].split(" ")[0]
                 enc_db_tmpfs_path = eval(workload_name.upper()+"_ENCRYPTED_DB_TMPFS_PATH")
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx_enclave \
                                         -v {enc_db_tmpfs_path}:{enc_db_tmpfs_path} \
                                         -t gsc-{workload_docker_image_name} --datadir {enc_db_tmpfs_path}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] == "1":
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx_enclave \
                                         -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
                                         -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_TMPFS_PATH}"
             elif os.environ['encryption'] == '1' and os.environ["tmpfs"] != "1":
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx_enclave \
                                         -v {ENCRYPTED_DB_REGFS_PATH}:{ENCRYPTED_DB_REGFS_PATH} \
                                         -t gsc-{workload_docker_image_name} \
                                         --datadir {ENCRYPTED_DB_REGFS_PATH}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] != "1":
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx_enclave \
                                         -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
                                         -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_REGFS_PATH}"

@@ -88,11 +88,11 @@ class OpenVinoModelServerWorkload:
                             -p 9001:9001 openvino/model_server:2024.5-gpu --model_path /model {tcd['docker_arguments']}"
         elif e_mode == 'gramine-sgx':
             if os.environ['encryption'] == '1':
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx_enclave \
                                 -v {OVMS_ENCRYPTED_DB_PATH}:{OVMS_ENCRYPTED_DB_PATH} \
                                 -t gsc-{workload_docker_image_name} --model_path {OVMS_ENCRYPTED_DB_PATH} {tcd['docker_arguments']}"
             else:
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} -u 0:0 -p 9001:9001 --device=/dev/sgx_enclave \
                                 -v $(pwd)/workloads/openvino-model-server/test_model:$(pwd)/workloads/openvino-model-server/test_model \
                                 -t gsc-{workload_docker_image_name} --model_path $(pwd)/workloads/openvino-model-server/test_model {tcd['docker_arguments']}"
         return init_db_cmd

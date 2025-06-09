@@ -65,9 +65,12 @@ class OpenVinoModelServerWorkload:
         # Increasing the enclave size from 16G to 32G as the workload was giving
         # 'bad_alloc' error for the model 'faster-rcnn-resnet101-coco-sparse'.
         enc_size_sed_cmd = f"sed -i 's/sgx.enclave_size =.*/sgx.enclave_size = \"32G\"/' {manifest_file}"
-        enable_recovery_cmd = f"sed -i 's/type = \"encrypted\"/type = \"encrypted\", enable_recovery = true /' {manifest_file}"
         utils.exec_shell_cmd(enc_size_sed_cmd, None)
-        utils.exec_shell_cmd(enable_recovery_cmd, None)
+        enable_recovery = utils.search_text_and_return_line_in_file(manifest_file, 'enable_recovery')
+        if not enable_recovery:
+            print(f"\nAdding enable_recovery to the manifest file {manifest_file}")
+            enable_recovery_cmd = f"sed -i 's/type = \"encrypted\"/type = \"encrypted\", enable_recovery = true /' {manifest_file}"
+            utils.exec_shell_cmd(enable_recovery_cmd, None)
         utils.check_and_enable_edmm_in_manifest(manifest_file)
 
     def generate_curated_image(self, test_config_dict):

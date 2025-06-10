@@ -98,7 +98,7 @@ def generate_curated_image(test_config_dict):
 def get_docker_run_command(workload_name):
     output = ''
     wrapper_image = "gsc-{}".format(workload_name)
-    gsc_workload = "docker run --rm --net=host --device=/dev/sgx/enclave -t {}".format(wrapper_image)
+    gsc_workload = "docker run --rm --net=host --device=/dev/sgx_enclave -t {}".format(wrapper_image)
     output += gsc_workload
     return output
 

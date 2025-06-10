@@ -61,7 +61,9 @@ pipeline{
                 stage(""){
                     steps{
                         script{
-                            def sklearn_node_workloads = ['sklearnex_perf','nginx_perf', 'mysql_perf', 'mariadb_perf']
+                            workload = 'mysql_perf'
+                            build_perf_job(workload, 'baremetal', get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true')]).call()
+                            def sklearn_node_workloads = ['nginx_perf', 'mysql_perf', 'mariadb_perf', 'sklearnex_perf']
                             sklearn_node_workloads.each { workload ->
                                 if (workload in ['mysql_perf', 'mariadb_perf']){
                                     build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true'), string(name: 'tmpfs', value: 'true')]).call() 
@@ -69,8 +71,6 @@ pipeline{
                                     build_perf_job(workload, get_perf_config(workload), get_exec_mode(workload), get_iterations(workload), edmm).call()
                                 }
                             }
-                            workload = 'mysql_perf'
-                            build_perf_job(workload, 'baremetal', get_exec_mode(workload), get_iterations(workload), edmm, [string(name: 'encryption', value: 'true')]).call()
                         }
                     }
                 }

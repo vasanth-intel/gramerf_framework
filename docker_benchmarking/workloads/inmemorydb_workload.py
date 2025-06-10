@@ -113,6 +113,11 @@ class InMemoryDBWorkload:
             arena_string = '$ a loader.env.MALLOC_ARENA_MAX = "1"'
             arena_sed_cmd = f"sed -i -e '{arena_string}' {manifest_file}"
             utils.exec_shell_cmd(arena_sed_cmd, None)
+        enable_recovery = utils.search_text_and_return_line_in_file(manifest_file, 'enable_recovery')
+        if not enable_recovery:
+            print(f"\nAdding enable_recovery to the manifest file {manifest_file}")
+            enable_recovery_cmd = f"sed -i 's/type = \"encrypted\"/type = \"encrypted\", enable_recovery = true /' {manifest_file}"
+            utils.exec_shell_cmd(enable_recovery_cmd, None)
         utils.check_and_enable_edmm_in_manifest(manifest_file)
     
     def generate_curated_image(self, test_config_dict):
@@ -140,21 +145,21 @@ class InMemoryDBWorkload:
             if os.environ['encryption'] == '1' and os.environ["tmpfs"] == "1":
                 workload_name = tcd["docker_image"].split(" ")[0]
                 enc_db_tmpfs_path = eval(workload_name.upper()+"_ENCRYPTED_DB_TMPFS_PATH")
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx_enclave \
                                         -v {enc_db_tmpfs_path}:{enc_db_tmpfs_path} \
                                         -t gsc-{workload_docker_image_name} --datadir {enc_db_tmpfs_path}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] == "1":
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx_enclave \
                                         -v {PLAIN_DB_TMPFS_PATH}:{PLAIN_DB_TMPFS_PATH} \
                                         -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_TMPFS_PATH}"
             elif os.environ['encryption'] == '1' and os.environ["tmpfs"] != "1":
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx_enclave \
                                         -v {ENCRYPTED_DB_REGFS_PATH}:{ENCRYPTED_DB_REGFS_PATH} \
                                         -t gsc-{workload_docker_image_name} \
                                         --datadir {ENCRYPTED_DB_REGFS_PATH}"
             elif os.environ['encryption'] != '1' and os.environ["tmpfs"] != "1":
-                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx/enclave \
+                init_db_cmd = f"docker run --rm --net=host --name {container_name} --device=/dev/sgx_enclave \
                                         -v {PLAIN_DB_REGFS_PATH}:{PLAIN_DB_REGFS_PATH} \
                                         -t gsc-{workload_docker_image_name} \
                                         --datadir {PLAIN_DB_REGFS_PATH}"
